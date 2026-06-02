@@ -7,10 +7,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f0ede8;--surface:#faf8f5;--border:#d8d3cc;--text:#1a1814;--muted:#8a8480;--accent:#c8431a;--ink:#1a1814;}
+:root{
+  --bg:#0d1117;
+  --surface:#161b22;
+  --border:#30363d;
+  --text:#e6edf3;
+  --muted:#7d8590;
+  --accent:#f78166;
+  --ink:#010409;
+  --t1:#ff6b6b;
+  --t2:#4ecdc4;
+  --t3:#45b7d1;
+  --t1e:#c084fc;
+  --green:#3fb950;
+}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
-.header{background:var(--ink);color:#f0ede8;padding:0 32px;display:flex;align-items:stretch;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.15);}
+.header{background:#161b22;color:#e6edf3;padding:0 32px;display:flex;align-items:stretch;height:64px;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.4);border-bottom:1px solid #30363d;}
 .header-logo{display:flex;align-items:center;gap:12px;padding-right:24px;border-right:1px solid rgba(255,255,255,0.1);}
 .logo-mark{width:36px;height:36px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;color:#fff;flex-shrink:0;}
 .header-title{font-size:15px;font-weight:600;}.header-sub{font-size:11px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;}
@@ -21,18 +34,18 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .btn-accent{background:var(--accent);color:#fff;border:none;}.btn-accent:hover{background:#b33a16;}
 .btn-sm{padding:5px 10px;font-size:11px;}
 #uploadZone{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 64px);gap:24px;padding:40px;}
-.upload-card{background:var(--surface);border:2px dashed var(--border);border-radius:16px;padding:60px 80px;text-align:center;max-width:560px;width:100%;transition:border-color 0.2s,background 0.2s;cursor:pointer;}
-.upload-card:hover,.upload-card.drag-over{border-color:var(--accent);background:#fff;}
+.upload-card{background:#161b22;border:2px dashed #30363d;border-radius:16px;padding:60px 80px;text-align:center;max-width:560px;width:100%;transition:border-color 0.2s,background 0.2s;cursor:pointer;}
+.upload-card:hover,.upload-card.drag-over{border-color:var(--accent);background:#1c2128;}
 .upload-icon{font-size:48px;margin-bottom:16px;}.upload-title{font-size:22px;font-weight:700;margin-bottom:8px;}
 .upload-sub{font-size:14px;color:var(--muted);line-height:1.6;}
 .upload-hint{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--bg);padding:8px 16px;border-radius:20px;margin-top:12px;display:inline-block;}
 #fileInput{display:none;}
 #appZone{display:none;}
-.app-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.app-bar{background:#161b22;border-bottom:1px solid #30363d;padding:12px 28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .app-bar-info{font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;}.app-bar-info strong{color:var(--text);}
 .tours-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:20px 28px 80px;}
-.tour-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
-.tour-card-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.tour-card{background:#161b22;border:1px solid #30363d;border-radius:12px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+.tour-card-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #30363d;background:#0d1117;}
 .tour-label{font-size:13px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:0.5px;}
 .tour-count{font-size:11px;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:10px;font-family:'DM Mono',monospace;}
 .tour-gmaps{display:block;margin:10px 12px 0;padding:9px 12px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:600;text-align:center;transition:opacity 0.15s;color:#fff;background:#1a6bc8!important;}
@@ -42,8 +55,8 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .tour-copy .copy-btn{background:var(--border);border:1px solid var(--border);padding:6px 10px;border-radius:0 6px 6px 0;cursor:pointer;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;transition:background 0.15s;}
 .tour-copy .copy-btn:hover{background:#c8c3bc;}.tour-copy .copy-btn.done{background:#1a9c4a;color:#fff;border-color:#1a9c4a;}
 .stop-list{padding:4px 0;min-height:30px;flex:1;}
-.stop-item{display:flex;align-items:flex-start;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(216,211,204,0.4);cursor:grab;transition:background 0.1s;}
-.stop-item:last-child{border-bottom:none;}.stop-item:hover{background:var(--bg);}
+.stop-item{display:flex;align-items:flex-start;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(48,54,61,0.6);cursor:grab;transition:background 0.1s;}
+.stop-item:last-child{border-bottom:none;}.stop-item:hover{background:#1c2128;}
 .stop-item.dragging{opacity:0.35;}.stop-item.drag-over-top{border-top:2px solid var(--accent);}.stop-item.drag-over-bottom{border-bottom:2px solid var(--accent)!important;}
 .stop-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:20px;padding-top:1px;flex-shrink:0;}
 .stop-body{flex:1;min-width:0;}.stop-name{font-size:12px;font-weight:600;line-height:1.3;}
@@ -53,9 +66,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .stop-item:hover .stop-move{display:flex;}
 .move-btn{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:10px;font-weight:600;color:var(--text);transition:all 0.1s;white-space:nowrap;}
 .move-btn:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
-.depot-row{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(26,24,20,0.04);font-size:11px;font-weight:600;color:var(--muted);font-family:'DM Mono',monospace;border-bottom:1px solid rgba(216,211,204,0.4);}
-.add-tour-card{background:transparent;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:100px;cursor:pointer;transition:all 0.15s;font-size:13px;color:var(--muted);font-weight:600;}
-.add-tour-card:hover{border-color:var(--accent);background:var(--surface);color:var(--accent);}
+.depot-row{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(48,54,61,0.3);font-size:11px;font-weight:600;color:var(--muted);font-family:'DM Mono',monospace;border-bottom:1px solid rgba(48,54,61,0.6);}
+.add-tour-card{background:transparent;border:2px dashed #30363d;border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:100px;cursor:pointer;transition:all 0.15s;font-size:13px;color:var(--muted);font-weight:600;}
+.add-tour-card:hover{border-color:var(--accent);background:#161b22;color:var(--accent);}
 .move-btn-pin{background:var(--bg);border:1px solid #8b1ac8;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:10px;font-weight:600;color:#8b1ac8;transition:all 0.1s;white-space:nowrap;margin-left:2px;}
 .move-btn-pin:hover{background:#8b1ac8;color:#fff;}
 .move-btn-del{background:var(--bg);border:1px solid #c8431a;border-radius:4px;padding:2px 7px;cursor:pointer;font-size:10px;font-weight:700;color:#c8431a;transition:all 0.1s;white-space:nowrap;margin-left:2px;}
@@ -75,15 +88,15 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .modal select:focus{border-color:var(--accent);}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,24,20,0.5);z-index:200;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal{background:var(--surface);border-radius:12px;padding:28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
+.modal{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);}
 .modal h3{font-size:18px;font-weight:700;margin-bottom:16px;}
-.modal input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--bg);color:var(--text);margin-bottom:12px;outline:none;box-sizing:border-box;}
+.modal input{width:100%;padding:10px 12px;border:1px solid #30363d;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:14px;background:#0d1117;color:var(--text);margin-bottom:12px;outline:none;box-sizing:border-box;}
 .modal input:focus{border-color:var(--accent);}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px;}
 .btn-cancel{background:var(--bg);color:var(--text);border:1px solid var(--border);}.btn-cancel:hover{background:var(--border);}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#f0ede8;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:300;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#238636;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;z-index:300;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;}
 .toast.show{transform:translateX(-50%) translateY(0);}
-.loading{display:none;position:fixed;inset:0;background:rgba(240,237,232,0.85);z-index:150;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loading{display:none;position:fixed;inset:0;background:rgba(13,17,23,0.9);z-index:150;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
 .loading.show{display:flex;}
 .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -94,7 +107,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
   <div class="header-logo">
     <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gQ3JlYXRlZCB3aXRoIElua3NjYXBlIChodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy8pIC0tPgoKPHN2ZwogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmcxIgogICB3aWR0aD0iODg0IgogICBoZWlnaHQ9Ijc5NC42NjY2OSIKICAgdmlld0JveD0iMCAwIDg4NCA3OTQuNjY2NjkiCiAgIHNvZGlwb2RpOmRvY25hbWU9IkxvZ28gREVSIENPVVJJRVIuZXBzIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxkZWZzCiAgICAgaWQ9ImRlZnMxIiAvPgogIDxzb2RpcG9kaTpuYW1lZHZpZXcKICAgICBpZD0ibmFtZWR2aWV3MSIKICAgICBwYWdlY29sb3I9IiNmZmZmZmYiCiAgICAgYm9yZGVyY29sb3I9IiMwMDAwMDAiCiAgICAgYm9yZGVyb3BhY2l0eT0iMC4yNSIKICAgICBpbmtzY2FwZTpzaG93cGFnZXNoYWRvdz0iMiIKICAgICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMC4wIgogICAgIGlua3NjYXBlOnBhZ2VjaGVja2VyYm9hcmQ9IjAiCiAgICAgaW5rc2NhcGU6ZGVza2NvbG9yPSIjZDFkMWQxIj4KICAgIDxpbmtzY2FwZTpwYWdlCiAgICAgICB4PSIwIgogICAgICAgeT0iMCIKICAgICAgIGlua3NjYXBlOmxhYmVsPSIxIgogICAgICAgaWQ9InBhZ2UxIgogICAgICAgd2lkdGg9Ijg4NCIKICAgICAgIGhlaWdodD0iNzk0LjY2NjY5IgogICAgICAgbWFyZ2luPSIwIgogICAgICAgYmxlZWQ9IjAiIC8+CiAgPC9zb2RpcG9kaTpuYW1lZHZpZXc+CiAgPGcKICAgICBpZD0iZzEiCiAgICAgaW5rc2NhcGU6Z3JvdXBtb2RlPSJsYXllciIKICAgICBpbmtzY2FwZTpsYWJlbD0iMSI+CiAgICA8cGF0aAogICAgICAgaWQ9InBhdGgxIgogICAgICAgZD0iTSAzODIwLDU5NTIuNzYgSCA2NjI2LjMgViAwIEggMzgyMCB2IDU5NTIuNzYiCiAgICAgICBzdHlsZT0iZmlsbDpub25lO2ZpbGwtb3BhY2l0eTowO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTpub25lIgogICAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC4xMzMzMzMzMywwLDAsLTAuMTMzMzMzMzMsMCw3OTQuNjY2NjcpIiAvPgogICAgPHBhdGgKICAgICAgIGlkPSJwYXRoMiIKICAgICAgIGQ9Im0gNDM1LjYyOSw1NzkzLjIxIGMgLTE0My41NzgsLTIuNzggLTI1OC4yMjcsLTExNS40OCAtMjU1LjIyNywtMjUwLjg5IDMuMDA0LC0xMzUuNDEgMTIyLjU1NSwtMjQzLjU5IDI2Ni4xMzMsLTI0MC44MSAxNDMuNTc0LDIuNzggMjU4LjIyNywxMTUuNDggMjU1LjIyMywyNTAuODkgLTMuMDA0LDEzNS40MSAtMTIyLjU1NSwyNDMuNTkgLTI2Ni4xMjksMjQwLjgxIgogICAgICAgc3R5bGU9ImZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6ZXZlbm9kZDtzdHJva2U6bm9uZSIKICAgICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuMTMzMzMzMzMsMCwwLC0wLjEzMzMzMzMzLDAsNzk0LjY2NjY3KSIgLz4KICAgIDxwYXRoCiAgICAgICBpZD0icGF0aDMiCiAgICAgICBkPSJtIDIyOC44NCw1NjQ0Ljg5IGMgMjcuMTY4LDAgNDkuMzMyLC0zOS40MyA0OS4zMzIsLTg3Ljc1IDAsLTQ4LjM0IC0yMi4xNjQsLTg3Ljc1IC00OS4zMzIsLTg3Ljc1IC0yNy4xNzIsMCAtNDkuMzMyLDM5LjQxIC00OS4zMzIsODcuNzUgMCw0OC4zMiAyMi4xNiw4Ny43NSA0OS4zMzIsODcuNzUiCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTpub25lIgogICAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC4xMzMzMzMzMywwLDAsLTAuMTMzMzMzMzMsMCw3OTQuNjY2NjcpIiAvPgogICAgPHBhdGgKICAgICAgIGlkPSJwYXRoNCIKICAgICAgIGQ9Im0gMTI1My4xLDU2NDQuODUgYyAyOS45NCwwIDU0LjM2LC0zOC45MiA1NC4zNiwtODYuNjIgMCwtNDcuNzEgLTI0LjQyLC04Ni42MiAtNTQuMzYsLTg2LjYyIC0yOS45MywwIC01NC4zNSwzOC45MSAtNTQuMzUsODYuNjIgMCw0Ny43IDI0LjQyLDg2LjYyIDU0LjM1LDg2LjYyIgogICAgICAgc3R5bGU9ImZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6ZXZlbm9kZDtzdHJva2U6bm9uZSIKICAgICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuMTMzMzMzMzMsMCwwLC0wLjEzMzMzMzMzLDAsNzk0LjY2NjY3KSIgLz4KICAgIDxwYXRoCiAgICAgICBpZD0icGF0aDUiCiAgICAgICBkPSJNIDIyOS4yMzQsNTY0NC44OSBIIDEyNTcuNzUgdiAtMTczIEggMjI5LjIzNCB2IDE3MyIKICAgICAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjE7ZmlsbC1ydWxlOmV2ZW5vZGQ7c3Ryb2tlOm5vbmUiCiAgICAgICB0cmFuc2Zvcm09Im1hdHJpeCgwLjEzMzMzMzMzLDAsMCwtMC4xMzMzMzMzMywwLDc5NC42NjY2NykiIC8+CiAgICA8cGF0aAogICAgICAgaWQ9InBhdGg2IgogICAgICAgZD0ibSA1NjQsNTM2OC43MiBjIDE5NC4wNjYsNDcuNjYgMzUzLjQ4OCw4NS40OCAzNTQuODg3LDg0LjE4IDEuNDAyLC0xLjI5IC0xNTUuNzM1LC00MS4yMiAtMzQ5LjgwMSwtODguODkgLTE5NC4wNjMsLTQ3LjY2IC0zNTMuNDg0LC04NS40OCAtMzU0Ljg4NywtODQuMTggLTEuMzk4LDEuMyAxNTUuNzM5LDQxLjIyIDM0OS44MDEsODguODkiCiAgICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO2ZpbGwtcnVsZTpldmVub2RkO3N0cm9rZTpub25lIgogICAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMC4xMzMzMzMzMywwLDAsLTAuMTMzMzMzMzMsMCw3OTQuNjY2NjcpIiAvPgogICAgPHBhdGgKICAgICAgIGlkPSJwYXRoNyIKICAgICAgIGQ9Im0gMTI5MS4wMiw1MzY1LjkxIGMgMTkzLjYzLC00OS4zNiAzNTIuMDcsLTkxLjA5IDM1Mi42OSwtOTIuODkgMC42MywtMS44MSAtMTU2Ljc5LDM2Ljk4IC0zNTAuNDIsODYuMzUgLTE5My42NCw0OS4zNiAtMzUyLjA3OSw5MS4wOCAtMzUyLjcwNCw5Mi44OSAtMC42MjUsMS44IDE1Ni43OTQsLTM2Ljk5IDM1MC40MzQsLTg2LjM1IgogICAgICAgc3R5bGU9ImZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6ZXZlbm9kZDtzdHJva2U6bm9uZSIKICAgICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuMTMzMzMzMzMsMCwwLC0wLjEzMzMzMzMzLDAsNzk0LjY2NjY3KSIgLz4KICAgIDxwYXRoCiAgICAgICBpZD0icGF0aDgiCiAgICAgICBkPSJtIDM1My4wMDgsNTM2OC43MiBjIDE5NC4wNjYsNDcuNjYgMzUzLjQ4NCw4NS40OCAzNTQuODg3LDg0LjE4IDEuMzk4LC0xLjI5IC0xNTUuNzM5LC00MS4yMiAtMzQ5LjgwMSwtODguODkgLTE5NC4wNjcsLTQ3LjY2IC0zNTMuNDg4NTMsLTg1LjQ4IC0zNTQuODg2OTcsLTg0LjE4IC0xLjQwMjM0LDEuMyAxNTUuNzMzOTcsNDEuMjIgMzQ5LjgwMDk3LDg4Ljg5IgogICAgICAgc3R5bGU9ImZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6ZXZlbm9kZDtzdHJva2U6bm9uZSIKICAgICAgIHRyYW5zZm9ybT0ibWF0cml4KDAuMTMzMzMzMzMsMCwwLC0wLjEzMzMzMzMzLDAsNzk0LjY2NjY3KSIgLz4KICAgIDx0ZXh0CiAgICAgICBpZD0idGV4dDgiCiAgICAgICB4bWw6c3BhY2U9InByZXNlcnZlIgogICAgICAgdHJhbnNmb3JtPSJtYXRyaXgoMS4zMzMzMzMzLDAsMCwxLjMzMzI5MzMsMzAuMTQxMiw2Mi4wOTQ2NjcpIj48dHNwYW4KICAgICAgICAgaWQ9InRzcGFuOCIKICAgICAgICAgc3R5bGU9ImZvbnQtdmFyaWFudDpub3JtYWw7Zm9udC13ZWlnaHQ6bm9ybWFsO2ZvbnQtc2l6ZToxNi42MzI2cHg7Zm9udC1mYW1pbHk6QXZhbnRHYXJkZUJrQlQ7d3JpdGluZy1tb2RlOmxyLXRiO2ZpbGw6I2ZmZmZmZjtmaWxsLW9wYWNpdHk6MTtmaWxsLXJ1bGU6bm9uemVybztzdHJva2U6bm9uZSIKICAgICAgICAgeD0iMCIKICAgICAgICAgZHg9IjAgMC40NjkzMjcwMyAwLjQ2OTE3NzM0IDAgMCAwLjQ3NDg0NzM4IDAuNDcxODUwMTkgMC40Njg5ODEwOSAwLjQ3MjE5MTE4IDAuNDcxNjkyMiAwLjQ2OTE3NzM0IgogICAgICAgICB5PSIwIj5ERVJDT1VSSUVSPC90c3Bhbj48L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" 
       alt="DER COURIER" 
-      style="height:42px;width:auto;max-width:180px;object-fit:contain;">
+      style="height:52px;width:auto;max-width:220px;object-fit:contain;">
   </div>
   <div class="header-actions">
     <button class="btn btn-ghost btn-sm" onclick="document.getElementById('fileInput').click()">📄 Neue PDF</button>
@@ -1018,9 +1031,9 @@ function buildGmapsUrl(stops) {
 }
 
 // ── GOOGLE MAPS WAYPOINT OPTIMIERUNG + STANDZEIT ─────────────────────────────
-async function optimizeWithGoogleMaps(stops, depot) {
+async function optimizeWithGoogleMaps(stops, depot, startTime) {
   const key = getApiKey();
-  if (!key || !googleMapsLoaded) return null;
+  if (!key) return null;
 
   try {
     await loadGoogleMapsSDK(key);
@@ -1042,13 +1055,27 @@ async function optimizeWithGoogleMaps(stops, depot) {
         optimizeWaypoints: true,
         travelMode: google.maps.TravelMode.DRIVING,
         drivingOptions: {
-          departureTime: new Date(),
+          departureTime: startTime || new Date(),
           trafficModel: google.maps.TrafficModel.BEST_GUESS
         }
       }, (result, status) => {
         if (status === 'OK') {
-          // Google gibt die optimierte Reihenfolge zurück
           const order = result.routes[0].waypoint_order;
+          const legs = result.routes[0].legs;
+          // Berechne ETAs: Startzeit + kumulative Fahrzeiten + 3 Min Standzeit
+          const STAY_MS = 3 * 60 * 1000;
+          let currentTime = new Date(startTime || new Date());
+          // Leg 0: depot → first stop
+          const reorderedStops = order.map(i => stops[i]);
+          legs.forEach((leg, i) => {
+            if (i >= reorderedStops.length) return;
+            const driveSecs = (leg.duration_in_traffic || leg.duration).value;
+            currentTime = new Date(currentTime.getTime() + driveSecs * 1000);
+            const h = String(currentTime.getHours()).padStart(2,'0');
+            const m = String(currentTime.getMinutes()).padStart(2,'0');
+            reorderedStops[i].eta = h + ':' + m;
+            currentTime = new Date(currentTime.getTime() + STAY_MS);
+          });
           resolve(order);
         } else {
           console.warn('DirectionsService:', status);
@@ -1206,14 +1233,29 @@ async function buildTours(stops, timeCode) {
   });
   const tours=[];
   const tourNums = Object.keys(tourMap).map(Number).sort();
+  const startHourB = {'31': 7, '32': 10, '33': 13}[state._currentTimeCode||'32'] || 7;
+  const startTimeB = new Date(); startTimeB.setHours(startHourB, 0, 0, 0);
+
   for(let i=0; i<tourNums.length; i++){
     const n=tourNums[i];
-    const optimized = await optimizeRoute(tourMap[n], DEPOT);
+    // Dormagen-Stopps ans Ende (nicht starr, aber als letzte Gruppe übergeben)
+    const dormagenStops = tourMap[n].filter(s => isDormagen(s));
+    const regularStops  = tourMap[n].filter(s => !isDormagen(s));
+    const optimizedReg  = await optimizeRoute(regularStops, DEPOT);
+    const optimizedDorm = dormagenStops.length > 1
+      ? await optimizeRoute(dormagenStops, DEPOT)
+      : dormagenStops;
+    const allStops = [...optimizedReg, ...optimizedDorm];
+    // Google Maps optimiert die Route inkl. ETA-Berechnung
+    const gmOrder = await optimizeWithGoogleMaps(allStops, DEPOT, new Date(startTimeB));
+    const optimized = (gmOrder && gmOrder.length === allStops.length)
+      ? gmOrder.map(i => allStops[i])
+      : allStops;
     tours.push({id:`tour${n}`,label:`Tour ${n}`,stops:optimized,color:TOUR_COLORS[i]||TOUR_COLORS[0]});
   }
   if(extraStops.length>0){
     let optimized = await optimizeRoute(extraStops, DEPOT);
-    const gmOrderE = await optimizeWithGoogleMaps(optimized, DEPOT);
+    const gmOrderE = await optimizeWithGoogleMaps(optimized, DEPOT, new Date());
     if (gmOrderE && gmOrderE.length === optimized.length) {
       optimized = gmOrderE.map(i => optimized[i]);
     }
@@ -1763,18 +1805,7 @@ async function handleFile(file){
     await geocodeMissingStops(stops);
     showLoadingMsg('Route wird berechnet…');
     state.tours=await buildTours(stops,timeCode);
-    // ETAs berechnen (3 Min Standzeit pro Stopp)
-    showLoadingMsg('Ankunftszeiten werden berechnet…');
-    try {
-      await loadGoogleMapsSDK(getApiKey());
-      const startHour = {'31': 7, '32': 10, '33': 13}[tourCode] || 7;
-      const startTime = new Date(); startTime.setHours(startHour, 0, 0, 0);
-      for (const tour of state.tours) {
-        await calculateETAs(tour.stops, [51.1974335, 6.5433796], new Date(startTime));
-      }
-    } catch(e) {
-      console.warn('ETA Berechnung übersprungen:', e.message);
-    }
+    // ETAs werden direkt in optimizeWithGoogleMaps berechnet (3 Min Standzeit)
     document.getElementById('uploadZone').style.display='none';
     document.getElementById('appZone').style.display='block';
     render();
