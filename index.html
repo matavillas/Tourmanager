@@ -106,6 +106,21 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 </div>
 
 <div id="uploadZone">
+  <!-- API Key Eingabe -->
+  <div id="apiSetup" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 24px;max-width:560px;width:100%;display:none;">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;">🔑 Google Maps API Key einrichten</div>
+    <div style="display:flex;gap:0;" onclick="event.stopPropagation()">
+      <input type="password" id="apiKeySetupInput" placeholder="AIza..." 
+        style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:6px 0 0 6px;font-size:13px;background:var(--bg);color:var(--text);outline:none;border-right:none;"
+        onkeydown="if(event.key==='Enter')saveApiKeySetup()">
+      <button onclick="saveApiKeySetup()"
+        style="background:var(--accent);color:#fff;border:none;padding:9px 16px;border-radius:0 6px 6px 0;cursor:pointer;font-size:12px;font-weight:700;">
+        Speichern
+      </button>
+    </div>
+    <div id="apiSetupStatus" style="font-size:11px;margin-top:6px;color:var(--muted);">Key wird sicher im Browser gespeichert – nicht in der Datei.</div>
+  </div>
+
   <div class="upload-card" id="dropZone" onclick="document.getElementById('fileInput').click()">
     <div class="upload-icon">📦</div>
     <div class="upload-title">Tour-PDF hochladen</div>
@@ -636,7 +651,7 @@ function twoOptHaversine(route, depot) {
 
 // ── API KEY MANAGEMENT ───────────────────────────────────────────────────────
 function getApiKey() {
-  return localStorage.getItem('gmaps_api_key') || 'AIzaSyCRet82UqswwSHdaAGdLVynr7GuiDJCXq0';
+  return localStorage.getItem('gmaps_api_key') || '';
 }
 
 var googleMapsLoaded = false;
@@ -1779,8 +1794,36 @@ document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.f
   const key = getApiKey();
   if (key) {
     loadGoogleMapsSDK(key).catch(e => console.warn('SDK preload:', e));
+  } else {
+    // Zeige API Key Eingabe wenn kein Key vorhanden
+    document.getElementById('apiSetup').style.display = 'block';
   }
 })();
+
+async function saveApiKeySetup() {
+  const key = document.getElementById('apiKeySetupInput').value.trim();
+  const status = document.getElementById('apiSetupStatus');
+  if (!key) return;
+  status.textContent = '⏳ Teste Key…';
+  try {
+    await loadGoogleMapsSDK(key);
+    const service = new google.maps.DistanceMatrixService();
+    await new Promise((resolve, reject) => {
+      service.getDistanceMatrix({
+        origins: [{lat: 51.197, lng: 6.543}],
+        destinations: [{lat: 51.215, lng: 6.758}],
+        travelMode: google.maps.TravelMode.DRIVING,
+      }, (resp, s) => { if (s === 'OK') resolve(); else reject(new Error(s)); });
+    });
+    localStorage.setItem('gmaps_api_key', key);
+    status.textContent = '✓ Key gespeichert – Google Maps Routing aktiv';
+    status.style.color = '#1a9c4a';
+    document.getElementById('apiSetup').style.display = 'none';
+  } catch(e) {
+    status.textContent = '✗ Fehler: ' + e.message;
+    status.style.color = '#c8431a';
+  }
+}
 const dz=document.getElementById('dropZone');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
 dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
