@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>KDS — Mata Villas</title>
+<style>
+:root{
+  --bg:#eef2f7;--bg2:#f8fafc;--bg3:#ffffff;
+  --border:#d1dbe8;--text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --accent:#2563eb;--accent-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#86efac;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --yellow:#d97706;--yellow-bg:#fef3c7;--yellow-border:#fde68a;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* LOGIN */
+.login{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;justify-content:center;z-index:999}
+.login.hidden{display:none}
+.login-card{background:#fff;border-radius:16px;padding:36px 40px;width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{height:64px;object-fit:contain;margin-bottom:12px}
+.login-title{font-size:13px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px}
+.login-role{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:10px;font-family:var(--font);background:var(--bg2);color:var(--text);outline:none}
+.login-pin{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.pin-dot{width:44px;height:44px;border:2px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;text-align:center;background:var(--bg2);color:var(--text);outline:none}
+.pin-dot:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;min-height:18px}
+
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:1.5px solid var(--border);padding:0 16px;height:50px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.topbar img{height:32px;object-fit:contain}
+.topbar-title{font-size:13px;font-weight:700;color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.lb{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;border:1.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)}
+.lb.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.user-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);font-size:12px;font-weight:600;color:var(--text2)}
+.logout-btn{padding:5px 10px;border-radius:6px;font-size:12px;border:1.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)}
+.stat-chip{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px}
+.stat-new{background:var(--red-bg);color:var(--red);border:1.5px solid #fca5a5}
+.stat-cooking{background:var(--yellow-bg);color:var(--yellow);border:1.5px solid var(--yellow-border)}
+.stat-ready{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green-border)}
+
+/* FILTER TABS */
+.filter-bar{background:#fff;border-bottom:1.5px solid var(--border);padding:8px 16px;display:flex;gap:8px;flex-shrink:0}
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font)}
+.filter-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.filter-btn .dot{width:8px;height:8px;border-radius:50%}
+.auto-refresh{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3)}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* ORDERS GRID */
+.kds-main{flex:1;overflow-y:auto;padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;align-content:start}
+.kds-main::-webkit-scrollbar{width:5px}
+.kds-main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ORDER TICKET */
+.ticket{background:#fff;border-radius:12px;border:2px solid var(--border);overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s,box-shadow .2s}
+.ticket.new{border-color:#fca5a5;box-shadow:0 2px 12px rgba(220,38,38,.12);animation:ticketIn .3s ease}
+.ticket.cooking{border-color:var(--yellow-border);box-shadow:0 2px 12px rgba(217,119,6,.1)}
+.ticket.ready{border-color:var(--green-border);box-shadow:0 2px 12px rgba(22,163,74,.1)}
+.ticket.served{opacity:.5;border-color:var(--border)}
+@keyframes ticketIn{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+
+.ticket-header{padding:10px 12px;display:flex;align-items:center;gap:8px}
+.ticket-header.new{background:var(--red-bg)}
+.ticket-header.cooking{background:var(--yellow-bg)}
+.ticket-header.ready{background:var(--green-bg)}
+.ticket-header.served{background:var(--bg2)}
+
+.ticket-table{font-size:16px;font-weight:800;flex:1}
+.ticket-num{font-size:11px;color:var(--text3);font-weight:600}
+.ticket-time{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px}
+.time-ok{background:var(--green-bg);color:var(--green)}
+.time-warn{background:var(--yellow-bg);color:var(--yellow)}
+.time-late{background:var(--red-bg);color:var(--red)}
+
+.ticket-body{padding:8px 12px;flex:1}
+.ticket-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.ticket-item:last-child{border-bottom:none}
+.ticket-item.done{opacity:.4}
+.ticket-item.done .item-name{text-decoration:line-through}
+.item-qty{width:24px;height:24px;border-radius:6px;background:var(--accent-bg);color:var(--accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.item-name{font-size:13px;font-weight:600;flex:1;line-height:1.3}
+.item-cat{font-size:10px;color:var(--text3);margin-top:1px}
+.item-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;transition:all .15s}
+.item-check:hover{border-color:var(--green);background:var(--green-bg)}
+.item-check.checked{background:var(--green);border-color:var(--green);color:#fff}
+
+.ticket-note{padding:6px 12px;font-size:12px;color:var(--orange);font-style:italic;background:var(--orange-bg);border-top:1px solid var(--orange-border)}
+
+.ticket-footer{padding:8px 12px;border-top:1.5px solid var(--border);display:flex;gap:6px;background:var(--bg2)}
+.ticket-btn{flex:1;padding:8px 6px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:all .15s}
+.btn-start{background:var(--yellow-bg);color:var(--yellow);border:1.5px solid var(--yellow-border)}
+.btn-start:hover{background:var(--yellow);color:#fff}
+.btn-ready{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green-border)}
+.btn-ready:hover{background:var(--green);color:#fff}
+.btn-served{background:var(--bg4);color:var(--text2);border:1.5px solid var(--border)}
+.btn-served:hover{background:var(--text2);color:#fff}
+.btn-cancel{background:var(--red-bg);color:var(--red);border:1.5px solid #fca5a5;font-size:11px}
+.btn-cancel:hover{background:var(--red);color:#fff}
+
+/* EMPTY STATE */
+.kds-empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;color:var(--text3);gap:10px}
+
+/* NOTIF */
+.notif{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-radius:8px;padding:9px 16px;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
+.notif.show{opacity:1}
+
+/* SOUND INDICATOR */
+.sound-btn{padding:4px 10px;border-radius:6px;font-size:12px;border:1.5px solid var(--border);background:var(--bg2);cursor:pointer;font-family:var(--font);color:var(--text2)}
+.sound-btn.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
+
+/* LANG */
+.l-de,.l-en,.l-id{display:none}
+body.de .l-de{display:inline}
+body.en .l-en{display:inline}
+body.id .l-id{display:inline}
+
+/* STATUS LABELS */
+.slabel{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;display:inline-block}
+.slabel.new{background:var(--red-bg);color:var(--red)}
+.slabel.cooking{background:var(--yellow-bg);color:var(--yellow)}
+.slabel.ready{background:var(--green-bg);color:var(--green)}
+.slabel.served{background:var(--bg4);color:var(--text3)}
+</style>
+</head>
+<body class="de">
+
+<!-- LOGIN -->
+<div class="login" id="login">
+  <div class="login-card">
+    <img class="login-logo" id="login-logo" src="" alt="Mata Villas">
+    <div class="login-title">
+      <span class="l-de">Küchen-Display (KDS)</span>
+      <span class="l-en">Kitchen Display (KDS)</span>
+      <span class="l-id">Tampilan Dapur (KDS)</span>
+    </div>
+    <select class="login-role" id="login-role"></select>
+    <div class="login-pin">
+      <input class="pin-dot" type="password" maxlength="1" id="p1" oninput="pinNext(0)">
+      <input class="pin-dot" type="password" maxlength="1" id="p2" oninput="pinNext(1)">
+      <input class="pin-dot" type="password" maxlength="1" id="p3" oninput="pinNext(2)">
+      <input class="pin-dot" type="password" maxlength="1" id="p4" oninput="pinNext(3)">
+    </div>
+    <button class="login-btn" onclick="doLogin()">
+      <span class="l-de">Anmelden</span><span class="l-en">Sign In</span><span class="l-id">Masuk</span>
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px">Demo-PIN: 0000</div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <img id="topbar-logo" src="" alt="">
+  <span class="topbar-title">
+    <span class="l-de">Küchen-Display</span>
+    <span class="l-en">Kitchen Display</span>
+    <span class="l-id">Tampilan Dapur</span>
+  </span>
+  <div id="stat-counts" style="display:flex;gap:6px;margin-left:12px"></div>
+  <div class="topbar-right">
+    <button class="lb on" onclick="setLang('de')">DE</button>
+    <button class="lb" onclick="setLang('en')">EN</button>
+    <button class="lb" onclick="setLang('id')">ID</button>
+    <button class="sound-btn on" id="sound-btn" onclick="toggleSound()" title="Sound">🔔</button>
+    <div class="user-chip">👤 <span id="user-name">—</span></div>
+    <button class="logout-btn" onclick="doLogout()">⏻</button>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <button class="filter-btn on" onclick="setFilter('all',this)" id="f-all">
+    <span class="l-de">Alle</span><span class="l-en">All</span><span class="l-id">Semua</span>
+    <span id="cnt-all" style="font-size:11px;opacity:.7"></span>
+  </button>
+  <button class="filter-btn" onclick="setFilter('new',this)" id="f-new">
+    <span class="dot" style="background:var(--red)"></span>
+    <span class="l-de">Neu</span><span class="l-en">New</span><span class="l-id">Baru</span>
+    <span id="cnt-new" style="font-size:11px;opacity:.7"></span>
+  </button>
+  <button class="filter-btn" onclick="setFilter('cooking',this)" id="f-cooking">
+    <span class="dot" style="background:var(--yellow)"></span>
+    <span class="l-de">In Zubereitung</span><span class="l-en">Cooking</span><span class="l-id">Sedang Masak</span>
+    <span id="cnt-cooking" style="font-size:11px;opacity:.7"></span>
+  </button>
+  <button class="filter-btn" onclick="setFilter('ready',this)" id="f-ready">
+    <span class="dot" style="background:var(--green)"></span>
+    <span class="l-de">Fertig</span><span class="l-en">Ready</span><span class="l-id">Siap</span>
+    <span id="cnt-ready" style="font-size:11px;opacity:.7"></span>
+  </button>
+  <div class="auto-refresh">
+    <div class="pulse"></div>
+    <span class="l-de">Live</span><span class="l-en">Live</span><span class="l-id">Langsung</span>
+    <span id="last-refresh" style="margin-left:4px"></span>
+  </div>
+</div>
+
+<!-- KDS GRID -->
+<div class="kds-main" id="kds-main"></div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+var LOGO = "data:image/jpeg;base64,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";
+document.getElementById("login-logo").src = LOGO;
+document.getElementById("topbar-logo").src = LOGO;
+
+// ── DATA ─────────────────────────────────────────────────────────
+var MSTORE = 'mata_manager_v1';
+var ORDER_KEY = 'mata_orders';
+var lang = 'de';
+var currentFilter = 'all';
+var soundOn = true;
+var knownOrderIds = new Set();
+var refreshInterval = null;
+
+var defaultStaff = [
+  {id:1,fname:"Marco",lname:"Rossi",role:"kitchen",pin:"1234",active:true},
+  {id:2,fname:"Anna",lname:"Koch",role:"kitchen",pin:"4567",active:true},
+  {id:7,fname:"Admin",lname:"Manager",role:"manager",pin:"0000",active:true},
+];
+
+// Demo orders when no POS orders exist
+var demoOrders = [
+  {id:1,table:3,items:[{id:202,name:"Patatas Bravas",price:40,qty:2,cat:"Tapas"},{id:206,name:"Albondigas",price:45,qty:1,cat:"Tapas"}],note:"ohne Chili bitte",total:125,status:"new",time:"12:34",ts:Date.now()-8*60000},
+  {id:2,table:7,items:[{id:401,name:"Crema Catalana",price:40,qty:2,cat:"Dessert"},{id:402,name:"Churros",price:40,qty:1,cat:"Dessert"}],note:"",total:120,status:"cooking",time:"12:28",ts:Date.now()-14*60000},
+  {id:3,table:11,items:[{id:203,name:"Tortilla Espanola",price:50,qty:1,cat:"Tapas"},{id:208,name:"Gambas al Ajilo",price:80,qty:1,cat:"Tapas"}],note:"Garnelen medium",total:130,status:"ready",time:"12:15",ts:Date.now()-27*60000},
+  {id:4,table:2,items:[{id:303,name:"Nicoise Salad",price:70,qty:1,cat:"Larger Plates"},{id:306,name:"Beef Rendang",price:90,qty:1,cat:"Larger Plates"}],note:"",total:160,status:"new",time:"12:41",ts:Date.now()-1*60000},
+];
+
+function lsLoad(key, def) {
+  try { var v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch(e){return def;}
+}
+function lsSave(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){}
+}
+
+var staff = lsLoad(MSTORE+'_staff', defaultStaff);
+// Item completion state: {orderId_itemIdx: true}
+var itemDone = lsLoad('mata_kds_items', {});
+
+// ── LOGIN ─────────────────────────────────────────────────────────
+function buildLoginSelect() {
+  var sel = document.getElementById('login-role');
+  sel.innerHTML = '<option value="">— Mitarbeiter wählen —</option>';
+  staff.filter(function(s){return s.active && (s.role==='kitchen'||s.role==='manager');})
+    .forEach(function(s){
+      var opt = document.createElement('option');
+      opt.value = s.id;
+      opt.textContent = s.fname + ' ' + s.lname + ' (' + s.role + ')';
+      sel.appendChild(opt);
+    });
+}
+
+function pinNext(idx) {
+  var ids=['p1','p2','p3','p4'];
+  if(idx<3&&document.getElementById(ids[idx]).value) document.getElementById(ids[idx+1]).focus();
+}
+
+function doLogin() {
+  var sid = parseInt(document.getElementById('login-role').value);
+  var pin = ['p1','p2','p3','p4'].map(function(id){return document.getElementById(id).value;}).join('');
+  var member = staff.find(function(s){return s.id===sid;});
+  if(!member){document.getElementById('login-err').textContent='Bitte Mitarbeiter wählen';return;}
+  if(member.pin!==pin&&pin!=='0000'){
+    document.getElementById('login-err').textContent='Falscher PIN';
+    ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('p1').focus(); return;
+  }
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('user-name').textContent = member.fname;
+  startKDS();
+}
+
+function doLogout(){
+  clearInterval(refreshInterval);
+  document.getElementById('login').classList.remove('hidden');
+  ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('login-err').textContent='';
+  buildLoginSelect();
+}
+
+// ── LANG ──────────────────────────────────────────────────────────
+function setLang(l){
+  lang=l; document.body.className=l;
+  document.querySelectorAll('.lb').forEach(function(b,i){
+    b.classList.toggle('on',['de','en','id'][i]===l);
+  });
+}
+
+// ── FILTER ────────────────────────────────────────────────────────
+function setFilter(f, el){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+  renderKDS();
+}
+
+// ── SOUND ─────────────────────────────────────────────────────────
+function toggleSound(){
+  soundOn=!soundOn;
+  var btn=document.getElementById('sound-btn');
+  btn.textContent=soundOn?'🔔':'🔕';
+  btn.classList.toggle('on',soundOn);
+}
+
+function playNewOrderSound(){
+  if(!soundOn) return;
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [880,1100,880].forEach(function(freq,i){
+      var osc=ctx.createOscillator();
+      var gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=freq;
+      osc.type='sine';
+      gain.gain.setValueAtTime(0.3,ctx.currentTime+i*0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.15+0.12);
+      osc.start(ctx.currentTime+i*0.15);
+      osc.stop(ctx.currentTime+i*0.15+0.12);
+    });
+  }catch(e){}
+}
+
+// ── KDS CORE ─────────────────────────────────────────────────────
+function getOrders(){
+  var orders = lsLoad(ORDER_KEY, []);
+  // Only kitchen-relevant items (not bar items for now)
+  if(orders.length===0) return demoOrders;
+  return orders.filter(function(o){return o.status!=='served';});
+}
+
+function startKDS(){
+  renderKDS();
+  refreshInterval = setInterval(function(){
+    checkNewOrders();
+    renderKDS();
+    document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 5000);
+}
+
+function checkNewOrders(){
+  var orders = getOrders();
+  orders.forEach(function(o){
+    if(!knownOrderIds.has(o.id)){
+      knownOrderIds.add(o.id);
+      if(knownOrderIds.size>1) playNewOrderSound();
+    }
+  });
+}
+
+function tWord(){ return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja '; }
+function elapsedMin(ts){ return Math.floor((Date.now()-ts)/60000); }
+
+function timeClass(mins){
+  if(mins<10) return 'time-ok';
+  if(mins<20) return 'time-warn';
+  return 'time-late';
+}
+
+function renderKDS(){
+  var orders = getOrders();
+
+  // Update counts
+  var counts = {all:0,new:0,cooking:0,ready:0};
+  orders.forEach(function(o){
+    counts.all++;
+    if(counts[o.status]!==undefined) counts[o.status]++;
+  });
+  ['all','new','cooking','ready'].forEach(function(k){
+    var el=document.getElementById('cnt-'+k);
+    if(el) el.textContent = counts[k]>0?'('+counts[k]+')':'';
+  });
+
+  // Stat chips
+  document.getElementById('stat-counts').innerHTML =
+    '<span class="stat-chip stat-new">🔴 '+counts.new+'</span>'
+    +'<span class="stat-chip stat-cooking">🟡 '+counts.cooking+'</span>'
+    +'<span class="stat-chip stat-ready">🟢 '+counts.ready+'</span>';
+
+  // Filter
+  var filtered = currentFilter==='all' ? orders : orders.filter(function(o){return o.status===currentFilter;});
+
+  // Sort: new first, then by time
+  filtered.sort(function(a,b){
+    var order = {new:0,cooking:1,ready:2,served:3};
+    if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
+    return a.ts-b.ts;
+  });
+
+  var main = document.getElementById('kds-main');
+
+  if(filtered.length===0){
+    main.innerHTML = '<div class="kds-empty"><span style="font-size:48px">✅</span>'
+      +'<span style="font-size:16px;font-weight:600"><span class="l-de">Keine offenen Bestellungen</span><span class="l-en">No open orders</span><span class="l-id">Tidak ada pesanan</span></span>'
+      +'<span style="font-size:13px"><span class="l-de">Küche hat Pause 🍳</span><span class="l-en">Kitchen is clear 🍳</span><span class="l-id">Dapur bersih 🍳</span></span></div>';
+    document.body.className=lang;
+    return;
+  }
+
+  main.innerHTML = filtered.map(function(o){
+    var mins = elapsedMin(o.ts);
+    var tc = timeClass(mins);
+
+    var itemsHtml = o.items.map(function(it,idx){
+      var key = o.id+'_'+idx;
+      var done = itemDone[key]||false;
+      // Only show food items (not drinks) — show all in KDS for now
+      return '<div class="ticket-item'+(done?' done':'')+'">'
+        +'<div class="item-qty">'+it.qty+'×</div>'
+        +'<div style="flex:1"><div class="item-name">'+it.name+'</div>'
+        +'<div class="item-cat">'+it.cat+'</div></div>'
+        +'<div class="item-check'+(done?' checked':'')+'" onclick="toggleItem('+o.id+','+idx+')">'+(done?'✓':'')+'</div>'
+        +'</div>';
+    }).join('');
+
+    var noteHtml = o.note ? '<div class="ticket-note">📝 '+o.note+'</div>' : '';
+
+    var statusL = {
+      new:{de:'Neu',en:'New',id:'Baru'},
+      cooking:{de:'In Zubereitung',en:'Cooking',id:'Sedang masak'},
+      ready:{de:'Fertig',en:'Ready',id:'Siap'},
+      served:{de:'Serviert',en:'Served',id:'Disajikan'}
+    };
+
+    var footerBtns = '';
+    if(o.status==='new'){
+      footerBtns += '<button class="ticket-btn btn-start" onclick="setStatus(' + o.id + ',1)">'
+        +'🍳 <span class="l-de">Beginnen</span><span class="l-en">Start</span><span class="l-id">Mulai</span></button>';
+    }
+    if(o.status==='cooking'){
+      footerBtns += '<button class="ticket-btn btn-ready" onclick="setStatus(' + o.id + ',2)">'
+        +'✅ <span class="l-de">Fertig</span><span class="l-en">Ready</span><span class="l-id">Siap</span></button>';
+    }
+    if(o.status==='ready'){
+      footerBtns += '<button class="ticket-btn btn-served" onclick="setStatus(' + o.id + ',3)">'
+        +'🚀 <span class="l-de">Abgeholt</span><span class="l-en">Picked up</span><span class="l-id">Diambil</span></button>';
+    }
+
+    return '<div class="ticket '+o.status+'" id="ticket-'+o.id+'">'
+      +'<div class="ticket-header '+o.status+'">'
+      +'<div class="ticket-table">'+tWord()+o.table+'</div>'
+      +'<span class="ticket-num">#'+o.id+'</span>'
+      +'<span class="ticket-time '+tc+'">'+mins+' min</span>'
+      +'</div>'
+      +'<div class="ticket-body">'+itemsHtml+'</div>'
+      +noteHtml
+      +'<div class="ticket-footer">'+footerBtns+'</div>'
+      +'</div>';
+  }).join('');
+
+  document.body.className=lang;
+}
+
+function setStatus(orderId, newStatus){
+  var statusMap = {1:'cooking', 2:'ready', 3:'served'};
+  if(typeof newStatus === 'number') newStatus = statusMap[newStatus];
+  var orders = lsLoad(ORDER_KEY, []);
+  var isDemo = orders.length===0;
+  var list = isDemo ? demoOrders : orders;
+  var o = list.find(function(x){return x.id===orderId;});
+  if(!o) return;
+  var old = o.status;
+  o.status = newStatus;
+  if(!isDemo) lsSave(ORDER_KEY, orders);
+
+  var msgs = {
+    cooking:{de:'In Zubereitung: ',en:'Cooking: ',id:'Sedang masak: '},
+    ready:{de:'Fertig: ',en:'Ready: ',id:'Siap: '},
+    served:{de:'Abgeholt: ',en:'Picked up: ',id:'Diambil: '}
+  };
+  notify('✓ ' + (msgs[newStatus]||{de:'',en:'',id:''})[lang] + o.table);
+  renderKDS();
+}
+
+function toggleItem(orderId, itemIdx){
+  var key = orderId+'_'+itemIdx;
+  itemDone[key] = !itemDone[key];
+  lsSave('mata_kds_items', itemDone);
+  renderKDS();
+}
+
+// ── NOTIFY ────────────────────────────────────────────────────────
+function notify(msg){
+  var el=document.getElementById('notif');
+  el.textContent=msg; el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2500);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+buildLoginSelect();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// Mata Villas — Supabase Config
+// Diese Datei in alle Terminals einbetten
+// ═══════════════════════════════════════════════════════
+
+var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe';
+
+// ── REST API Helper ───────────────────────────────────
+async function sbGet(table, query) {
+  query = query || '';
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!r.ok) throw new Error('GET ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPost(table, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('POST ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPatch(table, id, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('PATCH ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbDelete(table, id) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  });
+  if (!r.ok) throw new Error('DELETE ' + table + ': ' + r.status);
+  return true;
+}
+
+// ── Realtime Subscription ─────────────────────────────
+function sbRealtime(table, callback) {
+  var ws = new WebSocket(
+    SUPABASE_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0'
+  );
+  ws.onopen = function() {
+    ws.send(JSON.stringify({
+      topic: 'realtime:public:' + table,
+      event: 'phx_join',
+      payload: {},
+      ref: '1'
+    }));
+  };
+  ws.onmessage = function(e) {
+    var msg = JSON.parse(e.data);
+    if (msg.event === 'INSERT' || msg.event === 'UPDATE' || msg.event === 'DELETE') {
+      callback(msg.event, msg.payload.record);
+    }
+  };
+  ws.onerror = function() { console.warn('Realtime WS error, fallback to polling'); };
+  return ws;
+}
+
+async function loadStaffFromSB() {
+  try {
+    var data = await sbGet('employees', 'select=*&active=eq.true');
+    staff=data.map(function(s){return {id:s.id,fname:s.fname,lname:s.lname,role:s.role_id,pin:s.pin,active:true};});
+    buildLoginSelect();
+  } catch(e) {}
+}
+async function loadOrdersFromSB() {
+  try {
+    var data = await sbGet('orders','select=*,order_items(*)&status=not.in.(paid,served)&order=created_at');
+    if(data.length>0) {
+      var newOrders=[];
+      data.forEach(function(o) {
+        var barCats=['Cocktails','Spanish Drinks','Drinks'];
+        var foodItems=(o.order_items||[]).filter(function(i){return barCats.indexOf(i.category)<0;});
+        if(foodItems.length===0) return;
+        newOrders.push({
+          id:o.id, table:o.table_number,
+          items:(o.order_items||[]).filter(function(i){var bc=['Cocktails','Spanish Drinks','Drinks'];return bc.indexOf(i.category)<0;}).map(function(i){return {id:i.menu_item_id,name:i.name,price:i.price_k,qty:i.quantity,cat:i.category||'Tapas'};}),
+          note:o.note||'', total:o.total_k, status:o.status,
+          time:new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
+          ts:new Date(o.created_at).getTime()
+        };
+      });
+    }
+    renderKDS();
+  } catch(e) { renderKDS(); }
+}
+var _origSetStatus = setStatus;
+setStatus = async function(orderId, newStatus) {
+  var statusMap={1:'cooking',2:'ready',3:'served'};
+  if(typeof newStatus==='number') newStatus=statusMap[newStatus];
+  try {
+    await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/orders?id=eq.'+orderId, {
+      method:'PATCH',
+      headers:{'apikey':'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Authorization':'Bearer sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Content-Type':'application/json'},
+      body:JSON.stringify({status:newStatus,updated_at:new Date().toISOString()})
+    });
+  } catch(e) {}
+  var o=demoOrders.find(function(x){return x.id===orderId;});
+  if(o) o.status=newStatus;
+  var msgs={cooking:{de:'In Zubereitung: ',en:'Cooking: ',id:'Sedang masak: '},ready:{de:'Fertig: ',en:'Ready: ',id:'Siap: '},served:{de:'Abgeholt: ',en:'Picked up: ',id:'Diambil: '}};
+  notify('✓ '+(msgs[newStatus]&&msgs[newStatus][lang]||'')+(o?o.table:''));
+  renderKDS();
+};
+var _origStartKDS = startKDS;
+startKDS = async function() {
+  await loadOrdersFromSB();
+  try {
+    sbRealtime('orders', function(event, record) { loadOrdersFromSB(); });
+  } catch(e) {}
+  refreshInterval = setInterval(function(){
+    loadOrdersFromSB();
+    document.getElementById('last-refresh').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 8000);
+};
+(async function(){ await loadStaffFromSB(); })();
+</script>
+</body>
+</html>

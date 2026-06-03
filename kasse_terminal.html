@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Kassen-Terminal — Mata Villas</title>
+<style>
+:root{
+  --bg:#eef2f7;--bg2:#f8fafc;--bg4:#e2e8f0;
+  --border:#d1dbe8;--text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --accent:#2563eb;--accent2:#1d4ed8;--accent-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#86efac;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --yellow:#d97706;--yellow-bg:#fef3c7;--yellow-border:#fde68a;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+.login{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;justify-content:center;z-index:999}
+.login.hidden{display:none}
+.login-card{background:#fff;border-radius:16px;padding:36px 40px;width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{height:64px;object-fit:contain;margin-bottom:12px}
+.login-title{font-size:13px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px}
+.login-role{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:10px;font-family:var(--font);background:var(--bg2);color:var(--text);outline:none}
+.login-pin{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.pin-dot{width:44px;height:44px;border:2px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;text-align:center;background:var(--bg2);color:var(--text);outline:none}
+.pin-dot:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;min-height:18px}
+
+.topbar{background:#fff;border-bottom:1.5px solid var(--border);padding:0 16px;height:50px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.topbar img{height:32px;object-fit:contain}
+.topbar-title{font-size:13px;font-weight:700;color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.lb{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;border:1.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)}
+.lb.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.user-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);font-size:12px;font-weight:600;color:var(--text2)}
+.logout-btn{padding:5px 10px;border-radius:6px;font-size:12px;border:1.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)}
+
+.kasse-layout{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* LEFT: OPEN BILLS */
+.bills-side{width:300px;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.bills-header{padding:10px 14px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.bills-title{font-size:13px;font-weight:700}
+.badge-count{background:var(--orange);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px}
+.bills-list{flex:1;overflow-y:auto;padding:8px;min-height:0}
+.bills-list::-webkit-scrollbar{width:4px}
+.bills-list::-webkit-scrollbar-thumb{background:var(--border)}
+
+.bill-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:all .12s}
+.bill-card:hover,.bill-card.selected{border-color:var(--accent);background:var(--accent-bg)}
+.bill-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.bill-table{font-size:15px;font-weight:800}
+.bill-total{font-size:14px;font-weight:700;color:var(--accent)}
+.bill-items-preview{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bill-time{font-size:10px;color:var(--text3);margin-top:3px}
+.bill-status{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;display:inline-block;margin-top:4px}
+.bill-status.open{background:var(--orange-bg);color:var(--orange)}
+.bill-status.paid{background:var(--green-bg);color:var(--green)}
+
+/* RIGHT: PAYMENT */
+.payment-side{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.payment-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);gap:10px}
+
+/* RECEIPT */
+.receipt{flex:1;overflow-y:auto;padding:16px;min-height:0}
+.receipt::-webkit-scrollbar{width:4px}
+.receipt::-webkit-scrollbar-thumb{background:var(--border)}
+.receipt-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;max-width:420px;margin:0 auto}
+.receipt-header{background:var(--accent);color:#fff;padding:16px;text-align:center}
+.receipt-logo{font-size:22px;font-weight:800;margin-bottom:2px}
+.receipt-sub{font-size:11px;opacity:.8}
+.receipt-table-info{padding:12px 16px;border-bottom:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--bg2)}
+.receipt-table-name{font-size:16px;font-weight:800}
+.receipt-time{font-size:12px;color:var(--text3)}
+.receipt-items{padding:10px 0}
+.receipt-item{display:flex;align-items:center;gap:10px;padding:7px 16px;border-bottom:1px solid var(--border)}
+.receipt-item:last-child{border-bottom:none}
+.receipt-item-qty{width:28px;height:28px;border-radius:6px;background:var(--bg4);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.receipt-item-name{flex:1;font-size:13px;font-weight:600}
+.receipt-item-price{font-size:13px;font-weight:700;color:var(--text2)}
+.receipt-totals{padding:10px 16px;border-top:1.5px solid var(--border);background:var(--bg2)}
+.receipt-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:3px 0}
+.receipt-row.total{font-size:16px;font-weight:800;color:var(--text);padding-top:8px;margin-top:4px;border-top:1.5px solid var(--border)}
+
+/* PAYMENT METHODS */
+.pay-section{border-top:1.5px solid var(--border);padding:14px 16px;background:#fff;flex-shrink:0}
+.pay-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.pay-method{padding:12px 6px;border-radius:10px;border:2px solid var(--border);background:#fff;cursor:pointer;text-align:center;transition:all .12s;font-family:var(--font)}
+.pay-method:hover{border-color:var(--accent);background:var(--accent-bg)}
+.pay-method.selected{border-color:var(--accent);background:var(--accent-bg)}
+.pay-method-icon{font-size:22px;margin-bottom:4px}
+.pay-method-label{font-size:11px;font-weight:700;color:var(--text2)}
+.pay-cash-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.pay-cash-input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font);background:var(--bg2);outline:none}
+.pay-cash-input:focus{border-color:var(--accent)}
+.pay-change{font-size:13px;font-weight:700;color:var(--green);padding:8px 12px;background:var(--green-bg);border-radius:8px;border:1.5px solid var(--green-border)}
+.pay-confirm{width:100%;padding:12px;border-radius:10px;background:var(--green);color:#fff;border:none;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s}
+.pay-confirm:hover{background:#15803d}
+.pay-confirm:disabled{opacity:.4;cursor:not-allowed}
+
+/* PAID OVERLAY */
+.paid-overlay{position:fixed;inset:0;background:rgba(22,163,74,.93);display:none;align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:14px}
+.paid-overlay.show{display:flex}
+.paid-icon{font-size:72px}
+.paid-msg{font-size:26px;font-weight:800;color:#fff}
+.paid-detail{font-size:14px;color:rgba(255,255,255,.85)}
+.paid-change{font-size:20px;font-weight:700;color:#fff;background:rgba(255,255,255,.2);padding:8px 20px;border-radius:10px}
+
+.notif{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-radius:8px;padding:9px 16px;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
+.notif.show{opacity:1}
+
+.l-de,.l-en,.l-id{display:none}
+body.de .l-de{display:inline}
+body.en .l-en{display:inline}
+body.id .l-id{display:inline}
+</style>
+</head>
+<body class="de">
+
+<div class="login" id="login">
+  <div class="login-card">
+    <img class="login-logo" id="login-logo" src="" alt="">
+    <div class="login-title">
+      <span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span>
+    </div>
+    <select class="login-role" id="login-role"></select>
+    <div class="login-pin">
+      <input class="pin-dot" type="password" maxlength="1" id="p1" oninput="pinNext(0)">
+      <input class="pin-dot" type="password" maxlength="1" id="p2" oninput="pinNext(1)">
+      <input class="pin-dot" type="password" maxlength="1" id="p3" oninput="pinNext(2)">
+      <input class="pin-dot" type="password" maxlength="1" id="p4" oninput="pinNext(3)">
+    </div>
+    <button class="login-btn" onclick="doLogin()">
+      <span class="l-de">Anmelden</span><span class="l-en">Sign In</span><span class="l-id">Masuk</span>
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px">Demo-PIN: 0000</div>
+  </div>
+</div>
+
+<div class="topbar">
+  <img id="topbar-logo" src="" alt="">
+  <span class="topbar-title">
+    <span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span>
+  </span>
+  <div class="topbar-right">
+    <button class="lb on" onclick="setLang('de')">DE</button>
+    <button class="lb" onclick="setLang('en')">EN</button>
+    <button class="lb" onclick="setLang('id')">ID</button>
+    <div class="user-chip">💳 <span id="user-name">—</span></div>
+    <button class="logout-btn" onclick="doLogout()">⏻</button>
+  </div>
+</div>
+
+<div class="kasse-layout">
+
+  <!-- LEFT: OPEN BILLS -->
+  <div class="bills-side">
+    <div class="bills-header">
+      <span class="bills-title">
+        <span class="l-de">Offene Rechnungen</span><span class="l-en">Open Bills</span><span class="l-id">Tagihan Terbuka</span>
+      </span>
+      <span class="badge-count" id="bills-badge">0</span>
+    </div>
+    <div class="bills-list" id="bills-list"></div>
+  </div>
+
+  <!-- RIGHT: PAYMENT -->
+  <div class="payment-side" id="payment-side">
+    <div class="payment-empty" id="payment-empty">
+      <span style="font-size:48px">💳</span>
+      <span style="font-size:15px;font-weight:600">
+        <span class="l-de">Rechnung auswählen</span><span class="l-en">Select a bill</span><span class="l-id">Pilih tagihan</span>
+      </span>
+      <span style="font-size:13px">
+        <span class="l-de">← Tisch links auswählen</span><span class="l-en">← Select table on the left</span><span class="l-id">← Pilih meja di kiri</span>
+      </span>
+    </div>
+    <div class="receipt" id="receipt" style="display:none"></div>
+    <div class="pay-section" id="pay-section" style="display:none">
+      <div class="pay-title">
+        <span class="l-de">Zahlungsart</span><span class="l-en">Payment Method</span><span class="l-id">Metode Pembayaran</span>
+      </div>
+      <div class="pay-methods">
+        <div class="pay-method selected" id="pm-cash" onclick="selectPayMethod('cash')">
+          <div class="pay-method-icon">💵</div>
+          <div class="pay-method-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div>
+        </div>
+        <div class="pay-method" id="pm-card" onclick="selectPayMethod('card')">
+          <div class="pay-method-icon">💳</div>
+          <div class="pay-method-label"><span class="l-de">Karte</span><span class="l-en">Card</span><span class="l-id">Kartu</span></div>
+        </div>
+        <div class="pay-method" id="pm-qr" onclick="selectPayMethod('qr')">
+          <div class="pay-method-icon">📱</div>
+          <div class="pay-method-label">QRIS</div>
+        </div>
+      </div>
+      <div class="pay-cash-row" id="cash-row">
+        <input class="pay-cash-input" type="number" id="cash-given" placeholder="Gegeben / Given / Diberikan" oninput="calcChange()">
+        <div class="pay-change" id="change-display">Rückgeld: —</div>
+      </div>
+      <button class="pay-confirm" id="pay-confirm" onclick="confirmPayment()">
+        ✅ <span class="l-de">Zahlung bestätigen</span><span class="l-en">Confirm Payment</span><span class="l-id">Konfirmasi Pembayaran</span>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- PAID OVERLAY -->
+<div class="paid-overlay" id="paid-overlay">
+  <div class="paid-icon">✅</div>
+  <div class="paid-msg" id="paid-msg">Bezahlt!</div>
+  <div class="paid-detail" id="paid-detail"></div>
+  <div class="paid-change" id="paid-change" style="display:none"></div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+var LOGO = "data:image/jpeg;base64,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";
+document.getElementById("login-logo").src = LOGO;
+document.getElementById("topbar-logo").src = LOGO;
+
+var MSTORE = 'mata_manager_v1';
+var ORDER_KEY = 'mata_orders';
+var SALES_KEY = 'mata_sales';
+var lang = 'de';
+var selectedBill = null;
+var payMethod = 'cash';
+var refreshInterval = null;
+
+var defaultStaff = [
+  {id:6,fname:"Sophie",lname:"Huber",role:"kasse",pin:"6789",active:true},
+  {id:7,fname:"Admin",lname:"Manager",role:"manager",pin:"0000",active:true},
+];
+
+var demoOrders = [
+  {id:1,table:3,items:[{id:202,name:"Patatas Bravas",price:40,qty:2,cat:"Tapas"},{id:501,name:"Signature Blue Mata",price:80,qty:2,cat:"Cocktails"},{id:206,name:"Albondigas",price:45,qty:1,cat:"Tapas"}],note:"",total:285,status:"ready",time:"12:34",ts:Date.now()-25*60000},
+  {id:2,table:7,items:[{id:401,name:"Crema Catalana",price:40,qty:2,cat:"Dessert"},{id:601,name:"Gili Sangria",price:55,qty:1,cat:"Spanish Drinks"}],note:"",total:135,status:"ready",time:"12:20",ts:Date.now()-38*60000},
+  {id:3,table:11,items:[{id:306,name:"Beef Rendang",price:90,qty:2,cat:"Larger Plates"},{id:704,name:"Iced Coffee Latte",price:40,qty:2,cat:"Drinks"}],note:"",total:260,status:"served",time:"12:05",ts:Date.now()-55*60000},
+];
+
+function lsLoad(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function lsSave(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+var staff=lsLoad(MSTORE+'_staff',defaultStaff);
+
+function buildLoginSelect(){
+  var sel=document.getElementById('login-role');
+  sel.innerHTML='<option value="">— wählen —</option>';
+  staff.filter(function(s){return s.active&&(s.role==='kasse'||s.role==='manager');})
+    .forEach(function(s){var o=document.createElement('option');o.value=s.id;o.textContent=s.fname+' '+s.lname+' ('+s.role+')';sel.appendChild(o);});
+}
+function pinNext(i){var ids=['p1','p2','p3','p4'];if(i<3&&document.getElementById(ids[i]).value)document.getElementById(ids[i+1]).focus();}
+function doLogin(){
+  var sid=parseInt(document.getElementById('login-role').value);
+  var pin=['p1','p2','p3','p4'].map(function(id){return document.getElementById(id).value;}).join('');
+  var m=staff.find(function(s){return s.id===sid;});
+  if(!m){document.getElementById('login-err').textContent='Bitte wählen';return;}
+  if(m.pin!==pin&&pin!=='0000'){document.getElementById('login-err').textContent='Falscher PIN';['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('p1').focus();return;}
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('user-name').textContent=m.fname;
+  renderBills();
+  refreshInterval=setInterval(renderBills,5000);
+}
+function doLogout(){clearInterval(refreshInterval);document.getElementById('login').classList.remove('hidden');['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});buildLoginSelect();}
+function setLang(l){lang=l;document.body.className=l;document.querySelectorAll('.lb').forEach(function(b,i){b.classList.toggle('on',['de','en','id'][i]===l);});}
+
+function tWord(){ return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja '; }
+function getOrders(){
+  var orders=lsLoad(ORDER_KEY,[]);
+  if(orders.length===0) return demoOrders;
+  return orders.filter(function(o){return o.status!=='new'&&o.status!=='cooking'&&o.status!=='paid';});
+}
+
+function renderBills(){
+  var orders=getOrders();
+  var open=orders.filter(function(o){return o.status!=='paid';});
+  document.getElementById('bills-badge').textContent=open.length;
+  var list=document.getElementById('bills-list');
+  if(orders.length===0){
+    list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px">💳<br><span class="l-de">Keine offenen Rechnungen</span><span class="l-en">No open bills</span><span class="l-id">Tidak ada tagihan</span></div>';
+    document.body.className=lang; return;
+  }
+  orders.sort(function(a,b){return a.ts-b.ts;});
+  list.innerHTML=orders.map(function(o){
+    var preview=o.items.slice(0,2).map(function(it){return it.qty+'× '+it.name;}).join(', ')+(o.items.length>2?' …':'');
+    var mins=Math.floor((Date.now()-o.ts)/60000);
+    var sel=selectedBill&&selectedBill.id===o.id;
+    var isPaid=o.status==='paid';
+    return '<div class="bill-card'+(sel?' selected':'')+'" onclick="selectBill('+o.id+')">'
+      +'<div class="bill-card-top"><span class="bill-table">'+o.table+'</span><span class="bill-total">Rp '+o.total+'k</span></div>'
+      +'<div class="bill-items-preview">'+preview+'</div>'
+      +'<div class="bill-time">'+mins+' min &nbsp;·&nbsp; '+o.time+'</div>'
+      +'<span class="bill-status '+(isPaid?'paid':'open')+'">'+(isPaid?'✓ bezahlt':'offen')+'</span>'
+      +'</div>';
+  }).join('');
+  document.body.className=lang;
+}
+
+function selectBill(id){
+  var orders=getOrders();
+  selectedBill=orders.find(function(o){return o.id===id;})||null;
+  if(!selectedBill) return;
+  document.getElementById('payment-empty').style.display='none';
+  document.getElementById('receipt').style.display='block';
+  document.getElementById('pay-section').style.display=selectedBill.status!=='paid'?'block':'none';
+  renderReceipt();
+  renderBills();
+}
+
+function renderReceipt(){
+  if(!selectedBill) return;
+  var o=selectedBill;
+  var subtotal=Math.round(o.total/1.1);
+  var tax=o.total-subtotal;
+  var itemsHtml=o.items.map(function(it){
+    return '<div class="receipt-item">'
+      +'<div class="receipt-item-qty">'+it.qty+'×</div>'
+      +'<div class="receipt-item-name">'+it.name+'</div>'
+      +'<div class="receipt-item-price">Rp '+(it.price*it.qty)+'k</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('receipt').innerHTML =
+    '<div class="receipt-card">'
+    +'<div class="receipt-header"><div class="receipt-logo">Mata Villas</div><div class="receipt-sub">Tapas Bar · Surabaya</div></div>'
+    +'<div class="receipt-table-info"><span class="receipt-table-name">'+tWord()+o.table+'</span><span class="receipt-time">'+o.time+'</span></div>'
+    +'<div class="receipt-items">'+itemsHtml+'</div>'
+    +'<div class="receipt-totals">'
+    +'<div class="receipt-row"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'
+    +'<div class="receipt-row"><span>PPN 10%</span><span>Rp '+tax+'k</span></div>'
+    +'<div class="receipt-row total"><span>Total</span><span>Rp '+o.total+'k</span></div>'
+    +'</div></div>';
+  document.getElementById('cash-given').value='';
+  document.getElementById('change-display').textContent=lang==='de'?'Rückgeld: —':lang==='en'?'Change: —':'Kembalian: —';
+}
+
+function selectPayMethod(m){
+  payMethod=m;
+  ['cash','card','qr'].forEach(function(pm){
+    document.getElementById('pm-'+pm).classList.toggle('selected',pm===m);
+  });
+  document.getElementById('cash-row').style.display=m==='cash'?'flex':'none';
+}
+
+function calcChange(){
+  if(!selectedBill) return;
+  var given=parseFloat(document.getElementById('cash-given').value)||0;
+  var total=selectedBill.total;
+  var change=given-total;
+  var label=lang==='de'?'Rückgeld: ':lang==='en'?'Change: ':'Kembalian: ';
+  document.getElementById('change-display').textContent=change>=0?label+'Rp '+change+'k':label+'—';
+  document.getElementById('change-display').style.color=change>=0?'var(--green)':'var(--red)';
+}
+
+function confirmPayment(){
+  if(!selectedBill) return;
+  if(payMethod==='cash'){
+    var given=parseFloat(document.getElementById('cash-given').value)||0;
+    if(given<selectedBill.total){notify('⚠ Betrag zu niedrig!');return;}
+  }
+  // Mark as paid
+  var orders=lsLoad(ORDER_KEY,[]);
+  var isDemo=orders.length===0;
+  if(!isDemo){
+    var o=orders.find(function(x){return x.id===selectedBill.id;});
+    if(o) o.status='paid';
+    lsSave(ORDER_KEY,orders);
+  } else {
+    var o2=demoOrders.find(function(x){return x.id===selectedBill.id;});
+    if(o2) o2.status='paid';
+  }
+  // Save to sales
+  var sales=lsLoad(SALES_KEY,[]);
+  sales.push({id:selectedBill.id,table:selectedBill.table,total:selectedBill.total,method:payMethod,ts:Date.now()});
+  lsSave(SALES_KEY,sales);
+
+  // Show overlay
+  var ol=document.getElementById('paid-overlay');
+  var msgs={de:'Bezahlt!',en:'Paid!',id:'Lunas!'};
+  document.getElementById('paid-msg').textContent=msgs[lang];
+  document.getElementById('paid-detail').textContent=selectedBill.table+' · '+payMethod.toUpperCase()+' · Rp '+selectedBill.total+'k';
+  if(payMethod==='cash'){
+    var given3=parseFloat(document.getElementById('cash-given').value)||0;
+    var chg=given3-selectedBill.total;
+    var chgLabel={de:'Rückgeld: ',en:'Change: ',id:'Kembalian: '};
+    document.getElementById('paid-change').textContent=chgLabel[lang]+'Rp '+chg+'k';
+    document.getElementById('paid-change').style.display=chg>0?'block':'none';
+  } else {
+    document.getElementById('paid-change').style.display='none';
+  }
+  ol.classList.add('show');
+  setTimeout(function(){
+    ol.classList.remove('show');
+    selectedBill=null;
+    document.getElementById('payment-empty').style.display='flex';
+    document.getElementById('receipt').style.display='none';
+    document.getElementById('pay-section').style.display='none';
+    renderBills();
+  },3000);
+}
+
+function notify(msg){var el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2500);}
+
+buildLoginSelect();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// Mata Villas — Supabase Config
+// Diese Datei in alle Terminals einbetten
+// ═══════════════════════════════════════════════════════
+
+var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe';
+
+// ── REST API Helper ───────────────────────────────────
+async function sbGet(table, query) {
+  query = query || '';
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!r.ok) throw new Error('GET ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPost(table, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('POST ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPatch(table, id, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('PATCH ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbDelete(table, id) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  });
+  if (!r.ok) throw new Error('DELETE ' + table + ': ' + r.status);
+  return true;
+}
+
+// ── Realtime Subscription ─────────────────────────────
+function sbRealtime(table, callback) {
+  var ws = new WebSocket(
+    SUPABASE_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0'
+  );
+  ws.onopen = function() {
+    ws.send(JSON.stringify({
+      topic: 'realtime:public:' + table,
+      event: 'phx_join',
+      payload: {},
+      ref: '1'
+    }));
+  };
+  ws.onmessage = function(e) {
+    var msg = JSON.parse(e.data);
+    if (msg.event === 'INSERT' || msg.event === 'UPDATE' || msg.event === 'DELETE') {
+      callback(msg.event, msg.payload.record);
+    }
+  };
+  ws.onerror = function() { console.warn('Realtime WS error, fallback to polling'); };
+  return ws;
+}
+
+async function loadStaffFromSB() {
+  try {
+    var data=await sbGet('employees','select=*&active=eq.true');
+    staff=data.map(function(s){return {id:s.id,fname:s.fname,lname:s.lname,role:s.role_id,pin:s.pin,active:true};});
+    buildLoginSelect();
+  } catch(e) {}
+}
+async function loadBillsFromSB() {
+  try {
+    var data=await sbGet('orders','select=*,order_items(*)&status=not.in.(new,cooking,paid)&order=created_at');
+    if(data.length>0) {
+      var mappedOrders=data.map(function(o) {
+        var items=(o.order_items||[]).map(function(i){return {id:i.menu_item_id,name:i.name,price:i.price_k,qty:i.quantity,cat:i.category};});
+        return {id:o.id,table:o.table_number,items:items,note:o.note||'',
+                total:o.total_k,status:o.status,
+                time:new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
+                ts:new Date(o.created_at).getTime()};
+      });
+      if(mappedOrders.length>0) demoOrders=mappedOrders;
+    }
+    renderBills();
+  } catch(e) { renderBills(); }
+}
+confirmPayment = async function() {
+  if(!selectedBill) return;
+  if(payMethod==='cash') {
+    var given=parseFloat(document.getElementById('cash-given').value)||0;
+    if(given<selectedBill.total){notify('⚠ Betrag zu niedrig!');return;}
+  }
+  try {
+    await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/orders?id=eq.'+selectedBill.id, {
+      method:'PATCH',
+      headers:{'apikey':'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Authorization':'Bearer sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Content-Type':'application/json'},
+      body:JSON.stringify({status:'paid',payment_method:payMethod})
+    });
+    await sbPost('sales',{order_id:selectedBill.id,table_number:parseInt(selectedBill.table),total_k:selectedBill.total,payment_method:payMethod});
+    await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/tables?number=eq.'+parseInt(selectedBill.table), {
+      method:'PATCH',
+      headers:{'apikey':'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Authorization':'Bearer sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Content-Type':'application/json'},
+      body:JSON.stringify({status:'free',pax:0})
+    });
+  } catch(e) {
+    var o2=demoOrders.find(function(x){return x.id===selectedBill.id;});
+    if(o2) o2.status='paid';
+  }
+  var ol=document.getElementById('paid-overlay');
+  var msgs={de:'Bezahlt!',en:'Paid!',id:'Lunas!'};
+  document.getElementById('paid-msg').textContent=msgs[lang];
+  document.getElementById('paid-detail').textContent=selectedBill.table+' · '+payMethod.toUpperCase()+' · Rp '+selectedBill.total+'k';
+  if(payMethod==='cash') {
+    var given3=parseFloat(document.getElementById('cash-given').value)||0;
+    var chg=given3-selectedBill.total;
+    var cl={de:'Rückgeld: ',en:'Change: ',id:'Kembalian: '};
+    document.getElementById('paid-change').textContent=cl[lang]+'Rp '+chg+'k';
+    document.getElementById('paid-change').style.display=chg>0?'block':'none';
+  } else { document.getElementById('paid-change').style.display='none'; }
+  ol.classList.add('show');
+  setTimeout(async function(){
+    ol.classList.remove('show');
+    selectedBill=null;
+    document.getElementById('payment-empty').style.display='flex';
+    document.getElementById('receipt').style.display='none';
+    document.getElementById('pay-section').style.display='none';
+    await loadBillsFromSB();
+  },3000);
+};
+(async function(){
+  await loadStaffFromSB();
+  await loadBillsFromSB();
+  setInterval(loadBillsFromSB, 8000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Bar Terminal — Mata Villas</title>
+<style>
+:root{
+  --bg:#eef2f7;--bg2:#f8fafc;--bg3:#ffffff;--bg4:#e2e8f0;
+  --border:#d1dbe8;--text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --accent:#2563eb;--accent2:#1d4ed8;--accent-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#86efac;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --orange:#ea580c;--orange-bg:#fff7ed;--orange-border:#fed7aa;
+  --yellow:#d97706;--yellow-bg:#fef3c7;--yellow-border:#fde68a;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+.login{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f,#2563eb);display:flex;align-items:center;justify-content:center;z-index:999}
+.login.hidden{display:none}
+.login-card{background:#fff;border-radius:16px;padding:36px 40px;width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{height:64px;object-fit:contain;margin-bottom:12px}
+.login-title{font-size:13px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px}
+.login-role{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:10px;font-family:var(--font);background:var(--bg2);color:var(--text);outline:none}
+.login-pin{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.pin-dot{width:44px;height:44px;border:2px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;text-align:center;background:var(--bg2);color:var(--text);outline:none}
+.pin-dot:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;min-height:18px}
+
+.topbar{background:#fff;border-bottom:1.5px solid var(--border);padding:0 16px;height:50px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.topbar img{height:32px;object-fit:contain}
+.topbar-title{font-size:13px;font-weight:700;color:var(--text2)}
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.lb{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;border:1.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)}
+.lb.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.user-chip{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:var(--bg);border:1.5px solid var(--border);font-size:12px;font-weight:600;color:var(--text2)}
+.logout-btn{padding:5px 10px;border-radius:6px;font-size:12px;border:1.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)}
+
+.bar-layout{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* LEFT: DRINK ORDERS FROM POS */
+.orders-side{width:280px;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.orders-header{padding:10px 14px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.orders-header-title{font-size:13px;font-weight:700}
+.badge-count{background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px}
+.orders-list{flex:1;overflow-y:auto;padding:8px;min-height:0}
+.orders-list::-webkit-scrollbar{width:4px}
+.orders-list::-webkit-scrollbar-thumb{background:var(--border)}
+
+.drink-ticket{background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;cursor:pointer;transition:all .12s}
+.drink-ticket.new{border-color:#fca5a5;background:var(--red-bg)}
+.drink-ticket.making{border-color:var(--yellow-border);background:var(--yellow-bg)}
+.drink-ticket.ready{border-color:var(--green-border);background:var(--green-bg)}
+.drink-ticket-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.drink-ticket-table{font-size:14px;font-weight:800}
+.drink-ticket-time{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+.t-ok{background:var(--green-bg);color:var(--green)}
+.t-warn{background:var(--yellow-bg);color:var(--yellow)}
+.t-late{background:var(--red-bg);color:var(--red)}
+.drink-item{display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;border-bottom:1px solid rgba(0,0,0,.06)}
+.drink-item:last-child{border-bottom:none}
+.drink-qty{width:20px;height:20px;border-radius:5px;background:var(--accent-bg);color:var(--accent);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.drink-name{flex:1;font-weight:600}
+.drink-check{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--border);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s;flex-shrink:0}
+.drink-check:hover{border-color:var(--green);background:var(--green-bg)}
+.drink-check.checked{background:var(--green);border-color:var(--green);color:#fff}
+.ticket-actions{display:flex;gap:5px;margin-top:8px}
+.tact-btn{flex:1;padding:6px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:var(--font)}
+.tact-make{background:var(--yellow-bg);color:var(--yellow);border:1.5px solid var(--yellow-border)}
+.tact-make:hover{background:var(--yellow);color:#fff}
+.tact-done{background:var(--green-bg);color:var(--green);border:1.5px solid var(--green-border)}
+.tact-done:hover{background:var(--green);color:#fff}
+
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* RIGHT: DRINK MENU / QUICK ORDER */
+.menu-side{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.cat-bar{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1.5px solid var(--border);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.cat-bar::-webkit-scrollbar{display:none}
+.cat-btn{flex-shrink:0;padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;white-space:nowrap;font-family:var(--font)}
+.cat-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+.drink-grid{flex:1;overflow-y:auto;padding:10px 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:start;min-height:0}
+.drink-grid::-webkit-scrollbar{width:4px}
+.drink-grid::-webkit-scrollbar-thumb{background:var(--border)}
+
+.drink-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:10px;cursor:pointer;transition:all .12s;position:relative}
+.drink-card:hover{border-color:var(--accent);background:var(--accent-bg);transform:translateY(-1px)}
+.drink-card:active{transform:none}
+.drink-card-icon{font-size:22px;margin-bottom:4px}
+.drink-card-name{font-size:12px;font-weight:700;line-height:1.3;margin-bottom:3px}
+.drink-card-price{font-size:12px;font-weight:700;color:var(--accent)}
+.drink-card-cat{font-size:10px;color:var(--text3);margin-bottom:2px}
+.add-ind{position:absolute;bottom:7px;right:7px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
+.drink-card:hover .add-ind{opacity:1}
+
+/* QUICK ORDER PANEL */
+.quick-order{border-top:1.5px solid var(--border);background:#fff;flex-shrink:0;padding:10px 12px;max-height:220px;display:flex;flex-direction:column;gap:8px}
+.qo-header{display:flex;align-items:center;justify-content:space-between}
+.qo-title{font-size:12px;font-weight:700;color:var(--text2)}
+.qo-table{display:flex;align-items:center;gap:6px;font-size:12px}
+.qo-table select{padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;font-family:var(--font);background:var(--bg2);outline:none}
+.qo-items{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0}
+.qo-item{display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--bg2);border-radius:6px;font-size:12px}
+.qo-item-name{flex:1;font-weight:600}
+.qo-item-price{color:var(--accent);font-weight:700;font-size:11px}
+.qo-qty-btn{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--border);background:#fff;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:var(--font)}
+.qo-qty-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.qo-qty{font-size:13px;font-weight:700;min-width:18px;text-align:center}
+.qo-remove{background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:0 2px}
+.qo-footer{display:flex;align-items:center;gap:8px}
+.qo-total{font-size:13px;font-weight:700;flex:1}
+.qo-send{padding:8px 16px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.qo-send:hover{background:var(--accent2)}
+.qo-clear{padding:8px 12px;border-radius:8px;background:var(--bg4);color:var(--text2);border:none;font-size:12px;cursor:pointer;font-family:var(--font)}
+.qo-empty{font-size:12px;color:var(--text3);text-align:center;padding:8px}
+
+.notif{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-radius:8px;padding:9px 16px;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
+.notif.show{opacity:1}
+
+.l-de,.l-en,.l-id{display:none}
+body.de .l-de{display:inline}
+body.en .l-en{display:inline}
+body.id .l-id{display:inline}
+</style>
+</head>
+<body class="de">
+
+<div class="login" id="login">
+  <div class="login-card">
+    <img class="login-logo" id="login-logo" src="" alt="">
+    <div class="login-title">Bar Terminal</div>
+    <select class="login-role" id="login-role"></select>
+    <div class="login-pin">
+      <input class="pin-dot" type="password" maxlength="1" id="p1" oninput="pinNext(0)">
+      <input class="pin-dot" type="password" maxlength="1" id="p2" oninput="pinNext(1)">
+      <input class="pin-dot" type="password" maxlength="1" id="p3" oninput="pinNext(2)">
+      <input class="pin-dot" type="password" maxlength="1" id="p4" oninput="pinNext(3)">
+    </div>
+    <button class="login-btn" onclick="doLogin()">
+      <span class="l-de">Anmelden</span><span class="l-en">Sign In</span><span class="l-id">Masuk</span>
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px">Demo-PIN: 0000</div>
+  </div>
+</div>
+
+<div class="topbar">
+  <img id="topbar-logo" src="" alt="">
+  <span class="topbar-title">
+    <span class="l-de">Bar Terminal</span><span class="l-en">Bar Terminal</span><span class="l-id">Terminal Bar</span>
+  </span>
+  <span style="margin-left:8px;display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3)">
+    <span class="pulse"></span> Live
+  </span>
+  <div class="topbar-right">
+    <button class="lb on" onclick="setLang('de')">DE</button>
+    <button class="lb" onclick="setLang('en')">EN</button>
+    <button class="lb" onclick="setLang('id')">ID</button>
+    <div class="user-chip">🍹 <span id="user-name">—</span></div>
+    <button class="logout-btn" onclick="doLogout()">⏻</button>
+  </div>
+</div>
+
+<div class="bar-layout">
+
+  <!-- LEFT: INCOMING DRINK ORDERS -->
+  <div class="orders-side">
+    <div class="orders-header">
+      <span class="orders-header-title">
+        <span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span>
+      </span>
+      <span class="badge-count" id="drink-badge">0</span>
+    </div>
+    <div class="orders-list" id="orders-list"></div>
+  </div>
+
+  <!-- RIGHT: DRINK MENU + QUICK ORDER -->
+  <div class="menu-side">
+    <div class="cat-bar" id="cat-bar"></div>
+    <div class="drink-grid" id="drink-grid"></div>
+
+    <!-- QUICK ORDER PANEL -->
+    <details><summary style="padding:8px 12px;font-size:12px;font-weight:700;color:var(--text3);cursor:pointer;background:#fff;border-top:1.5px solid var(--border)"><span class="l-de">+ Direktbestellung (Sonderfall)</span><span class="l-en">+ Direct Order (special case)</span><span class="l-id">+ Pesanan Langsung (kasus khusus)</span></summary><div class="quick-order" style="border-top:none">
+      <div class="qo-header">
+        <span class="qo-title">
+          <span class="l-de">Direktbestellung</span><span class="l-en">Direct Order</span><span class="l-id">Pesanan Langsung</span>
+        </span>
+        <div class="qo-table">
+          <span class="l-de">Tisch:</span><span class="l-en">Table:</span><span class="l-id">Meja:</span>
+          <select id="qo-table-sel">
+            <option value="">—</option>
+          </select>
+        </div>
+      </div>
+      <div class="qo-items" id="qo-items">
+        <div class="qo-empty">
+          <span class="l-de">Getränk antippen zum Hinzufügen</span>
+          <span class="l-en">Tap a drink to add</span>
+          <span class="l-id">Ketuk minuman untuk menambah</span>
+        </div>
+      </div>
+      <div class="qo-footer">
+        <span class="qo-total" id="qo-total">Rp 0k</span>
+        <button class="qo-clear" onclick="clearQuickOrder()">🗑</button>
+        <button class="qo-send" onclick="sendQuickOrder()" id="qo-send" disabled>
+          📤 <span class="l-de">Abschicken</span><span class="l-en">Send</span><span class="l-id">Kirim</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div></details>
+
+<div class="notif" id="notif"></div>
+
+<script>
+var LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABQAGMDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAMFAgQGAQcI/8QAOBAAAgEDAwEGAwUGBwAAAAAAAQIDAAQRBRIhMQYTQVFhcRSBkRUiMqGxB0JiosHRFjVyc5Ky8P/EABoBAAIDAQEAAAAAAAAAAAAAAAACAQMEBQb/xAAtEQABAwIDBQgDAQAAAAAAAAABAAIRAyEEEjETUWGh8CJBcYGRscHRBTLhFP/aAAwDAQACEQMRAD8A/P8ASlKEJSlert3jfnbnnHXFCFNZ2pu7lYe9ihB5aSVtqqPM1Zz6ZYC2MlpNdTgN3YmaMIkj+SDJY/8As4rdi1PspBCuNCuJZVHWW44Y+uP7V5NqkVxbnUp3hSVA0FjYQDCwjHLnyxn3J9q1tp0w25BPn/Fz3VqznghpA4xf0k+wA3qq0/T1uJwkyykt+FYiu5+M4GeCcEcePhXt/YWkcAubG9E0edrxSrsljPqviPUVb9zaj4W2uZzbJd20M9vc+EUqrs59Djk+HBr1df0m6Y/bmjJPdKcNcW77DIR4sBgE+tApMjKSAet30oNeoXZmgkbhHz8GQd4K5Wlb2qy6bNch9MtpreIjlJXD4Poa0ayuEGJlb2OzNBIhKUpUJkpSlCEpSlCErb0+wa/lmG8IkMLzOx8Ao/qcD51qVY6VKFS+tycNcWxRT6hlfHz2kfOnpgF11XVLgwluq24rSCDsfPeyoDPc3Kwwkj8KqNzH9BV32Z7Ex39gt9qLOElBMMSHGR4MT/SqOWXv+x9ui9ba8cOPR1BU/wArV9U0aeKbRLGaIju+4TGPDAwR9Qa6eDoU6tTtCwAXB/J4qvQonIYLnG+6NB5i65TTez0PaHsdZJNI0VzbmVIpByB948EeIrkLfSpftG70qdNt2FYIP41+9j5gED3FfTeyUZj7M2hIwZC8nyZyR+WK5W5Zbv8AanD8Pg7J4w5Hmqjd+hpq+HZs6T+8wPGyrwmMqitXpz2W5iOBB9iuMFu7WzTryiuFb0yOP0P0qKryBEFjr0wI7gBY0HmxlBXHyVqo65T25Y4/a9DTqZy7h9A/KUpSkVqUpShCUpShCUBIOQcGlKEKeG5eGKeIcpMgVhnyIIP5VZ6R2k1HS7aaygZXhmVlCP8AuMwxlfI1pWd7JE4VpI9nlNEJF+hBroba1M4S5h0Czv8AaQ26wuHUg+qZyPpWmiHEyx0HrdKxYp1MAiq2QfDXzgc1a9pu0N32eW30awRI9lsg748sOMceA6da43SdTl067muI0aSd4XjVupUsMbv1rt5o73Xrxbm57H5lVdu+5uWRQM56YGetVWr61qeiD4a0+ybPPBSwwzr7nwrXiA4u2hcQ0aWPzC5mDc0U9g1gLz+3aF/STyXH95IIzFuYIW3Fc8ZHGf1rCpbm6nvJ2muJXlkbqznJNRVzCu+NLpSlKhSlKUoQlKv7eFNW0aOyVEF9bo00DAAGVNx3IfMgDcPY1hepGOzdgkIQbrqYM/A3kBOSfLk4q7ZWzTaJWYYgZspF5j3M8uoVHSunTRLu60GS3TT5PibV1lSRY896H4Zdw4ODt/OsHlu4NFvZZtq3UV5CAQFO0bX4GOMcDj0qdgRruS/62mzYJmNd8Qea5uskkeNw8bsrDoVODV7okAu3lgnhU/aAaNZNoxG3VSPLLYHtmtPR7ldP1hBdLiFiYbhWHRW+63zHX5Uop/qZsU5rTmAEkc+rhasmo30ybZby4kXyaViP1rWqxuLeXSZb2BziQObfjxAOSfpj61exsf8AEVn050oE8Dr8OTn680wplxhxvMJHV202ywWgn0XI0re0b/PdP9biMHP+oVHqXOqXf+8//Y1Vl7OZX5+3k4StWldBb2nxGg3Nn3QE8Ci8R8DLcffX/iQcfwmsNPiiu9Phis76O01CORiySnYJs424fpkdMGrNibceoVRxIAJjQx/fBUVK2b9Z01CdbqIRThyJEChQrePA6UqoiDC0NMgFYSThooFRCjxqVLBvxZJPy64raXUk+Bs7WS2DpbzPKTvI37sZB8vwiq+prW4a1nEqqrEAjDdORTNcQUjqYI006+Vs6dqk1he9/gyo24SRMxCuGBBBx71it+E0uexEI2yzLKH3crtBAH8xrFb4qUPdqdiFMHkEGso9ReNoyscf3BjGOM7cZ/L60wdaJ6KQ0wTOXd37tFDNcb5kkiUxBAoUBs4wOuffn51Jqd6NR1CW77lYmlO51U5BbxPzPNQyTmQRAjiMEDnryT/Wp/tBt5YxIcyCTGP3hjOPfHNLNiJTZYIIFwvL/UJdQkieYKGjiWPI/ewMZPr0+lbi64y6hFd/DJmO1+GC7jgjZsz74NaHxb/Ed9gbtmz+XGfeslvnSPaqKD3fd7vHGc/3+tMHmZlKaTSA3LaI9dVJb30NrNBNFaL3kMyy7mcnOOg9s0e9t5J5ZXslZpH3nMhwPvZIHv0qJrwtGyGNPvKqk48uh98cVkt+6rbju0Pc9Mjrnrmozd08lOzvMX8VlZ6jJZaol+iKzK5Yo3Rgc5B9CCRR7yCSFI3s0xGTsZWIO0knafPGfeoZ7kzQwxlFURAgEePvUFRnIsDZTs2k5iL9famurqW8upLiYgyOcnFKhpSkyZKsAAEBf//Z";
+document.getElementById("login-logo").src = LOGO;
+document.getElementById("topbar-logo").src = LOGO;
+
+var MSTORE = 'mata_manager_v1';
+var ORDER_KEY = 'mata_orders';
+var lang = 'de';
+var quickOrder = [];
+var itemDone = {};
+var refreshInterval = null;
+var orderIdCounter = 200;
+
+var defaultStaff = [
+  {id:5,fname:"Felix",lname:"Wagner",role:"bar",pin:"5678",active:true},
+  {id:7,fname:"Admin",lname:"Manager",role:"manager",pin:"0000",active:true},
+];
+
+var drinkCats = ['Cocktails','Spanish Drinks','Drinks'];
+var drinkIcons = {
+  'Cocktails':'🍹','Spanish Drinks':'🍷','Drinks':'☕'
+};
+
+var allDrinks = [
+  {id:501,name:"Signature Blue Mata",cat:"Cocktails",price:80},
+  {id:502,name:"Margarita",cat:"Cocktails",price:80},
+  {id:503,name:"Gin Fizz",cat:"Cocktails",price:80},
+  {id:504,name:"Pina Colada",cat:"Cocktails",price:80},
+  {id:505,name:"Lime Daiquiri",cat:"Cocktails",price:80},
+  {id:506,name:"Arak Attack",cat:"Cocktails",price:80},
+  {id:601,name:"Gili Sangria",cat:"Spanish Drinks",price:55},
+  {id:602,name:"Calimocho",cat:"Spanish Drinks",price:60},
+  {id:603,name:"Tinto Verano",cat:"Spanish Drinks",price:60},
+  {id:604,name:"Red Wine",cat:"Spanish Drinks",price:80},
+  {id:605,name:"White Wine",cat:"Spanish Drinks",price:80},
+  {id:701,name:"Espresso",cat:"Drinks",price:25},
+  {id:702,name:"Lombok Black Coffee",cat:"Drinks",price:25},
+  {id:703,name:"Hot Latte",cat:"Drinks",price:35},
+  {id:704,name:"Iced Coffee Latte",cat:"Drinks",price:40},
+  {id:705,name:"Hot Tea",cat:"Drinks",price:20},
+  {id:706,name:"Iced Tea",cat:"Drinks",price:25},
+  {id:707,name:"Ice Lemon Tea",cat:"Drinks",price:25},
+  {id:708,name:"Mineral Water",cat:"Drinks",price:10},
+  {id:709,name:"Fresh Coconut",cat:"Drinks",price:25},
+  {id:710,name:"Kombucha",cat:"Drinks",price:45},
+  {id:711,name:"Banana Juice",cat:"Drinks",price:35},
+  {id:712,name:"Mango Juice",cat:"Drinks",price:35},
+  {id:713,name:"Pineapple Juice",cat:"Drinks",price:35},
+  {id:714,name:"Avocado Juice",cat:"Drinks",price:35},
+  {id:715,name:"Orange Juice",cat:"Drinks",price:35},
+  {id:716,name:"Green Booster",cat:"Drinks",price:40},
+  {id:717,name:"Small Bintang",cat:"Drinks",price:40},
+  {id:718,name:"Coca-Cola",cat:"Drinks",price:25},
+  {id:719,name:"Coca-Cola Zero",cat:"Drinks",price:25},
+  {id:720,name:"Sprite",cat:"Drinks",price:25},
+];
+
+var demoOrders = [
+  {id:101,table:3,items:[{id:501,name:"Signature Blue Mata",price:80,qty:2,cat:"Cocktails"},{id:704,name:"Iced Coffee Latte",price:40,qty:1,cat:"Drinks"}],note:"",total:200,status:"new",time:"12:34",ts:Date.now()-6*60000},
+  {id:102,table:7,items:[{id:601,name:"Gili Sangria",price:55,qty:1,cat:"Spanish Drinks"},{id:708,name:"Mineral Water",price:10,qty:2,cat:"Drinks"}],note:"Sangria extra kalt",total:75,status:"making",time:"12:28",ts:Date.now()-12*60000},
+];
+
+function lsLoad(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function lsSave(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+var staff = lsLoad(MSTORE+'_staff', defaultStaff);
+var currentCat = null;
+
+function buildLoginSelect(){
+  var sel = document.getElementById('login-role');
+  sel.innerHTML = '<option value="">— wählen —</option>';
+  staff.filter(function(s){return s.active&&(s.role==='bar'||s.role==='manager');})
+    .forEach(function(s){
+      var o=document.createElement('option');
+      o.value=s.id; o.textContent=s.fname+' '+s.lname+' ('+s.role+')';
+      sel.appendChild(o);
+    });
+}
+function pinNext(i){var ids=['p1','p2','p3','p4'];if(i<3&&document.getElementById(ids[i]).value)document.getElementById(ids[i+1]).focus();}
+function doLogin(){
+  var sid=parseInt(document.getElementById('login-role').value);
+  var pin=['p1','p2','p3','p4'].map(function(id){return document.getElementById(id).value;}).join('');
+  var m=staff.find(function(s){return s.id===sid;});
+  if(!m){document.getElementById('login-err').textContent='Bitte wählen';return;}
+  if(m.pin!==pin&&pin!=='0000'){document.getElementById('login-err').textContent='Falscher PIN';['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('p1').focus();return;}
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('user-name').textContent=m.fname;
+  buildCatBar(); showCat(null); buildTableSel(); renderOrders();
+  refreshInterval=setInterval(function(){renderOrders();},5000);
+}
+function doLogout(){clearInterval(refreshInterval);document.getElementById('login').classList.remove('hidden');['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});buildLoginSelect();}
+function setLang(l){lang=l;document.body.className=l;document.querySelectorAll('.lb').forEach(function(b,i){b.classList.toggle('on',['de','en','id'][i]===l);});}
+
+function buildTableSel(){
+  var sel=document.getElementById('qo-table-sel');
+  sel.innerHTML='<option value="">—</option>';
+  for(var i=1;i<=15;i++){var o=document.createElement('option');o.value='Meja '+i;o.textContent='Meja '+i;sel.appendChild(o);}
+}
+
+function buildCatBar(){
+  var bar=document.getElementById('cat-bar');
+  bar.innerHTML='';
+  var all=document.createElement('button');
+  all.className='cat-btn on';
+  all.innerHTML='<span class="l-de">Alle</span><span class="l-en">All</span><span class="l-id">Semua</span>';
+  all.addEventListener('click',function(){showCat(null,this);});
+  bar.appendChild(all);
+  drinkCats.forEach(function(c){
+    var btn=document.createElement('button');
+    btn.className='cat-btn';
+    btn.textContent=(drinkIcons[c]||'🥤')+' '+c;
+    btn.setAttribute('data-cat',c);
+    btn.addEventListener('click',function(){showCat(this.getAttribute('data-cat'),this);});
+    bar.appendChild(btn);
+  });
+}
+
+function showCat(cat,el){
+  currentCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.remove('on');});
+  if(el) el.classList.add('on');
+  renderDrinkGrid();
+}
+
+function renderDrinkGrid(){
+  var items=currentCat?allDrinks.filter(function(d){return d.cat===currentCat;}):allDrinks;
+  document.getElementById('drink-grid').innerHTML=items.map(function(d){
+    return '<div class="drink-card" onclick="addToQuick('+d.id+')">'
+      +'<div class="drink-card-icon">'+(drinkIcons[d.cat]||'🥤')+'</div>'
+      +'<div class="drink-card-cat">'+d.cat+'</div>'
+      +'<div class="drink-card-name">'+d.name+'</div>'
+      +'<div class="drink-card-price">Rp '+d.price+'k</div>'
+      +'<div class="add-ind">+</div>'
+      +'</div>';
+  }).join('');
+}
+
+function addToQuick(id){
+  var d=allDrinks.find(function(x){return x.id===id;});
+  if(!d) return;
+  var ex=quickOrder.find(function(x){return x.id===id;});
+  if(ex) ex.qty++;
+  else quickOrder.push({id:id,name:d.name,price:d.price,cat:d.cat,qty:1});
+  renderQuickOrder();
+}
+
+function renderQuickOrder(){
+  var el=document.getElementById('qo-items');
+  if(quickOrder.length===0){
+    el.innerHTML='<div class="qo-empty"><span class="l-de">Getränk antippen zum Hinzufügen</span><span class="l-en">Tap a drink to add</span><span class="l-id">Ketuk minuman untuk menambah</span></div>';
+    document.body.className=lang;
+  } else {
+    el.innerHTML=quickOrder.map(function(o){
+      return '<div class="qo-item">'
+        +'<span class="qo-item-name">'+o.name+'</span>'
+        +'<span class="qo-item-price">Rp '+o.price+'k</span>'
+        +'<button class="qo-qty-btn" onclick="qoQty('+o.id+',-1)">−</button>'
+        +'<span class="qo-qty">'+o.qty+'</span>'
+        +'<button class="qo-qty-btn" onclick="qoQty('+o.id+',1)">+</button>'
+        +'<button class="qo-remove" onclick="qoRemove('+o.id+')">✕</button>'
+        +'</div>';
+    }).join('');
+  }
+  var total=quickOrder.reduce(function(s,o){return s+o.price*o.qty;},0);
+  document.getElementById('qo-total').textContent='Rp '+total+'k';
+  document.getElementById('qo-send').disabled=quickOrder.length===0;
+}
+
+function qoQty(id,d){var o=quickOrder.find(function(x){return x.id===id;});if(!o)return;o.qty+=d;if(o.qty<=0)quickOrder=quickOrder.filter(function(x){return x.id!==id;});renderQuickOrder();}
+function qoRemove(id){quickOrder=quickOrder.filter(function(x){return x.id!==id;});renderQuickOrder();}
+function clearQuickOrder(){quickOrder=[];renderQuickOrder();}
+
+function sendQuickOrder(){
+  var table=document.getElementById('qo-table-sel').value;
+  if(!table){notify('⚠ Tisch wählen!');return;}
+  var total=quickOrder.reduce(function(s,o){return s+o.price*o.qty;},0);
+  var orders=lsLoad(ORDER_KEY,[]);
+  orders.push({id:++orderIdCounter,table:table,items:quickOrder.slice(),note:'',total:total,status:'new',time:new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),ts:Date.now()});
+  lsSave(ORDER_KEY,orders);
+  notify('✓ '+table+' · Rp '+total+'k');
+  clearQuickOrder();
+  renderOrders();
+}
+
+function getBarOrders(){
+  var orders=lsLoad(ORDER_KEY,[]);
+  var barIds=[501,502,503,504,505,506,601,602,603,604,605,701,702,703,704,705,706,707,708,709,710,711,712,713,714,715,716,717,718,719,720];
+  var result=[];
+  if(orders.length===0) return demoOrders;
+  orders.forEach(function(o){
+    if(o.status==='served') return;
+    var drinkItems=o.items.filter(function(it){return barIds.indexOf(it.id)>=0;});
+    if(drinkItems.length>0) result.push(Object.assign({},o,{items:drinkItems}));
+  });
+  return result;
+}
+
+function tWord(){ return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja '; }
+function renderOrders(){
+  var orders=getBarOrders();
+  var newCount=orders.filter(function(o){return o.status==='new';}).length;
+  document.getElementById('drink-badge').textContent=newCount;
+  var list=document.getElementById('orders-list');
+  if(orders.length===0){
+    list.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);font-size:13px">🍹<br><span class="l-de">Keine Getränkebestellungen</span><span class="l-en">No drink orders</span><span class="l-id">Tidak ada pesanan minuman</span></div>';
+    document.body.className=lang; return;
+  }
+  orders.sort(function(a,b){var ord={new:0,making:1,ready:2};return (ord[a.status]||0)-(ord[b.status]||0)||a.ts-b.ts;});
+  list.innerHTML=orders.map(function(o){
+    var mins=Math.floor((Date.now()-o.ts)/60000);
+    var tc=mins<8?'t-ok':mins<15?'t-warn':'t-late';
+    var itemsHtml=o.items.map(function(it,idx){
+      var key=o.id+'_'+idx;
+      var done=itemDone[key]||false;
+      return '<div class="drink-item">'
+        +'<div class="drink-qty">'+it.qty+'×</div>'
+        +'<span class="drink-name" style="'+(done?'text-decoration:line-through;opacity:.4':'')+'">'+it.name+'</span>'
+        +'<div class="drink-check'+(done?' checked':'')+'" onclick="toggleDrink('+o.id+','+idx+')">'+(done?'✓':'')+'</div>'
+        +'</div>';
+    }).join('');
+    var noteHtml=o.note?'<div style="padding:4px 8px;font-size:11px;color:var(--orange);font-style:italic;background:var(--orange-bg);border-top:1px solid var(--orange-border)">📝 '+o.note+'</div>':'';
+    var btns='';
+    if(o.status==='new') btns='<button class="tact-btn tact-make" onclick="setBarStatus('+o.id+',1)">🍹 <span class="l-de">Zubereiten</span><span class="l-en">Making</span><span class="l-id">Buat</span></button>';
+    if(o.status==='making') btns='<button class="tact-btn tact-done" onclick="setBarStatus('+o.id+',2)">✅ <span class="l-de">Fertig</span><span class="l-en">Ready</span><span class="l-id">Siap</span></button>';
+    if(o.status==='ready') btns='<button class="tact-btn tact-done" onclick="setBarStatus('+o.id+',3)">🚀 <span class="l-de">Ausgegeben</span><span class="l-en">Served</span><span class="l-id">Disajikan</span></button>';
+    return '<div class="drink-ticket '+o.status+'">'
+      +'<div class="drink-ticket-top"><span class="drink-ticket-table">'+o.table+'</span><span class="drink-ticket-time '+tc+'">'+mins+' min</span></div>'
+      +itemsHtml+noteHtml
+      +(btns?'<div class="ticket-actions">'+btns+'</div>':'')
+      +'</div>';
+  }).join('');
+  document.body.className=lang;
+}
+
+function setBarStatus(id,code){
+  var map={1:'making',2:'ready',3:'served'};
+  var status=map[code];
+  var orders=lsLoad(ORDER_KEY,[]);
+  var isDemo=orders.length===0;
+  var list=isDemo?demoOrders:orders;
+  var o=list.find(function(x){return x.id===id;});
+  if(!o) return;
+  o.status=status;
+  if(!isDemo) lsSave(ORDER_KEY,orders);
+  notify('✓ '+o.table+': '+(status==='making'?'In Zubereitung':'Fertig'));
+  renderOrders();
+}
+
+function toggleDrink(oid,idx){
+  var key=oid+'_'+idx;
+  itemDone[key]=!itemDone[key];
+  renderOrders();
+}
+
+function notify(msg){var el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2500);}
+
+buildLoginSelect();
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// Mata Villas — Supabase Config
+// Diese Datei in alle Terminals einbetten
+// ═══════════════════════════════════════════════════════
+
+var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe';
+
+// ── REST API Helper ───────────────────────────────────
+async function sbGet(table, query) {
+  query = query || '';
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!r.ok) throw new Error('GET ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPost(table, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('POST ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPatch(table, id, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('PATCH ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbDelete(table, id) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  });
+  if (!r.ok) throw new Error('DELETE ' + table + ': ' + r.status);
+  return true;
+}
+
+// ── Realtime Subscription ─────────────────────────────
+function sbRealtime(table, callback) {
+  var ws = new WebSocket(
+    SUPABASE_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0'
+  );
+  ws.onopen = function() {
+    ws.send(JSON.stringify({
+      topic: 'realtime:public:' + table,
+      event: 'phx_join',
+      payload: {},
+      ref: '1'
+    }));
+  };
+  ws.onmessage = function(e) {
+    var msg = JSON.parse(e.data);
+    if (msg.event === 'INSERT' || msg.event === 'UPDATE' || msg.event === 'DELETE') {
+      callback(msg.event, msg.payload.record);
+    }
+  };
+  ws.onerror = function() { console.warn('Realtime WS error, fallback to polling'); };
+  return ws;
+}
+
+async function loadStaffFromSB() {
+  try {
+    var data=await sbGet('employees','select=*&active=eq.true');
+    staff=data.map(function(s){return {id:s.id,fname:s.fname,lname:s.lname,role:s.role_id,pin:s.pin,active:true};});
+    buildLoginSelect();
+  } catch(e) {}
+}
+async function loadBarOrdersFromSB() {
+  var barCats=['Cocktails','Spanish Drinks','Drinks'];
+  try {
+    var data=await sbGet('orders','select=*,order_items(*)&status=not.in.(paid,served)&order=created_at');
+    if(data.length>0) {
+      var newBarOrders=[];
+      data.forEach(function(o) {
+        var drinkItems=(o.order_items||[]).filter(function(i){return barCats.indexOf(i.category)>=0;});
+        if(drinkItems.length>0) {
+          newBarOrders.push({
+            id:o.id, table:o.table_number,
+            items:drinkItems.map(function(i){return {id:i.menu_item_id,name:i.name,price:i.price_k,qty:i.quantity,cat:i.category};}),
+            note:o.note||'', total:o.total_k, status:o.status,
+            time:new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
+            ts:new Date(o.created_at).getTime()
+          });
+        }
+      });
+    }
+    renderOrders();
+  } catch(e) { renderOrders(); }
+}
+
+var localStatus = {}; // track local status overrides
+
+var _origSetBarStatus2 = setBarStatus;
+setBarStatus = async function(id, code) {
+  var map={1:'making',2:'ready',3:'served'};
+  var status = map[code];
+  localStatus[id] = status; // remember local change
+  try {
+    await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/orders?id=eq.'+id, {
+      method:'PATCH',
+      headers:{'apikey':'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Authorization':'Bearer sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Content-Type':'application/json'},
+      body:JSON.stringify({status:status})
+    });
+  } catch(e) {}
+  var o = demoOrders.find(function(x){return x.id===id;});
+  if(o) o.status = status;
+  notify('\u2713 ' + tWord() + (o?o.table:'') + ': ' + (status==='making'?'In Zubereitung':status==='ready'?'Fertig':'Ausgegeben'));
+  renderOrders();
+};
+
+(async function(){
+  await loadStaffFromSB();
+  await loadBarOrdersFromSB();
+  setInterval(function(){
+    // Only reload if no pending local changes
+    loadBarOrdersFromSB().then(function(){
+      // Apply local overrides
+      Object.keys(localStatus).forEach(function(id){
+        var o = demoOrders.find(function(x){return x.id===parseInt(id);});
+        if(o && localStatus[id] !== 'served') o.status = localStatus[id];
+      });
+      renderOrders();
+    });
+  }, 10000);
+})();
+</script>
+</body>
+</html>

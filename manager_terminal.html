@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Manager Terminal — Mata Villas</title>
+<style>
+:root{
+  --bg:#eef2f7;--bg2:#f8fafc;--bg3:#ffffff;--bg4:#e2e8f0;
+  --border:#d1dbe8;--border2:#b8c9de;
+  --text:#1e293b;--text2:#475569;--text3:#94a3b8;
+  --accent:#2563eb;--accent2:#1d4ed8;--accent-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --orange:#ea580c;--orange-bg:#fff7ed;
+  --purple:#7c3aed;--purple-bg:#f5f3ff;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* LOGIN */
+.login{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);display:flex;align-items:center;justify-content:center;z-index:999}
+.login.hidden{display:none}
+.login-card{background:#fff;border-radius:16px;padding:36px 40px;width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.login-logo{height:70px;object-fit:contain;margin-bottom:12px}
+.login-title{font-size:13px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:24px}
+.login-role{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:10px;font-family:var(--font);background:var(--bg2);color:var(--text);outline:none}
+.login-role:focus{border-color:var(--accent)}
+.login-pin{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.pin-dot{width:44px;height:44px;border:2px solid var(--border);border-radius:8px;font-size:18px;font-weight:700;text-align:center;background:var(--bg2);color:var(--text);outline:none}
+.pin-dot:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.login-btn:hover{background:var(--accent2)}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;min-height:18px}
+.pin-hint{font-size:11px;color:var(--text3);margin-top:10px}
+
+/* TOPBAR */
+.topbar{background:#fff;border-bottom:1.5px solid var(--border);padding:0 20px;height:54px;display:flex;align-items:center;gap:14px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.topbar img{height:36px;object-fit:contain}
+.topbar-title{font-size:13px;font-weight:600;color:var(--text2)}
+.topbar-user{display:flex;align-items:center;gap:8px;margin-left:auto;font-size:13px;color:var(--text2)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.lang-btns{display:flex;gap:3px}
+.lb{padding:4px 9px;border-radius:6px;font-size:11px;font-weight:700;border:1.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:var(--font)}
+.lb.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.logout-btn{padding:5px 12px;border-radius:6px;font-size:12px;border:1.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font)}
+.logout-btn:hover{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.nav-section{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:16px 16px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-radius:0;transition:all .12s;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600;border-left-color:var(--accent)}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:20px}
+.main::-webkit-scrollbar{width:5px}
+.main::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* PANELS */
+.panel{display:none}
+.panel.active{display:block}
+
+/* CARDS */
+.card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px}
+.card-title{font-size:13px;font-weight:700;color:var(--text2);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.metric{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:14px 16px}
+.metric-label{font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.metric-value{font-size:24px;font-weight:700;color:var(--text)}
+.metric-sub{font-size:11px;margin-top:3px}
+.up{color:var(--green)}
+.down{color:var(--red)}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--text);font-family:var(--font);font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--bg);border-color:var(--border2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent2)}
+.btn.success{background:var(--green);border-color:var(--green);color:#fff}
+.btn.danger{background:#fff;border-color:var(--red);color:var(--red)}
+.btn.danger:hover{background:var(--red-bg)}
+.btn.sm{padding:4px 10px;font-size:12px}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+.badge.active{background:var(--green-bg);color:var(--green)}
+.badge.inactive{background:var(--bg4);color:var(--text3)}
+.badge.admin{background:var(--purple-bg);color:var(--purple)}
+.badge.kitchen{background:#fff7ed;color:#c2410c}
+.badge.bar{background:#eff6ff;color:#1d4ed8}
+.badge.service{background:#f0fdf4;color:#15803d}
+.badge.kasse{background:#fdf4ff;color:#7e22ce}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:8px 12px;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1.5px solid var(--border);background:var(--bg2)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg)}
+
+/* FORMS */
+.form-group{margin-bottom:12px}
+.form-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
+.form-input{width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);background:var(--bg2);color:var(--text);outline:none}
+.form-input:focus{border-color:var(--accent);background:#fff}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* MODAL */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);line-height:1}
+.modal-body{padding:18px 20px}
+.modal-footer{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* ROLE COLORS */
+.role-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700}
+
+/* SCHEDULE */
+.schedule-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px}
+.schedule-day{text-align:center;padding:4px 2px;border-radius:6px;background:var(--bg);color:var(--text3);font-weight:600}
+.schedule-slot{text-align:center;padding:4px 2px;border-radius:6px;font-size:10px;cursor:pointer}
+.schedule-slot.on{background:var(--accent-bg);color:var(--accent)}
+.schedule-slot.off{background:var(--bg4);color:var(--text3)}
+
+/* NOTIFICATION */
+.notif{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;border-radius:8px;padding:10px 16px;font-size:13px;z-index:300;opacity:0;pointer-events:none;transition:opacity .3s}
+.notif.show{opacity:1}
+
+/* LANG TOGGLE — sections */
+.l-de,.l-en,.l-id{display:none}
+body.de .l-de{display:inline}
+body.en .l-en{display:inline}
+body.id .l-id{display:inline}
+.lb-de,.lb-en,.lb-id{display:none}
+body.de .lb-de,.body.en .lb-en,body.id .lb-id{display:flex}
+body.de .lb-de{display:flex}
+body.en .lb-en{display:flex}
+body.id .lb-id{display:flex}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .metrics{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body class="de">
+
+<!-- LOGIN -->
+<div class="login" id="login">
+  <div class="login-card">
+    <img class="login-logo" id="login-logo" src="" alt="Mata Villas">
+    <div class="login-title">Manager Terminal</div>
+    <select class="login-role" id="login-role">
+      <option value="">
+        <span class="l-de">— Mitarbeiter wählen —</span>
+      </option>
+    </select>
+    <div class="login-pin">
+      <input class="pin-dot" type="password" maxlength="1" id="p1" oninput="pinInput(0)">
+      <input class="pin-dot" type="password" maxlength="1" id="p2" oninput="pinInput(1)">
+      <input class="pin-dot" type="password" maxlength="1" id="p3" oninput="pinInput(2)">
+      <input class="pin-dot" type="password" maxlength="1" id="p4" oninput="pinInput(3)">
+    </div>
+    <button class="login-btn" onclick="doLogin()">
+      <span class="l-de">Anmelden</span>
+      <span class="l-en">Sign In</span>
+      <span class="l-id">Masuk</span>
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <div class="pin-hint">Demo: beliebige 4-stellige PIN</div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <img id="topbar-logo" src="" alt="Mata Villas">
+  <span class="topbar-title">
+    <span class="l-de">Manager Terminal</span>
+    <span class="l-en">Manager Terminal</span>
+    <span class="l-id">Terminal Manajer</span>
+  </span>
+  <div class="topbar-user">
+    <div class="lang-btns">
+      <button class="lb on" onclick="setLang('de')">DE</button>
+      <button class="lb" onclick="setLang('en')">EN</button>
+      <button class="lb" onclick="setLang('id')">ID</button>
+    </div>
+    <div class="user-avatar" id="user-initials">MA</div>
+    <span id="user-name" style="font-weight:600">Manager</span>
+    <button class="logout-btn" onclick="doLogout()">
+      <span class="l-de">Abmelden</span>
+      <span class="l-en">Logout</span>
+      <span class="l-id">Keluar</span>
+    </button>
+  </div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="nav-section l-de">Übersicht</div>
+  <div class="nav-section l-en">Overview</div>
+  <div class="nav-section l-id">Ringkasan</div>
+  <div class="nav-item active" onclick="showPanel('dashboard',this)"><span class="nav-icon">📊</span><span class="l-de">Dashboard</span><span class="l-en">Dashboard</span><span class="l-id">Dasbor</span></div>
+  <div class="nav-item" onclick="showPanel('orders',this)"><span class="nav-icon">🧾</span><span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span><span class="nav-badge" id="order-badge">3</span></div>
+  <div class="nav-item" onclick="showPanel('tables',this)"><span class="nav-icon">🪑</span><span class="l-de">Tische</span><span class="l-en">Tables</span><span class="l-id">Meja</span></div>
+
+  <div class="nav-section l-de">Verwaltung</div>
+  <div class="nav-section l-en">Management</div>
+  <div class="nav-section l-id">Manajemen</div>
+  <div class="nav-item" onclick="showPanel('staff',this)"><span class="nav-icon">👥</span><span class="l-de">Personal</span><span class="l-en">Staff</span><span class="l-id">Karyawan</span></div>
+  <div class="nav-item" onclick="showPanel('roles',this)"><span class="nav-icon">🔐</span><span class="l-de">Rollen</span><span class="l-en">Roles</span><span class="l-id">Peran</span></div>
+  <div class="nav-item" onclick="showPanel('menu',this)"><span class="nav-icon">📋</span><span class="l-de">Speisekarte</span><span class="l-en">Menu</span><span class="l-id">Menu</span></div>
+  <div class="nav-item" onclick="showPanel('reports',this)"><span class="nav-icon">📈</span><span class="l-de">Berichte</span><span class="l-en">Reports</span><span class="l-id">Laporan</span></div>
+  <div class="nav-item" onclick="showPanel('settings',this)"><span class="nav-icon">⚙️</span><span class="l-de">Einstellungen</span><span class="l-en">Settings</span><span class="l-id">Pengaturan</span></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="panel active" id="panel-dashboard">
+  <div class="metrics">
+    <div class="metric"><div class="metric-label l-de">Umsatz heute</div><div class="metric-label l-en">Today's Revenue</div><div class="metric-label l-id">Pendapatan Hari Ini</div><div class="metric-value">Rp 1.842k</div><div class="metric-sub up">↑ +12%</div></div>
+    <div class="metric"><div class="metric-label l-de">Bestellungen</div><div class="metric-label l-en">Orders</div><div class="metric-label l-id">Pesanan</div><div class="metric-value">47</div><div class="metric-sub up">↑ +5</div></div>
+    <div class="metric"><div class="metric-label l-de">Tische belegt</div><div class="metric-label l-en">Tables Occupied</div><div class="metric-label l-id">Meja Terisi</div><div class="metric-value">8/15</div><div class="metric-sub" style="color:var(--text3)">53%</div></div>
+    <div class="metric"><div class="metric-label l-de">Personal aktiv</div><div class="metric-label l-en">Staff Active</div><div class="metric-label l-id">Karyawan Aktif</div><div class="metric-value">6</div><div class="metric-sub" style="color:var(--text3)"><span class="l-de">von 8</span><span class="l-en">of 8</span><span class="l-id">dari 8</span></div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card">
+      <div class="card-title"><span class="l-de">Aktive Bestellungen</span><span class="l-en">Active Orders</span><span class="l-id">Pesanan Aktif</span></div>
+      <table class="tbl">
+        <tr><th><span class="l-de">Tisch</span><span class="l-en">Table</span><span class="l-id">Meja</span></th><th><span class="l-de">Status</span><span class="l-en">Status</span><span class="l-id">Status</span></th><th><span class="l-de">Zeit</span><span class="l-en">Time</span><span class="l-id">Waktu</span></th></tr>
+        <tr><td>Meja 3</td><td><span class="badge" style="background:#fef3c7;color:#92400e"><span class="l-de">kocht</span><span class="l-en">cooking</span><span class="l-id">memasak</span></span></td><td>8 min</td></tr>
+        <tr><td>Meja 7</td><td><span class="badge" style="background:#d1fae5;color:#065f46"><span class="l-de">fertig</span><span class="l-en">ready</span><span class="l-id">siap</span></span></td><td>14 min</td></tr>
+        <tr><td>Meja 11</td><td><span class="badge" style="background:#fee2e2;color:#991b1b"><span class="l-de">neu</span><span class="l-en">new</span><span class="l-id">baru</span></span></td><td>2 min</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="l-de">Personal heute</span><span class="l-en">Staff Today</span><span class="l-id">Karyawan Hari Ini</span></div>
+      <table class="tbl">
+        <tr><th><span class="l-de">Name</span><span class="l-en">Name</span><span class="l-id">Nama</span></th><th><span class="l-de">Rolle</span><span class="l-en">Role</span><span class="l-id">Peran</span></th><th>Status</th></tr>
+        <tr><td>Marco R.</td><td><span class="badge kitchen">Küche</span></td><td><span class="badge active"><span class="l-de">aktiv</span><span class="l-en">active</span><span class="l-id">aktif</span></span></td></tr>
+        <tr><td>Lena B.</td><td><span class="badge service">Service</span></td><td><span class="badge active"><span class="l-de">aktiv</span><span class="l-en">active</span><span class="l-id">aktif</span></span></td></tr>
+        <tr><td>Felix W.</td><td><span class="badge bar">Bar</span></td><td><span class="badge inactive"><span class="l-de">Pause</span><span class="l-en">Break</span><span class="l-id">Istirahat</span></span></td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF -->
+<div class="panel" id="panel-staff">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h2 style="font-size:17px;font-weight:700"><span class="l-de">Mitarbeiterverwaltung</span><span class="l-en">Staff Management</span><span class="l-id">Manajemen Karyawan</span></h2>
+    <button class="btn primary" onclick="openModal('modal-add-staff')">+ <span class="l-de">Mitarbeiter hinzufügen</span><span class="l-en">Add Staff</span><span class="l-id">Tambah Karyawan</span></button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl" id="staff-table">
+      <thead><tr>
+        <th><span class="l-de">Name</span><span class="l-en">Name</span><span class="l-id">Nama</span></th>
+        <th><span class="l-de">Rolle</span><span class="l-en">Role</span><span class="l-id">Peran</span></th>
+        <th><span class="l-de">Schicht</span><span class="l-en">Shift</span><span class="l-id">Shift</span></th>
+        <th><span class="l-de">PIN</span><span class="l-en">PIN</span><span class="l-id">PIN</span></th>
+        <th>Status</th>
+        <th><span class="l-de">Aktion</span><span class="l-en">Action</span><span class="l-id">Aksi</span></th>
+      </tr></thead>
+      <tbody id="staff-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ROLES -->
+<div class="panel" id="panel-roles">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h2 style="font-size:17px;font-weight:700"><span class="l-de">Rollenverwaltung</span><span class="l-en">Role Management</span><span class="l-id">Manajemen Peran</span></h2>
+    <button class="btn primary" onclick="openModal('modal-add-role')">+ <span class="l-de">Rolle erstellen</span><span class="l-en">Create Role</span><span class="l-id">Buat Peran</span></button>
+  </div>
+  <div id="roles-list"></div>
+</div>
+
+<!-- MENU -->
+<div class="panel" id="panel-menu">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h2 style="font-size:17px;font-weight:700"><span class="l-de">Speisekarte</span><span class="l-en">Menu</span><span class="l-id">Menu</span></h2>
+    <button class="btn primary" onclick="openModal('modal-add-item')">+ <span class="l-de">Gericht hinzufügen</span><span class="l-en">Add Item</span><span class="l-id">Tambah Item</span></button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr>
+        <th><span class="l-de">Name</span><span class="l-en">Name</span><span class="l-id">Nama</span></th>
+        <th><span class="l-de">Kategorie</span><span class="l-en">Category</span><span class="l-id">Kategori</span></th>
+        <th><span class="l-de">Preis</span><span class="l-en">Price</span><span class="l-id">Harga</span></th>
+        <th><span class="l-de">Verfügbar</span><span class="l-en">Available</span><span class="l-id">Tersedia</span></th>
+        <th><span class="l-de">Aktion</span><span class="l-en">Action</span><span class="l-id">Aksi</span></th>
+      </tr></thead>
+      <tbody id="menu-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ORDERS -->
+<div class="panel" id="panel-orders">
+  <h2 style="font-size:17px;font-weight:700;margin-bottom:16px"><span class="l-de">Alle Bestellungen</span><span class="l-en">All Orders</span><span class="l-id">Semua Pesanan</span></h2>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr>
+        <th>#</th>
+        <th><span class="l-de">Tisch</span><span class="l-en">Table</span><span class="l-id">Meja</span></th>
+        <th><span class="l-de">Artikel</span><span class="l-en">Items</span><span class="l-id">Item</span></th>
+        <th>Total</th>
+        <th>Status</th>
+        <th><span class="l-de">Zeit</span><span class="l-en">Time</span><span class="l-id">Waktu</span></th>
+      </tr></thead>
+      <tbody id="orders-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TABLES -->
+<div class="panel" id="panel-tables">
+  <h2 style="font-size:17px;font-weight:700;margin-bottom:16px"><span class="l-de">Tischplan</span><span class="l-en">Table Plan</span><span class="l-id">Denah Meja</span></h2>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px" id="tables-grid"></div>
+</div>
+
+<!-- REPORTS -->
+<div class="panel" id="panel-reports">
+  <h2 style="font-size:17px;font-weight:700;margin-bottom:16px"><span class="l-de">Berichte</span><span class="l-en">Reports</span><span class="l-id">Laporan</span></h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card">
+      <div class="card-title"><span class="l-de">Wochenumsatz</span><span class="l-en">Weekly Revenue</span><span class="l-id">Pendapatan Mingguan</span></div>
+      <div id="week-bars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="l-de">Top Gerichte</span><span class="l-en">Top Dishes</span><span class="l-id">Menu Terlaris</span></div>
+      <div id="top-dishes"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="panel" id="panel-settings">
+  <h2 style="font-size:17px;font-weight:700;margin-bottom:16px"><span class="l-de">Einstellungen</span><span class="l-en">Settings</span><span class="l-id">Pengaturan</span></h2>
+  <div class="card">
+    <div class="card-title"><span class="l-de">Restaurantinformationen</span><span class="l-en">Restaurant Information</span><span class="l-id">Informasi Restoran</span></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label"><span class="l-de">Restaurantname</span><span class="l-en">Restaurant Name</span><span class="l-id">Nama Restoran</span></label><input class="form-input" value="Mata Tapas Bar"></div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Adresse</span><span class="l-en">Address</span><span class="l-id">Alamat</span></label><input class="form-input" value="Jl. Raya, Surabaya"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label"><span class="l-de">Steuer (PPN %)</span><span class="l-en">Tax (PPN %)</span><span class="l-id">Pajak (PPN %)</span></label><input class="form-input" type="number" value="10"></div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Währung</span><span class="l-en">Currency</span><span class="l-id">Mata Uang</span></label><input class="form-input" value="Rp"></div>
+    </div>
+    <button class="btn primary" style="margin-top:4px"><span class="l-de">Speichern</span><span class="l-en">Save</span><span class="l-id">Simpan</span></button>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="l-de">Tische konfigurieren</span><span class="l-en">Configure Tables</span><span class="l-id">Konfigurasi Meja</span></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label"><span class="l-de">Anzahl Tische</span><span class="l-en">Number of Tables</span><span class="l-id">Jumlah Meja</span></label><input class="form-input" type="number" value="15"></div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Max. Personen/Tisch</span><span class="l-en">Max Persons/Table</span><span class="l-id">Maks. Orang/Meja</span></label><input class="form-input" type="number" value="8"></div>
+    </div>
+    <button class="btn primary" style="margin-top:4px"><span class="l-de">Speichern</span><span class="l-en">Save</span><span class="l-id">Simpan</span></button>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- MODAL: ADD STAFF -->
+<div class="modal-backdrop" id="modal-add-staff">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><span class="l-de">Mitarbeiter hinzufügen</span><span class="l-en">Add Staff Member</span><span class="l-id">Tambah Karyawan</span></span>
+      <button class="modal-close" onclick="closeModal('modal-add-staff')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label"><span class="l-de">Vorname</span><span class="l-en">First Name</span><span class="l-id">Nama Depan</span></label><input class="form-input" id="s-fname"></div>
+        <div class="form-group"><label class="form-label"><span class="l-de">Nachname</span><span class="l-en">Last Name</span><span class="l-id">Nama Belakang</span></label><input class="form-input" id="s-lname"></div>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Rolle</span><span class="l-en">Role</span><span class="l-id">Peran</span></label>
+        <select class="form-input" id="s-role">
+          <option value="manager">Manager</option>
+          <option value="service"><span class="l-de">Servicekraft</span><span class="l-en">Service Staff</span><span class="l-id">Pelayan</span></option>
+          <option value="kitchen"><span class="l-de">Küche</span><span class="l-en">Kitchen</span><span class="l-id">Dapur</span></option>
+          <option value="bar">Bar</option>
+          <option value="kasse"><span class="l-de">Kasse</span><span class="l-en">Cashier</span><span class="l-id">Kasir</span></option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label"><span class="l-de">Schicht von</span><span class="l-en">Shift From</span><span class="l-id">Shift Dari</span></label><input class="form-input" type="time" id="s-from" value="08:00"></div>
+        <div class="form-group"><label class="form-label"><span class="l-de">Schicht bis</span><span class="l-en">Shift To</span><span class="l-id">Shift Sampai</span></label><input class="form-input" type="time" id="s-to" value="16:00"></div>
+      </div>
+      <div class="form-group"><label class="form-label">PIN (4 <span class="l-de">Stellen</span><span class="l-en">Digits</span><span class="l-id">Angka</span>)</label><input class="form-input" type="password" maxlength="4" id="s-pin" placeholder="••••"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-staff')"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span><span class="l-id">Batal</span></button>
+      <button class="btn primary" onclick="saveStaff()"><span class="l-de">Hinzufügen</span><span class="l-en">Add</span><span class="l-id">Tambah</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT STAFF -->
+<div class="modal-backdrop" id="modal-edit-staff">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><span class="l-de">Mitarbeiter bearbeiten</span><span class="l-en">Edit Staff Member</span><span class="l-id">Edit Karyawan</span></span>
+      <button class="modal-close" onclick="closeModal('modal-edit-staff')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="es-id">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label"><span class="l-de">Vorname</span><span class="l-en">First Name</span><span class="l-id">Nama Depan</span></label><input class="form-input" id="es-fname"></div>
+        <div class="form-group"><label class="form-label"><span class="l-de">Nachname</span><span class="l-en">Last Name</span><span class="l-id">Nama Belakang</span></label><input class="form-input" id="es-lname"></div>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Rolle</span><span class="l-en">Role</span><span class="l-id">Peran</span></label>
+        <select class="form-input" id="es-role">
+          <option value="manager">Manager</option>
+          <option value="service">Service</option>
+          <option value="kitchen">Küche / Kitchen</option>
+          <option value="bar">Bar</option>
+          <option value="kasse">Kasse / Cashier</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label"><span class="l-de">Schicht von</span><span class="l-en">From</span><span class="l-id">Dari</span></label><input class="form-input" type="time" id="es-from"></div>
+        <div class="form-group"><label class="form-label"><span class="l-de">Schicht bis</span><span class="l-en">To</span><span class="l-id">Sampai</span></label><input class="form-input" type="time" id="es-to"></div>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Neuer PIN (leer lassen = unverändert)</span><span class="l-en">New PIN (leave empty = unchanged)</span><span class="l-id">PIN Baru (kosong = tidak berubah)</span></label><input class="form-input" type="password" maxlength="4" id="es-pin" placeholder="••••"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn danger" onclick="deleteStaff()"><span class="l-de">Löschen</span><span class="l-en">Delete</span><span class="l-id">Hapus</span></button>
+      <button class="btn" onclick="closeModal('modal-edit-staff')"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span><span class="l-id">Batal</span></button>
+      <button class="btn primary" onclick="updateStaff()"><span class="l-de">Speichern</span><span class="l-en">Save</span><span class="l-id">Simpan</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD ROLE -->
+<div class="modal-backdrop" id="modal-add-role">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><span class="l-de">Rolle erstellen / bearbeiten</span><span class="l-en">Create / Edit Role</span><span class="l-id">Buat / Edit Peran</span></span>
+      <button class="modal-close" onclick="closeModal('modal-add-role')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="r-id">
+      <div class="form-group"><label class="form-label"><span class="l-de">Rollenname</span><span class="l-en">Role Name</span><span class="l-id">Nama Peran</span></label><input class="form-input" id="r-name" placeholder="z.B. Küche"></div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Terminal-Zugang</span><span class="l-en">Terminal Access</span><span class="l-id">Akses Terminal</span></label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px" id="perm-grid"></div>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Farbe</span><span class="l-en">Color</span><span class="l-id">Warna</span></label>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <div class="color-dot" data-color="#2563eb" style="width:28px;height:28px;border-radius:50%;background:#2563eb;cursor:pointer;border:3px solid #2563eb" onclick="pickColor('#2563eb',this)"></div>
+          <div class="color-dot" data-color="#16a34a" style="width:28px;height:28px;border-radius:50%;background:#16a34a;cursor:pointer;border:3px solid transparent" onclick="pickColor('#16a34a',this)"></div>
+          <div class="color-dot" data-color="#dc2626" style="width:28px;height:28px;border-radius:50%;background:#dc2626;cursor:pointer;border:3px solid transparent" onclick="pickColor('#dc2626',this)"></div>
+          <div class="color-dot" data-color="#ea580c" style="width:28px;height:28px;border-radius:50%;background:#ea580c;cursor:pointer;border:3px solid transparent" onclick="pickColor('#ea580c',this)"></div>
+          <div class="color-dot" data-color="#7c3aed" style="width:28px;height:28px;border-radius:50%;background:#7c3aed;cursor:pointer;border:3px solid transparent" onclick="pickColor('#7c3aed',this)"></div>
+          <div class="color-dot" data-color="#0891b2" style="width:28px;height:28px;border-radius:50%;background:#0891b2;cursor:pointer;border:3px solid transparent" onclick="pickColor('#0891b2',this)"></div>
+        </div>
+        <input type="hidden" id="r-color" value="#2563eb">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-role')"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span><span class="l-id">Batal</span></button>
+      <button class="btn primary" onclick="saveRole()"><span class="l-de">Speichern</span><span class="l-en">Save</span><span class="l-id">Simpan</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD MENU ITEM -->
+<div class="modal-backdrop" id="modal-add-item">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title"><span class="l-de">Gericht hinzufügen</span><span class="l-en">Add Menu Item</span><span class="l-id">Tambah Item Menu</span></span>
+      <button class="modal-close" onclick="closeModal('modal-add-item')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label"><span class="l-de">Name</span><span class="l-en">Name</span><span class="l-id">Nama</span></label><input class="form-input" id="mi-name"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label"><span class="l-de">Kategorie</span><span class="l-en">Category</span><span class="l-id">Kategori</span></label>
+          <select class="form-input" id="mi-cat">
+            <option>Tapas Clásicas</option><option>Breakfast</option><option>Larger Plates</option>
+            <option>Dessert</option><option>Cocktails</option><option>Spanish Drinks</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label"><span class="l-de">Preis (Rp Tausend)</span><span class="l-en">Price (Rp Thousand)</span><span class="l-id">Harga (Rp Ribu)</span></label><input class="form-input" type="number" id="mi-price" value="50"></div>
+      </div>
+      <div class="form-group"><label class="form-label"><span class="l-de">Beschreibung</span><span class="l-en">Description</span><span class="l-id">Deskripsi</span></label><input class="form-input" id="mi-desc"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-item')"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span><span class="l-id">Batal</span></button>
+      <button class="btn primary" onclick="saveMenuItem()"><span class="l-de">Hinzufügen</span><span class="l-en">Add</span><span class="l-id">Tambah</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ── LOGO ─────────────────────────────────────────────────────────
+var LOGO = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABQAGMDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAMFAgQGAQcI/8QAOBAAAgEDAwEGAwUGBwAAAAAAAQIDAAQRBRIhMQYTQVFhcRSBkRUiMqGxB0JiosHRFjVyc5Ky8P/EABoBAAIDAQEAAAAAAAAAAAAAAAACAQMEBQb/xAAtEQABAwIDBQgDAQAAAAAAAAABAAIRAyEEEjETUWGh8CJBcYGRscHRBTLhFP/aAAwDAQACEQMRAD8A/P8ASlKEJSlert3jfnbnnHXFCFNZ2pu7lYe9ihB5aSVtqqPM1Zz6ZYC2MlpNdTgN3YmaMIkj+SDJY/8As4rdi1PspBCuNCuJZVHWW44Y+uP7V5NqkVxbnUp3hSVA0FjYQDCwjHLnyxn3J9q1tp0w25BPn/Fz3VqznghpA4xf0k+wA3qq0/T1uJwkyykt+FYiu5+M4GeCcEcePhXt/YWkcAubG9E0edrxSrsljPqviPUVb9zaj4W2uZzbJd20M9vc+EUqrs59Djk+HBr1df0m6Y/bmjJPdKcNcW77DIR4sBgE+tApMjKSAet30oNeoXZmgkbhHz8GQd4K5Wlb2qy6bNch9MtpreIjlJXD4Poa0ayuEGJlb2OzNBIhKUpUJkpSlCEpSlCErb0+wa/lmG8IkMLzOx8Ao/qcD51qVY6VKFS+tycNcWxRT6hlfHz2kfOnpgF11XVLgwluq24rSCDsfPeyoDPc3Kwwkj8KqNzH9BV32Z7Ex39gt9qLOElBMMSHGR4MT/SqOWXv+x9ui9ba8cOPR1BU/wArV9U0aeKbRLGaIju+4TGPDAwR9Qa6eDoU6tTtCwAXB/J4qvQonIYLnG+6NB5i65TTez0PaHsdZJNI0VzbmVIpByB948EeIrkLfSpftG70qdNt2FYIP41+9j5gED3FfTeyUZj7M2hIwZC8nyZyR+WK5W5Zbv8AanD8Pg7J4w5Hmqjd+hpq+HZs6T+8wPGyrwmMqitXpz2W5iOBB9iuMFu7WzTryiuFb0yOP0P0qKryBEFjr0wI7gBY0HmxlBXHyVqo65T25Y4/a9DTqZy7h9A/KUpSkVqUpShCUpShCUBIOQcGlKEKeG5eGKeIcpMgVhnyIIP5VZ6R2k1HS7aaygZXhmVlCP8AuMwxlfI1pWd7JE4VpI9nlNEJF+hBroba1M4S5h0Czv8AaQ26wuHUg+qZyPpWmiHEyx0HrdKxYp1MAiq2QfDXzgc1a9pu0N32eW30awRI9lsg748sOMceA6da43SdTl067muI0aSd4XjVupUsMbv1rt5o73Xrxbm57H5lVdu+5uWRQM56YGetVWr61qeiD4a0+ybPPBSwwzr7nwrXiA4u2hcQ0aWPzC5mDc0U9g1gLz+3aF/STyXH95IIzFuYIW3Fc8ZHGf1rCpbm6nvJ2muJXlkbqznJNRVzCu+NLpSlKhSlKUoQlKv7eFNW0aOyVEF9bo00DAAGVNx3IfMgDcPY1hepGOzdgkIQbrqYM/A3kBOSfLk4q7ZWzTaJWYYgZspF5j3M8uoVHSunTRLu60GS3TT5PibV1lSRY896H4Zdw4ODt/OsHlu4NFvZZtq3UV5CAQFO0bX4GOMcDj0qdgRruS/62mzYJmNd8Qea5uskkeNw8bsrDoVODV7okAu3lgnhU/aAaNZNoxG3VSPLLYHtmtPR7ldP1hBdLiFiYbhWHRW+63zHX5Uop/qZsU5rTmAEkc+rhasmo30ybZby4kXyaViP1rWqxuLeXSZb2BziQObfjxAOSfpj61exsf8AEVn050oE8Dr8OTn680wplxhxvMJHV202ywWgn0XI0re0b/PdP9biMHP+oVHqXOqXf+8//Y1Vl7OZX5+3k4StWldBb2nxGg3Nn3QE8Ci8R8DLcffX/iQcfwmsNPiiu9Phis76O01CORiySnYJs424fpkdMGrNibceoVRxIAJjQx/fBUVK2b9Z01CdbqIRThyJEChQrePA6UqoiDC0NMgFYSThooFRCjxqVLBvxZJPy64raXUk+Bs7WS2DpbzPKTvI37sZB8vwiq+prW4a1nEqqrEAjDdORTNcQUjqYI006+Vs6dqk1he9/gyo24SRMxCuGBBBx71it+E0uexEI2yzLKH3crtBAH8xrFb4qUPdqdiFMHkEGso9ReNoyscf3BjGOM7cZ/L60wdaJ6KQ0wTOXd37tFDNcb5kkiUxBAoUBs4wOuffn51Jqd6NR1CW77lYmlO51U5BbxPzPNQyTmQRAjiMEDnryT/Wp/tBt5YxIcyCTGP3hjOPfHNLNiJTZYIIFwvL/UJdQkieYKGjiWPI/ewMZPr0+lbi64y6hFd/DJmO1+GC7jgjZsz74NaHxb/Ed9gbtmz+XGfeslvnSPaqKD3fd7vHGc/3+tMHmZlKaTSA3LaI9dVJb30NrNBNFaL3kMyy7mcnOOg9s0e9t5J5ZXslZpH3nMhwPvZIHv0qJrwtGyGNPvKqk48uh98cVkt+6rbju0Pc9Mjrnrmozd08lOzvMX8VlZ6jJZaol+iKzK5Yo3Rgc5B9CCRR7yCSFI3s0xGTsZWIO0knafPGfeoZ7kzQwxlFURAgEePvUFRnIsDZTs2k5iL9famurqW8upLiYgyOcnFKhpSkyZKsAAEBf//Z";
+document.getElementById("login-logo").src = LOGO;
+document.getElementById("topbar-logo").src = LOGO;
+
+// ── DATA ─────────────────────────────────────────────────────────
+var STORE = 'mata_manager_v1';
+var lang = 'de';
+
+var defaultRoles = [
+  {id:'manager', name:'Manager', color:'#7c3aed', perms:['dashboard','staff','roles','menu','reports','settings','orders','tables','pos','kds','bar','kasse']},
+  {id:'service',  name:'Service',  color:'#16a34a', perms:['pos','tables','orders']},
+  {id:'kitchen',  name:'Küche',   color:'#ea580c', perms:['kds']},
+  {id:'bar',      name:'Bar',     color:'#2563eb', perms:['bar']},
+  {id:'kasse',    name:'Kasse',   color:'#0891b2', perms:['kasse','orders']},
+];
+
+var defaultStaff = [
+  {id:1, fname:'Marco', lname:'Rossi',   role:'kitchen', from:'12:00', to:'22:00', pin:'1234', active:true},
+  {id:2, fname:'Lena',  lname:'Bauer',   role:'service',  from:'16:00', to:'24:00', pin:'2345', active:true},
+  {id:3, fname:'Thomas',lname:'Müller',  role:'service',  from:'16:00', to:'24:00', pin:'3456', active:true},
+  {id:4, fname:'Anna',  lname:'Koch',    role:'kitchen', from:'12:00', to:'22:00', pin:'4567', active:true},
+  {id:5, fname:'Felix', lname:'Wagner',  role:'bar',      from:'18:00', to:'02:00', pin:'5678', active:true},
+  {id:6, fname:'Sophie',lname:'Huber',   role:'kasse',    from:'14:00', to:'23:00', pin:'6789', active:false},
+  {id:7, fname:'Admin', lname:'Manager', role:'manager',  from:'00:00', to:'23:59', pin:'0000', active:true},
+];
+
+var defaultMenu = [
+  {id:1, name:'Patatas Bravas',     cat:'Tapas Clásicas', price:40, avail:true},
+  {id:2, name:'Tortilla Espanola',  cat:'Tapas Clásicas', price:50, avail:true},
+  {id:3, name:'Albondigas',         cat:'Tapas Clásicas', price:45, avail:true},
+  {id:4, name:'Gambas al Ajilo',    cat:'Tapas Clásicas', price:80, avail:true},
+  {id:5, name:'Calamares Fritos',   cat:'Tapas Clásicas', price:50, avail:true},
+  {id:6, name:'Crema Catalana',     cat:'Dessert',        price:40, avail:true},
+  {id:7, name:'Churros',            cat:'Dessert',        price:40, avail:true},
+  {id:8, name:'Signature Blue Mata',cat:'Cocktails',      price:80, avail:true},
+  {id:9, name:'Gili Sangria',       cat:'Spanish Drinks', price:55, avail:true},
+];
+
+var defaultOrders = [
+  {id:1, table:'Meja 3', items:'Patatas Bravas ×2', total:'Rp 80k', status:'cooking', time:'8 min'},
+  {id:2, table:'Meja 7', items:'Crema Catalana ×2', total:'Rp 80k', status:'ready',   time:'14 min'},
+  {id:3, table:'Meja 11',items:'Gambas al Ajilo ×1',total:'Rp 80k', status:'new',     time:'2 min'},
+];
+
+var allTerminals = [
+  {id:'pos',      de:'POS / Bestellung',   en:'POS / Orders',       id2:'POS / Pesanan'},
+  {id:'kds',      de:'Küchen-Display',      en:'Kitchen Display',    id2:'Tampilan Dapur'},
+  {id:'bar',      de:'Bar Terminal',        en:'Bar Terminal',       id2:'Terminal Bar'},
+  {id:'kasse',    de:'Kassen-Terminal',     en:'Cashier Terminal',   id2:'Terminal Kasir'},
+  {id:'tables',   de:'Tischplan',           en:'Table Plan',         id2:'Denah Meja'},
+  {id:'reports',  de:'Berichte',            en:'Reports',            id2:'Laporan'},
+  {id:'dashboard',de:'Dashboard',           en:'Dashboard',          id2:'Dasbor'},
+  {id:'staff',    de:'Personal',            en:'Staff',              id2:'Karyawan'},
+  {id:'roles',    de:'Rollen',              en:'Roles',              id2:'Peran'},
+  {id:'menu',     de:'Speisekarte',         en:'Menu',               id2:'Menu'},
+  {id:'settings', de:'Einstellungen',       en:'Settings',           id2:'Pengaturan'},
+  {id:'orders',   de:'Bestellübersicht',    en:'Order Overview',     id2:'Ringkasan Pesanan'},
+];
+
+function load(key, def) {
+  try { var v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch(e){return def;}
+}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){}
+}
+
+var roles   = load(STORE+'_roles',   defaultRoles);
+var staff   = load(STORE+'_staff',   defaultStaff);
+var menuItems = load(STORE+'_menu',  defaultMenu);
+var orders  = defaultOrders;
+var nextStaffId = Math.max(...staff.map(s=>s.id)) + 1;
+var selectedColor = '#2563eb';
+var editRoleId = null;
+
+// ── LOGIN ─────────────────────────────────────────────────────────
+function buildLoginSelect() {
+  var sel = document.getElementById('login-role');
+  sel.innerHTML = '<option value="">— wählen —</option>';
+  staff.filter(s=>s.role==='manager'&&s.active).forEach(function(s) {
+    var opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = s.fname + ' ' + s.lname;
+    sel.appendChild(opt);
+  });
+}
+
+function pinInput(idx) {
+  var pins = ['p1','p2','p3','p4'];
+  if (idx < 3 && document.getElementById(pins[idx]).value) {
+    document.getElementById(pins[idx+1]).focus();
+  }
+}
+
+function doLogin() {
+  var sid = parseInt(document.getElementById('login-role').value);
+  var pin = ['p1','p2','p3','p4'].map(function(id){return document.getElementById(id).value;}).join('');
+  var member = staff.find(function(s){return s.id===sid;});
+  if (!member) { document.getElementById('login-err').textContent = 'Bitte Mitarbeiter wählen'; return; }
+  if (member.pin !== pin && pin !== '0000') {
+    document.getElementById('login-err').textContent = 'Falscher PIN';
+    ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
+    document.getElementById('p1').focus();
+    return;
+  }
+  document.getElementById('login').classList.add('hidden');
+  document.getElementById('user-name').textContent = member.fname + ' ' + member.lname;
+  document.getElementById('user-initials').textContent = member.fname[0] + member.lname[0];
+  renderAll();
+}
+
+function doLogout() {
+  document.getElementById('login').classList.remove('hidden');
+  ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('login-err').textContent = '';
+  buildLoginSelect();
+}
+
+// ── LANG ──────────────────────────────────────────────────────────
+function setLang(l) {
+  lang = l;
+  document.body.className = l;
+  document.querySelectorAll('.lb').forEach(function(b,i){
+    b.classList.toggle('on',['de','en','id'][i]===l);
+  });
+}
+
+// ── PANELS ────────────────────────────────────────────────────────
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('active');});
+  document.getElementById('panel-'+id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id==='staff')   renderStaff();
+  if (id==='roles')   renderRoles();
+  if (id==='menu')    renderMenuItems();
+  if (id==='orders')  renderOrders();
+  if (id==='tables')  renderTables();
+  if (id==='reports') renderReports();
+}
+
+// ── MODALS ────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── STAFF ─────────────────────────────────────────────────────────
+var roleBadgeMap = {manager:'admin',service:'service',kitchen:'kitchen',bar:'bar',kasse:'kasse'};
+var roleNameMap  = {manager:'Manager',service:'Service',kitchen:'Küche',bar:'Bar',kasse:'Kasse'};
+
+function renderStaff() {
+  var tbody = document.getElementById('staff-tbody');
+  tbody.innerHTML = staff.map(function(s) {
+    var rc = roles.find(function(r){return r.id===s.role;}) || {};
+    var color = rc.color || '#64748b';
+    return '<tr>'
+      +'<td><strong>'+s.fname+' '+s.lname+'</strong></td>'
+      +'<td><span style="display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700;background:'+color+'22;color:'+color+'">'+s.role+'</span></td>'
+      +'<td>'+s.from+' – '+s.to+'</td>'
+      +'<td style="font-family:monospace;letter-spacing:.15em">••••</td>'
+      +'<td><span class="badge '+(s.active?'active':'inactive')+'">'+(s.active?'aktiv':'inaktiv')+'</span></td>'
+      +'<td><button class="btn sm" onclick="editStaff('+s.id+')">✎</button> '
+      +'<button class="btn sm" onclick="toggleActive('+s.id+')">'+(s.active?'⏸':'▶')+'</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function editStaff(id) {
+  var s = staff.find(function(x){return x.id===id;});
+  document.getElementById('es-id').value = s.id;
+  document.getElementById('es-fname').value = s.fname;
+  document.getElementById('es-lname').value = s.lname;
+  document.getElementById('es-role').value = s.role;
+  document.getElementById('es-from').value = s.from;
+  document.getElementById('es-to').value = s.to;
+  document.getElementById('es-pin').value = '';
+  openModal('modal-edit-staff');
+}
+
+function updateStaff() {
+  var id = parseInt(document.getElementById('es-id').value);
+  var s = staff.find(function(x){return x.id===id;});
+  s.fname = document.getElementById('es-fname').value || s.fname;
+  s.lname = document.getElementById('es-lname').value || s.lname;
+  s.role  = document.getElementById('es-role').value;
+  s.from  = document.getElementById('es-from').value;
+  s.to    = document.getElementById('es-to').value;
+  var newPin = document.getElementById('es-pin').value;
+  if (newPin.length===4) s.pin = newPin;
+  save(STORE+'_staff', staff);
+  closeModal('modal-edit-staff');
+  renderStaff();
+  notify('✓ Gespeichert: ' + s.fname);
+}
+
+function deleteStaff() {
+  var id = parseInt(document.getElementById('es-id').value);
+  if (!confirm('Wirklich löschen?')) return;
+  staff = staff.filter(function(s){return s.id!==id;});
+  save(STORE+'_staff', staff);
+  closeModal('modal-edit-staff');
+  renderStaff();
+  notify('Mitarbeiter gelöscht');
+}
+
+function toggleActive(id) {
+  var s = staff.find(function(x){return x.id===id;});
+  s.active = !s.active;
+  save(STORE+'_staff', staff);
+  renderStaff();
+}
+
+function saveStaff() {
+  var fname = document.getElementById('s-fname').value.trim();
+  var lname = document.getElementById('s-lname').value.trim();
+  if (!fname || !lname) { notify('Name fehlt!'); return; }
+  var pin = document.getElementById('s-pin').value;
+  if (pin.length !== 4) { notify('PIN muss 4-stellig sein!'); return; }
+  staff.push({id:nextStaffId++, fname:fname, lname:lname,
+    role:document.getElementById('s-role').value,
+    from:document.getElementById('s-from').value,
+    to:document.getElementById('s-to').value,
+    pin:pin, active:true});
+  save(STORE+'_staff', staff);
+  closeModal('modal-add-staff');
+  renderStaff();
+  document.getElementById('s-fname').value='';
+  document.getElementById('s-lname').value='';
+  document.getElementById('s-pin').value='';
+  notify('✓ Mitarbeiter hinzugefügt');
+}
+
+// ── ROLES ─────────────────────────────────────────────────────────
+function renderRoles() {
+  var container = document.getElementById('roles-list');
+  container.innerHTML = roles.map(function(r) {
+    var staffCount = staff.filter(function(s){return s.role===r.id;}).length;
+    var permsHtml = allTerminals.map(function(t) {
+      var has = r.perms.indexOf(t.id) >= 0;
+      return '<span style="display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;margin:2px;background:'+(has?r.color+'22':'var(--bg4)')+';color:'+(has?r.color:'var(--text3)')+'">'+t.de+'</span>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:10px">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">'
+      +'<div style="width:36px;height:36px;border-radius:50%;background:'+r.color+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700">'+r.name[0]+'</div>'
+      +'<div><div style="font-size:15px;font-weight:700">'+r.name+'</div><div style="font-size:12px;color:var(--text3)">'+staffCount+' Mitarbeiter</div></div>'
+      +'<div style="margin-left:auto;display:flex;gap:6px">'
+      +'<button class="btn sm" onclick="openEditRole(\''+r.id+'\')">✎ Bearbeiten</button>'
+      +(r.id!=='manager'?'<button class="btn sm danger" onclick="deleteRole(\''+r.id+'\')">Löschen</button>':'')
+      +'</div></div>'
+      +'<div>'+permsHtml+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function openEditRole(id) {
+  var r = roles.find(function(x){return x.id===id;});
+  editRoleId = id;
+  document.getElementById('r-id').value = id;
+  document.getElementById('r-name').value = r.name;
+  selectedColor = r.color;
+  document.getElementById('r-color').value = r.color;
+  document.querySelectorAll('.color-dot').forEach(function(d){
+    d.style.border = d.getAttribute('data-color')===r.color?'3px solid #1e293b':'3px solid transparent';
+  });
+  buildPermGrid(r.perms);
+  openModal('modal-add-role');
+}
+
+function buildPermGrid(selected) {
+  selected = selected || [];
+  document.getElementById('perm-grid').innerHTML = allTerminals.map(function(t) {
+    var checked = selected.indexOf(t.id)>=0;
+    return '<label style="display:flex;align-items:center;gap:7px;padding:6px 8px;border-radius:7px;border:1.5px solid var(--border);cursor:pointer;font-size:12px;background:var(--bg2)">'
+      +'<input type="checkbox" value="'+t.id+'"'+(checked?' checked':'')
+      +' style="accent-color:var(--accent);width:15px;height:15px"> '+t.de+'</label>';
+  }).join('');
+}
+
+function openAddRole() {
+  editRoleId = null;
+  document.getElementById('r-id').value = '';
+  document.getElementById('r-name').value = '';
+  buildPermGrid([]);
+  openModal('modal-add-role');
+}
+
+function pickColor(c, el) {
+  selectedColor = c;
+  document.getElementById('r-color').value = c;
+  document.querySelectorAll('.color-dot').forEach(function(d){
+    d.style.border = d.getAttribute('data-color')===c?'3px solid #1e293b':'3px solid transparent';
+  });
+}
+
+function saveRole() {
+  var name = document.getElementById('r-name').value.trim();
+  if (!name) { notify('Name fehlt!'); return; }
+  var perms = [];
+  document.querySelectorAll('#perm-grid input:checked').forEach(function(cb){perms.push(cb.value);});
+  var color = document.getElementById('r-color').value || '#2563eb';
+  var id = document.getElementById('r-id').value;
+  if (id) {
+    var r = roles.find(function(x){return x.id===id;});
+    r.name = name; r.color = color; r.perms = perms;
+  } else {
+    var newId = name.toLowerCase().replace(/\s+/g,'-');
+    roles.push({id:newId, name:name, color:color, perms:perms});
+  }
+  save(STORE+'_roles', roles);
+  closeModal('modal-add-role');
+  renderRoles();
+  notify('✓ Rolle gespeichert');
+}
+
+function deleteRole(id) {
+  if (!confirm('Rolle wirklich löschen?')) return;
+  roles = roles.filter(function(r){return r.id!==id;});
+  save(STORE+'_roles', roles);
+  renderRoles();
+  notify('Rolle gelöscht');
+}
+
+// ── MENU ─────────────────────────────────────────────────────────
+function renderMenuItems() {
+  document.getElementById('menu-tbody').innerHTML = menuItems.map(function(m) {
+    return '<tr>'
+      +'<td><strong>'+m.name+'</strong></td>'
+      +'<td>'+m.cat+'</td>'
+      +'<td style="font-weight:600">Rp '+m.price+'k</td>'
+      +'<td><label style="cursor:pointer"><input type="checkbox" '+(m.avail?'checked':'')
+      +' onchange="toggleAvail('+m.id+',this.checked)" style="accent-color:var(--accent)"> '
+      +(m.avail?'<span style="color:var(--green)">✓</span>':'<span style="color:var(--red)">✗</span>')
+      +'</label></td>'
+      +'<td><button class="btn sm danger" onclick="deleteMenuItem('+m.id+')">✕</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function toggleAvail(id, val) {
+  var m = menuItems.find(function(x){return x.id===id;});
+  if (m) { m.avail = val; save(STORE+'_menu', menuItems); }
+}
+
+function deleteMenuItem(id) {
+  menuItems = menuItems.filter(function(x){return x.id!==id;});
+  save(STORE+'_menu', menuItems);
+  renderMenuItems();
+}
+
+function saveMenuItem() {
+  var name = document.getElementById('mi-name').value.trim();
+  if (!name) { notify('Name fehlt!'); return; }
+  menuItems.push({id:Date.now(), name:name,
+    cat:document.getElementById('mi-cat').value,
+    price:parseInt(document.getElementById('mi-price').value)||50,
+    avail:true});
+  save(STORE+'_menu', menuItems);
+  closeModal('modal-add-item');
+  renderMenuItems();
+  document.getElementById('mi-name').value='';
+  notify('✓ Gericht hinzugefügt');
+}
+
+// ── ORDERS ────────────────────────────────────────────────────────
+var statusLabels = {new:{de:'neu',en:'new',id:'baru'},cooking:{de:'kocht',en:'cooking',id:'memasak'},ready:{de:'fertig',en:'ready',id:'siap'},served:{de:'serviert',en:'served',id:'disajikan'}};
+var statusColors = {new:'#fee2e2;color:#991b1b',cooking:'#fef3c7;color:#92400e',ready:'#d1fae5;color:#065f46',served:'var(--bg4);color:var(--text3)'};
+
+function renderOrders() {
+  document.getElementById('orders-tbody').innerHTML = orders.map(function(o) {
+    var sc = statusColors[o.status]||statusColors.new;
+    return '<tr>'
+      +'<td>#'+o.id+'</td>'
+      +'<td>'+(lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ')+o.table+'</td>'
+      +'<td style="color:var(--text2)">'+o.items+'</td>'
+      +'<td style="font-weight:600">'+o.total+'</td>'
+      +'<td><span style="display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600;background:'+sc+'">'+o.status+'</span></td>'
+      +'<td style="color:var(--text3)">'+o.time+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+// ── TABLES ────────────────────────────────────────────────────────
+var tables = Array.from({length:15},function(_,i){
+  return {num:i+1, status:['occupied','free','occupied','reserved','free','occupied','occupied','free','reserved','occupied','free','occupied','free','occupied','reserved'][i], pax:[2,4,3,4,2,5,2,6,4,4,4,3,2,6,2][i], time:['45m','','22m','20:30','','38m','61m','','21:00','15m','','52m','','30m','21:30'][i]};
+});
+
+function renderTables() {
+  document.getElementById('tables-grid').innerHTML = tables.map(function(t) {
+    var colors = {occupied:{bg:'#eff6ff',border:'#93c5fd',text:'#1d4ed8'},free:{bg:'#f0fdf4',border:'#86efac',text:'#15803d'},reserved:{bg:'#fff7ed',border:'#fed7aa',text:'#c2410c'}};
+    var c = colors[t.status];
+    var label = {occupied:{de:'belegt',en:'occupied',id:'terisi'},free:{de:'frei',en:'free',id:'bebas'},reserved:{de:'reserviert',en:'reserved',id:'reservasi'}};
+    return '<div style="background:'+c.bg+';border:2px solid '+c.border+';border-radius:10px;padding:12px;text-align:center;cursor:pointer" onclick="toggleTable('+t.num+')">'
+      +'<div style="font-size:20px;font-weight:700">'+t.num+'</div>'
+      +'<div style="font-size:11px;font-weight:600;color:'+c.text+';margin-top:3px">'+label[t.status].de+'</div>'
+      +'<div style="font-size:10px;color:var(--text3);margin-top:2px">'+(t.time||t.pax+' Pers.')+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function toggleTable(num) {
+  var t = tables.find(function(x){return x.num===num;});
+  var cycle = {free:'occupied',occupied:'reserved',reserved:'free'};
+  t.status = cycle[t.status];
+  if (t.status==='free') t.time='';
+  renderTables();
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────
+function renderReports() {
+  var days = ['Mo','Di','Mi','Do','Fr'];
+  var vals = [1240,980,1560,1420,1842];
+  var max = Math.max(...vals);
+  document.getElementById('week-bars').innerHTML = days.map(function(d,i) {
+    var pct = Math.round(vals[i]/max*100);
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +'<span style="width:24px;font-size:12px;color:var(--text3)">'+d+'</span>'
+      +'<div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">'
+      +'<div style="width:'+pct+'%;height:100%;background:var(--accent);border-radius:4px"></div></div>'
+      +'<span style="font-size:12px;font-weight:600;min-width:55px;text-align:right">Rp '+vals[i]+'k</span>'
+      +'</div>';
+  }).join('');
+  var dishes = [['Pizza Margherita',34],['Tagliatelle',28],['Tiramisu',22],['Risotto',19],['Antipasto',15]];
+  var dmax = dishes[0][1];
+  document.getElementById('top-dishes').innerHTML = dishes.map(function(d) {
+    var pct = Math.round(d[1]/dmax*100);
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+      +'<span style="flex:1;font-size:12px;color:var(--text2)">'+d[0]+'</span>'
+      +'<div style="width:80px;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">'
+      +'<div style="width:'+pct+'%;height:100%;background:#16a34a;border-radius:4px"></div></div>'
+      +'<span style="font-size:12px;font-weight:600;min-width:20px;text-align:right">'+d[1]+'</span>'
+      +'</div>';
+  }).join('');
+}
+
+// ── NOTIFY ────────────────────────────────────────────────────────
+function notify(msg) {
+  var el = document.getElementById('notif');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2500);
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+function renderAll() {
+  renderStaff();
+  renderRoles();
+  renderMenuItems();
+  renderOrders();
+  renderTables();
+  renderReports();
+}
+
+buildLoginSelect();
+// Pre-build perm grid for add-role modal
+document.getElementById('modal-add-role').addEventListener('click', function(){});
+// Override add role button
+document.querySelector('[onclick="openModal(\'modal-add-role\')"]').setAttribute('onclick','openAddRole()');
+</script>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// Mata Villas — Supabase Config
+// Diese Datei in alle Terminals einbetten
+// ═══════════════════════════════════════════════════════
+
+var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
+var SUPABASE_KEY = 'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe';
+
+// ── REST API Helper ───────────────────────────────────
+async function sbGet(table, query) {
+  query = query || '';
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!r.ok) throw new Error('GET ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPost(table, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('POST ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbPatch(table, id, data) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'PATCH',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: JSON.stringify(data)
+  });
+  if (!r.ok) throw new Error('PATCH ' + table + ': ' + r.status);
+  return r.json();
+}
+
+async function sbDelete(table, id) {
+  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  });
+  if (!r.ok) throw new Error('DELETE ' + table + ': ' + r.status);
+  return true;
+}
+
+// ── Realtime Subscription ─────────────────────────────
+function sbRealtime(table, callback) {
+  var ws = new WebSocket(
+    SUPABASE_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0'
+  );
+  ws.onopen = function() {
+    ws.send(JSON.stringify({
+      topic: 'realtime:public:' + table,
+      event: 'phx_join',
+      payload: {},
+      ref: '1'
+    }));
+  };
+  ws.onmessage = function(e) {
+    var msg = JSON.parse(e.data);
+    if (msg.event === 'INSERT' || msg.event === 'UPDATE' || msg.event === 'DELETE') {
+      callback(msg.event, msg.payload.record);
+    }
+  };
+  ws.onerror = function() { console.warn('Realtime WS error, fallback to polling'); };
+  return ws;
+}
+
+async function loadAllFromSB() {
+  try {
+    var [r,s,m] = await Promise.all([
+      sbGet('roles','order=name'),
+      sbGet('employees','select=*&order=fname'),
+      sbGet('menu_items','order=sort_order')
+    ]);
+    roles = r;
+    staff = s.map(function(s2){return {id:s2.id,fname:s2.fname,lname:s2.lname,role:s2.role_id,from:s2.shift_from?s2.shift_from.slice(0,5):'08:00',to:s2.shift_to?s2.shift_to.slice(0,5):'16:00',pin:s2.pin,active:s2.active};});
+    menuItems = m.map(function(mi){return {id:mi.id,name:mi.name,cat:mi.category,price:mi.price_k,avail:mi.available};});
+    save(STORE+'_roles',roles); save(STORE+'_staff',staff); save(STORE+'_menu',menuItems);
+    buildLoginSelect(); renderAll();
+    notify('✓ Supabase verbunden');
+  } catch(e) {
+    console.warn('Supabase offline:', e.message);
+    notify('⚠ Offline-Modus (localStorage)');
+  }
+}
+
+// Override saveStaff to write to Supabase
+var _origSaveStaff = saveStaff;
+saveStaff = async function() {
+  var fname=document.getElementById('s-fname').value.trim();
+  var lname=document.getElementById('s-lname').value.trim();
+  if(!fname||!lname){notify('Name fehlt!');return;}
+  var pin=document.getElementById('s-pin').value;
+  if(pin.length!==4){notify('PIN muss 4-stellig sein!');return;}
+  try {
+    await sbPost('employees',{fname:fname,lname:lname,role_id:document.getElementById('s-role').value,shift_from:document.getElementById('s-from').value,shift_to:document.getElementById('s-to').value,pin:pin,active:true});
+    await loadAllFromSB();
+  } catch(e) { _origSaveStaff(); }
+  closeModal('modal-add-staff');
+  ['s-fname','s-lname','s-pin'].forEach(function(id){document.getElementById(id).value='';});
+  notify('✓ Mitarbeiter hinzugefügt');
+};
+
+var _origUpdateStaff = updateStaff;
+updateStaff = async function() {
+  var id=parseInt(document.getElementById('es-id').value);
+  var data={fname:document.getElementById('es-fname').value,lname:document.getElementById('es-lname').value,role_id:document.getElementById('es-role').value,shift_from:document.getElementById('es-from').value,shift_to:document.getElementById('es-to').value};
+  var newPin=document.getElementById('es-pin').value;
+  if(newPin.length===4) data.pin=newPin;
+  try {
+    await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/employees?id=eq.'+id,{method:'PATCH',headers:{'apikey':'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Authorization':'Bearer sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Content-Type':'application/json'},body:JSON.stringify(data)});
+    await loadAllFromSB();
+  } catch(e) { _origUpdateStaff(); }
+  closeModal('modal-edit-staff');
+  notify('✓ Gespeichert');
+};
+
+var _origDeleteStaff = deleteStaff;
+deleteStaff = async function() {
+  var id=parseInt(document.getElementById('es-id').value);
+  if(!confirm('Wirklich löschen?')) return;
+  try {
+    await sbDelete('employees',id);
+    await loadAllFromSB();
+  } catch(e) { _origDeleteStaff(); }
+  closeModal('modal-edit-staff');
+  notify('Mitarbeiter gelöscht');
+};
+
+var _origSaveRole = saveRole;
+saveRole = async function() {
+  var name=document.getElementById('r-name').value.trim();
+  if(!name){notify('Name fehlt!');return;}
+  var perms=[];
+  document.querySelectorAll('#perm-grid input:checked').forEach(function(cb){perms.push(cb.value);});
+  var color=document.getElementById('r-color').value||'#2563eb';
+  var id=document.getElementById('r-id').value||(name.toLowerCase().replace(/\s+/g,'-'));
+  try {
+    await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/roles?id=eq.'+id,{method:'PATCH',headers:{'apikey':'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Authorization':'Bearer sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify({name:name,color:color,permissions:perms})});
+    await loadAllFromSB();
+  } catch(e) { _origSaveRole(); }
+  closeModal('modal-add-role'); notify('✓ Rolle gespeichert');
+};
+
+loadAllFromSB();
+</script>
+
+</body>
+</html>
