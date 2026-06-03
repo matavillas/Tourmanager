@@ -609,8 +609,9 @@ async function loadOrdersFromSB() {
           note:o.note||'', total:o.total_k, status:o.status,
           time:new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
           ts:new Date(o.created_at).getTime()
-        };
+        });
       });
+      if(newOrders.length>0) demoOrders=newOrders;
     }
     renderKDS();
   } catch(e) { renderKDS(); }
