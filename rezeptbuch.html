@@ -895,6 +895,62 @@ function saveNew(lang) {
   notify(head[lang].saved);
 }
 loadFromStorage();
+
+// ── SUPABASE ──────────────────────────────────────────────────
+var SB_URL_RZ = "https://pxzdkyvndosikdmstnpp.supabase.co";
+var SB_KEY_RZ = "sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe";
+
+async function sbRzGet() {
+  var r = await fetch(SB_URL_RZ+'/rest/v1/kitchen_recipes?order=sort_order', {
+    headers:{'apikey':SB_KEY_RZ,'Authorization':'Bearer '+SB_KEY_RZ}
+  });
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function sbRzPatch(id, data) {
+  return fetch(SB_URL_RZ+'/rest/v1/kitchen_recipes?id=eq.'+id, {
+    method:'PATCH',
+    headers:{'apikey':SB_KEY_RZ,'Authorization':'Bearer '+SB_KEY_RZ,'Content-Type':'application/json'},
+    body:JSON.stringify(data)
+  });
+}
+async function sbRzPost(data) {
+  var r = await fetch(SB_URL_RZ+'/rest/v1/kitchen_recipes', {
+    method:'POST',
+    headers:{'apikey':SB_KEY_RZ,'Authorization':'Bearer '+SB_KEY_RZ,'Content-Type':'application/json','Prefer':'return=representation'},
+    body:JSON.stringify(data)
+  });
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+function sbRowToLocal(row) {
+  return {id:row.id,cat:row.category,n:{de:row.name_de||'',en:row.name_en||'',id:row.name_id||''},i:{de:row.ingredients_de||[],en:row.ingredients_en||[],id:row.ingredients_id||[]},s:{de:row.steps_de||[],en:row.steps_en||[],id:row.steps_id||[]},note:row.note||''};
+}
+async function loadFromSupabase() {
+  try {
+    var data = await sbRzGet();
+    if(data && data.length > 0) { R = data.map(sbRowToLocal); render(); }
+  } catch(e) { console.warn('Supabase offline'); }
+}
+var _origSaveEdit_sb = saveEdit;
+saveEdit = async function(id, lang) {
+  _origSaveEdit_sb(id, lang);
+  var rec = R.find(function(x){return x.id===id;});
+  if(rec) sbRzPatch(id,{name_de:rec.n.de,name_en:rec.n.en,name_id:rec.n.id,category:rec.cat,ingredients_de:rec.i.de,ingredients_en:rec.i.en,ingredients_id:rec.i.id,steps_de:rec.s.de,steps_en:rec.s.en,steps_id:rec.s.id,note:rec.note,updated_at:new Date().toISOString()}).catch(function(){});
+};
+var _origSaveNew_sb = saveNew;
+saveNew = async function(lang) {
+  var name = document.getElementById("new-de").value.trim();
+  if(!name){notify("Name fehlt!");return;}
+  var newRec = {category:document.getElementById("new-cat").value,name_de:name,name_en:document.getElementById("new-en").value||name,name_id:document.getElementById("new-id").value||name,ingredients_de:parseIngs(document.getElementById("new-i-de").value),ingredients_en:parseIngs(document.getElementById("new-i-en").value),ingredients_id:parseIngs(document.getElementById("new-i-id").value),steps_de:(document.getElementById("new-s-de").value||'').split("\n").filter(function(l){return l.trim();}),steps_en:(document.getElementById("new-s-en").value||'').split("\n").filter(function(l){return l.trim();}),steps_id:(document.getElementById("new-s-id").value||'').split("\n").filter(function(l){return l.trim();}),note:document.getElementById("new-note").value};
+  try {
+    var saved = await sbRzPost(newRec);
+    if(saved&&saved[0]){R.push(sbRowToLocal(saved[0]));closeModal();render();notify(head[lang].saved);return;}
+  } catch(e){}
+  _origSaveNew_sb(lang);
+};
+loadFromSupabase();
+
 </script>
 </body>
 </html>
