@@ -444,10 +444,11 @@ var RECIPES = {"Signature Blue Mata": {"de": [["Blue Curaçao", "30 ml"], ["Vodk
 // ── Recipe popup ──────────────────────────────────────────────
 function toggleRecipe(e, name) {
   e.stopPropagation();
-  // Find or create popup next to this button
-  var btn = e.target;
+  var btn = e.target.closest('.recipe-btn');
+  if(!btn) return;
   var item = btn.closest('.ticket-item');
-  var existing = item.querySelector('.recipe-popup');
+  if(!item) return;
+  var existing = item.parentNode.querySelector('.recipe-popup[data-for="'+name+'"]');
   if(existing) { existing.classList.toggle('open'); return; }
   var r = RECIPES[name];
   if(!r) return;
@@ -456,9 +457,20 @@ function toggleRecipe(e, name) {
   }).join('');
   var popup = document.createElement('div');
   popup.className = 'recipe-popup open';
+  popup.setAttribute('data-for', name);
   popup.innerHTML = '<table>'+ing+'</table>';
   item.parentNode.insertBefore(popup, item.nextSibling);
 }
+
+// Event delegation for recipe buttons
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.recipe-btn');
+  if(btn) {
+    e.stopPropagation();
+    var name = btn.getAttribute('data-rname');
+    if(name) toggleRecipe(e, name);
+  }
+});
 
 // ── Direct order ──────────────────────────────────────────────
 var DO_DRINKS = [{"id": 501, "name": "Signature Blue Mata", "cat": "Cocktails", "price": 80}, {"id": 502, "name": "Margarita", "cat": "Cocktails", "price": 80}, {"id": 503, "name": "Gin Fizz", "cat": "Cocktails", "price": 80}, {"id": 504, "name": "Pina Colada", "cat": "Cocktails", "price": 80}, {"id": 505, "name": "Lime Daiquiri", "cat": "Cocktails", "price": 80}, {"id": 506, "name": "Arak Attack", "cat": "Cocktails", "price": 80}, {"id": 601, "name": "Gili Sangria", "cat": "Spanish Drinks", "price": 55}, {"id": 602, "name": "Calimocho", "cat": "Spanish Drinks", "price": 60}, {"id": 603, "name": "Tinto Verano", "cat": "Spanish Drinks", "price": 60}, {"id": 604, "name": "Red Wine", "cat": "Spanish Drinks", "price": 80}, {"id": 605, "name": "White Wine", "cat": "Spanish Drinks", "price": 80}, {"id": 701, "name": "Espresso", "cat": "Drinks", "price": 25}, {"id": 702, "name": "Lombok Black Coffee", "cat": "Drinks", "price": 25}, {"id": 703, "name": "Hot Latte", "cat": "Drinks", "price": 35}, {"id": 704, "name": "Iced Coffee Latte", "cat": "Drinks", "price": 40}, {"id": 705, "name": "Hot Tea", "cat": "Drinks", "price": 20}, {"id": 706, "name": "Iced Tea", "cat": "Drinks", "price": 25}, {"id": 707, "name": "Ice Lemon Tea", "cat": "Drinks", "price": 25}, {"id": 708, "name": "Mineral Water", "cat": "Drinks", "price": 10}, {"id": 709, "name": "Fresh Coconut", "cat": "Drinks", "price": 25}, {"id": 710, "name": "Kombucha", "cat": "Drinks", "price": 45}, {"id": 711, "name": "Banana Juice", "cat": "Drinks", "price": 35}, {"id": 712, "name": "Mango Juice", "cat": "Drinks", "price": 35}, {"id": 713, "name": "Pineapple Juice", "cat": "Drinks", "price": 35}, {"id": 714, "name": "Avocado Juice", "cat": "Drinks", "price": 35}, {"id": 715, "name": "Orange Juice", "cat": "Drinks", "price": 35}, {"id": 716, "name": "Green Booster", "cat": "Drinks", "price": 40}, {"id": 717, "name": "Small Bintang", "cat": "Drinks", "price": 40}, {"id": 718, "name": "Coca-Cola", "cat": "Drinks", "price": 25}, {"id": 719, "name": "Coca-Cola Zero", "cat": "Drinks", "price": 25}, {"id": 720, "name": "Sprite", "cat": "Drinks", "price": 25}];

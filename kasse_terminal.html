@@ -42,7 +42,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
 .kasse-layout{display:flex;flex:1;overflow:hidden;min-height:0}
 
 /* LEFT: OPEN BILLS */
-.bills-side{width:300px;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.bills-side{flex:1;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column;min-width:260px}
 .bills-header{padding:10px 14px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .bills-title{font-size:13px;font-weight:700}
 .badge-count{background:var(--orange);color:#fff;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px}
@@ -62,7 +62,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
 .bill-status.paid{background:var(--green-bg);color:var(--green)}
 
 /* RIGHT: PAYMENT */
-.payment-side{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.payment-side{width:340px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;min-height:0;border-left:1.5px solid var(--border);background:#fff}
 .payment-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--text3);gap:10px}
 
 /* RECEIPT */
@@ -70,30 +70,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
 .receipt::-webkit-scrollbar{width:4px}
 .receipt::-webkit-scrollbar-thumb{background:var(--border)}
 .receipt-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;max-width:420px;margin:0 auto}
-.receipt-header{background:var(--accent);color:#fff;padding:16px;text-align:center}
-.receipt-logo{font-size:22px;font-weight:800;margin-bottom:2px}
-.receipt-sub{font-size:11px;opacity:.8}
+.receipt-header{background:var(--accent);color:#fff;padding:10px;text-align:center}
+.receipt-logo{font-size:16px;font-weight:800;margin-bottom:1px}
+.receipt-sub{font-size:10px;opacity:.8}
 .receipt-table-info{padding:12px 16px;border-bottom:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--bg2)}
 .receipt-table-name{font-size:16px;font-weight:800}
 .receipt-time{font-size:12px;color:var(--text3)}
 .receipt-items{padding:10px 0}
-.receipt-item{display:flex;align-items:center;gap:10px;padding:7px 16px;border-bottom:1px solid var(--border)}
+.receipt-item{display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid var(--border)}
 .receipt-item:last-child{border-bottom:none}
 .receipt-item-qty{width:28px;height:28px;border-radius:6px;background:var(--bg4);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .receipt-item-name{flex:1;font-size:13px;font-weight:600}
 .receipt-item-price{font-size:13px;font-weight:700;color:var(--text2)}
-.receipt-totals{padding:10px 16px;border-top:1.5px solid var(--border);background:var(--bg2)}
-.receipt-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text2);padding:3px 0}
-.receipt-row.total{font-size:16px;font-weight:800;color:var(--text);padding-top:8px;margin-top:4px;border-top:1.5px solid var(--border)}
+.receipt-totals{padding:6px 12px;border-top:1.5px solid var(--border);background:var(--bg2)}
+.receipt-row.total{display:flex;justify-content:space-between;font-size:18px;font-weight:800;color:var(--text);padding:12px 0}
 
 /* PAYMENT METHODS */
-.pay-section{border-top:1.5px solid var(--border);padding:14px 16px;background:#fff;flex-shrink:0}
+.pay-section{border-top:1.5px solid var(--border);padding:10px 12px;background:#fff;flex-shrink:0}
 .pay-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
-.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.pay-method{padding:12px 6px;border-radius:10px;border:2px solid var(--border);background:#fff;cursor:pointer;text-align:center;transition:all .12s;font-family:var(--font)}
+.pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.pay-method{padding:8px 4px;border-radius:8px;border:2px solid var(--border);background:#fff;cursor:pointer;text-align:center;transition:all .12s;font-family:var(--font)}
 .pay-method:hover{border-color:var(--accent);background:var(--accent-bg)}
 .pay-method.selected{border-color:var(--accent);background:var(--accent-bg)}
-.pay-method-icon{font-size:22px;margin-bottom:4px}
+.pay-method-icon{font-size:18px;margin-bottom:2px}
 .pay-method-label{font-size:11px;font-weight:700;color:var(--text2)}
 .pay-cash-row{display:flex;gap:8px;align-items:center;margin-bottom:12px}
 .pay-cash-input{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font);background:var(--bg2);outline:none}
@@ -332,12 +331,10 @@ function renderReceipt(){
   }).join('');
   document.getElementById('receipt').innerHTML =
     '<div class="receipt-card">'
-    +'<div class="receipt-header"><div class="receipt-logo">Mata Villas</div><div class="receipt-sub">Tapas Bar · Surabaya</div></div>'
+    +'<div class="receipt-header"><div class="receipt-logo">Mata Villas</div><div class="receipt-sub">Tapas Bar · Gili Trawangan</div></div>'
     +'<div class="receipt-table-info"><span class="receipt-table-name">'+tWord()+o.table+'</span><span class="receipt-time">'+o.time+'</span></div>'
     +'<div class="receipt-items">'+itemsHtml+'</div>'
     +'<div class="receipt-totals">'
-    +'<div class="receipt-row"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'
-    +'<div class="receipt-row"><span>PPN 10%</span><span>Rp '+tax+'k</span></div>'
     +'<div class="receipt-row total"><span>Total</span><span>Rp '+o.total+'k</span></div>'
     +'</div></div>';
   document.getElementById('cash-given').value='';
@@ -558,13 +555,17 @@ confirmPayment = async function() {
     document.getElementById('paid-change').textContent=cl[lang]+'Rp '+chg+'k';
     document.getElementById('paid-change').style.display=chg>0?'block':'none';
   } else { document.getElementById('paid-change').style.display='none'; }
+  var paidId = selectedBill.id;
   ol.classList.add('show');
   setTimeout(async function(){
     ol.classList.remove('show');
+    // Remove paid bill from local list immediately
+    demoOrders = demoOrders.filter(function(x){return x.id!==paidId;});
     selectedBill=null;
     document.getElementById('payment-empty').style.display='flex';
     document.getElementById('receipt').style.display='none';
     document.getElementById('pay-section').style.display='none';
+    renderBills();
     await loadBillsFromSB();
   },3000);
 };
