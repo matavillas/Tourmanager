@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Mata Villas v2026-06-05 15:27 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -147,6 +148,67 @@ body.id .l-id{display:inline}
   .menu-grid{grid-template-columns:repeat(2,1fr)}
   .order-side{width:260px}
 }
+
+/* ── MOBILE LAYOUT ─────────────────────────────────────── */
+@media(max-width:700px){
+  .pos-layout{flex-direction:column;position:relative}
+  .menu-side{flex:1;overflow-y:auto;min-height:0}
+  .order-side{
+    position:fixed;bottom:0;left:0;right:0;
+    width:100%;
+    max-height:75vh;
+    border-left:none;
+    border-top:2px solid var(--border);
+    border-radius:16px 16px 0 0;
+    transform:translateY(100%);
+    transition:transform .3s ease;
+    z-index:50;
+    box-shadow:0 -4px 20px rgba(0,0,0,.15);
+  }
+  .order-side.open{transform:translateY(0)}
+  .order-side-handle{
+    display:flex;align-items:center;justify-content:center;
+    padding:8px;cursor:pointer;
+  }
+  .order-side-handle-bar{
+    width:36px;height:4px;border-radius:2px;background:var(--border)
+  }
+  /* Floating cart button */
+  .cart-fab{
+    display:flex;
+    position:fixed;bottom:16px;right:16px;
+    width:56px;height:56px;border-radius:50%;
+    background:var(--accent);color:#fff;
+    border:none;font-size:22px;cursor:pointer;
+    box-shadow:0 4px 16px rgba(37,99,235,.4);
+    align-items:center;justify-content:center;
+    z-index:49;font-family:var(--font);
+    transition:transform .15s;
+  }
+  .cart-fab:active{transform:scale(.92)}
+  .cart-fab .fab-count{
+    position:absolute;top:-2px;right:-2px;
+    background:var(--red);color:#fff;
+    width:20px;height:20px;border-radius:50%;
+    font-size:11px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cart-fab.hidden{display:none}
+  /* Backdrop */
+  .cart-backdrop{
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.3);z-index:49;
+  }
+  .cart-backdrop.open{display:block}
+  .menu-grid{grid-template-columns:repeat(2,1fr)!important}
+  /* Table grid mobile */
+  .tables-grid{grid-template-columns:repeat(4,1fr)!important}
+}
+@media(min-width:701px){
+  .cart-fab{display:none!important}
+  .cart-backdrop{display:none!important}
+  .order-side-handle{display:none}
+}
 </style>
 </head>
 <body class="de">
@@ -202,7 +264,11 @@ body.id .l-id{display:inline}
   </div>
 
   <!-- RIGHT: ORDER -->
-  <div class="order-side">
+  <div class="cart-backdrop" id="cart-backdrop" onclick="toggleCart()"></div>
+<div class="order-side" id="order-side">
+  <div class="order-side-handle" onclick="toggleCart()">
+    <div class="order-side-handle-bar"></div>
+  </div>
     <div class="order-header">
       <span class="order-title">
         <span class="l-de">Bestellung</span>
@@ -808,6 +874,68 @@ sendOrder = async function() {
   setTimeout(function(){ol.classList.remove('show');clearOrder();document.getElementById('order-note').value='';},2000);
 };
 (async function() { await Promise.all([loadStaffFromSB(), loadMenuFromSB()]); })();
+
+
+// ── MOBILE CART ───────────────────────────────────────────
+function toggleCart() {
+  var side = document.getElementById('order-side');
+  var backdrop = document.getElementById('cart-backdrop');
+  if(!side) return;
+  var isOpen = side.classList.contains('open');
+  side.classList.toggle('open', !isOpen);
+  backdrop.classList.toggle('open', !isOpen);
+}
+
+function updateFab() {
+  var fab = document.getElementById('cart-fab');
+  var cnt = document.getElementById('fab-count');
+  if(!fab) return;
+  var total = order.reduce(function(s,o){return s+o.qty;},0);
+  fab.classList.toggle('hidden', total===0);
+  if(cnt) cnt.textContent = total;
+}
+
+// Patch addToOrder to update FAB
+var _origAddToOrder = addToOrder;
+addToOrder = function(id) {
+  _origAddToOrder(id);
+  updateFab();
+};
+
+// Patch removeItem to update FAB  
+var _origRemoveItem = removeItem;
+removeItem = function(id) {
+  _origRemoveItem(id);
+  updateFab();
+  if(order.length===0){
+    var side=document.getElementById('order-side');
+    var bd=document.getElementById('cart-backdrop');
+    if(side){side.classList.remove('open');}
+    if(bd){bd.classList.remove('open');}
+  }
+};
+
+// Patch clearOrder
+var _origClearOrder = clearOrder;
+clearOrder = function() {
+  _origClearOrder();
+  updateFab();
+  var side=document.getElementById('order-side');
+  var bd=document.getElementById('cart-backdrop');
+  if(side) side.classList.remove('open');
+  if(bd) bd.classList.remove('open');
+};
+
+// Patch sendOrder - close drawer after sending
+var _origSendOrderMobile = sendOrder;
+sendOrder = async function() {
+  await _origSendOrderMobile();
+  var side=document.getElementById('order-side');
+  var bd=document.getElementById('cart-backdrop');
+  if(side) side.classList.remove('open');
+  if(bd) bd.classList.remove('open');
+  updateFab();
+};
 
 </script>
 </body>
