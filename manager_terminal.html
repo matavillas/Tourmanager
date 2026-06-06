@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-05 15:27 -->
+<!-- Mata Villas v2026-06-05 16:36:58 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -517,6 +517,7 @@ document.getElementById("login-logo").src = LOGO;
 document.getElementById("topbar-logo").src = LOGO;
 
 // ── DATA ─────────────────────────────────────────────────────────
+// Build: 2026-06-05 16:27:29
 var STORE = 'mata_manager_v1';
 var lang = 'de';
 
@@ -1135,6 +1136,124 @@ saveRole = async function() {
 };
 
 loadAllFromSB();
+
+// ── REPORTS ───────────────────────────────────────────────────
+async function loadReports(preset) {
+  var fromEl = document.getElementById('rpt-from');
+  var toEl   = document.getElementById('rpt-to');
+  var today  = new Date().toISOString().slice(0,10);
+  
+  if(preset==='today') {
+    fromEl.value = today;
+    toEl.value   = today;
+  } else if(preset==='week') {
+    var d = new Date();
+    d.setDate(d.getDate()-6);
+    fromEl.value = d.toISOString().slice(0,10);
+    toEl.value   = today;
+  }
+  
+  var from = fromEl.value || today;
+  var to   = toEl.value   || today;
+  
+  document.getElementById('rpt-loading').textContent = '⏳ ...';
+  
+  try {
+    // Load sales with order details
+    var query = 'select=*,orders(table_number,order_items(name,price_k,quantity,category))'
+      + '&created_at=gte.' + from + 'T00:00:00'
+      + '&created_at=lte.' + to   + 'T23:59:59'
+      + '&order=created_at.desc';
+    
+    var sales = await sbGet('sales', query);
+    
+    // Summary
+    var total = sales.reduce(function(s,x){return s+(x.total_k||0);},0);
+    var cash  = sales.filter(function(x){return x.payment_method==='cash';}).reduce(function(s,x){return s+(x.total_k||0);},0);
+    var card  = sales.filter(function(x){return x.payment_method!=='cash';}).reduce(function(s,x){return s+(x.total_k||0);},0);
+    
+    document.getElementById('rpt-total').textContent = 'Rp '+total+'k';
+    document.getElementById('rpt-count').textContent = sales.length;
+    document.getElementById('rpt-cash').textContent  = 'Rp '+cash+'k';
+    document.getElementById('rpt-card').textContent  = 'Rp '+card+'k';
+    
+    // Table
+    var tbody = document.getElementById('rpt-tbody');
+    if(sales.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:30px;text-align:center;color:var(--text3)"><span class="l-de">Keine Rechnungen im gewählten Zeitraum</span><span class="l-en">No bills in selected period</span><span class="l-id">Tidak ada tagihan</span></td></tr>';
+      document.body.className = lang;
+      document.getElementById('rpt-loading').textContent = '';
+      return;
+    }
+    
+    var payIcons = {cash:'💵',card:'💳',qr:'📱'};
+    var payLabels = {
+      cash:  {de:'Bar',    en:'Cash',  id:'Tunai'},
+      card:  {de:'Karte',  en:'Card',  id:'Kartu'},
+      qr:    {de:'QRIS',   en:'QRIS',  id:'QRIS'}
+    };
+    
+    tbody.innerHTML = sales.map(function(s) {
+      var pm = s.payment_method||'cash';
+      var pmLabel = (payLabels[pm]&&payLabels[pm][lang])||pm.toUpperCase();
+      var pmIcon  = payIcons[pm]||'💳';
+      var time    = new Date(s.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      var date    = new Date(s.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+      var tableNum = s.table_number || (s.orders&&s.orders.table_number) || '?';
+      var tLabel  = lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';
+      
+      return '<tr style="border-bottom:1px solid var(--border)">'
+        +'<td style="padding:8px 12px;color:var(--text3);font-size:12px">#'+s.id+'</td>'
+        +'<td style="padding:8px 12px;font-weight:600">'+tLabel+tableNum+'</td>'
+        +'<td style="padding:8px 12px;color:var(--text2)">'+date+' '+time+'</td>'
+        +'<td style="padding:8px 12px">'+pmIcon+' '+pmLabel+'</td>'
+        +'<td style="padding:8px 12px;text-align:right;font-weight:700">Rp '+s.total_k+'k</td>'
+        +'<td style="padding:8px 12px;text-align:center">'
+        +'<button onclick="stornoBill('+s.id+','+s.order_id+')" style="padding:4px 10px;border-radius:6px;border:1.5px solid var(--red);background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">&#10005; <span class="l-de">Storno</span><span class="l-en">Cancel</span><span class="l-id">Batal</span></button>'
+        +'</td>'
+        +'</tr>';
+    }).join('');
+    
+    document.body.className = lang;
+    document.getElementById('rpt-loading').textContent = sales.length + ' ' + (lang==='de'?'Einträge':lang==='en'?'entries':'entri');
+    
+  } catch(e) {
+    document.getElementById('rpt-loading').textContent = '✗ Fehler';
+    document.getElementById('rpt-tbody').innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:var(--red)">Verbindungsfehler: '+e.message+'</td></tr>';
+    console.error('loadReports:', e);
+  }
+}
+
+async function stornoBill(saleId, orderId) {
+  var confirmMsg = lang==='de'?'Rechnung wirklich stornieren?':lang==='en'?'Really cancel this bill?':'Benar-benar batalkan tagihan ini?';
+  if(!confirm(confirmMsg)) return;
+  
+  try {
+    // Delete from sales
+    await sbDelete('sales', saleId);
+    
+    // Reset order status to 'served' (not paid)
+    if(orderId) {
+      await sbPatch('orders', orderId, {status:'served', payment_method:null});
+    }
+    
+    notify('✓ ' + (lang==='de'?'Storniert':lang==='en'?'Cancelled':'Dibatalkan'));
+    loadReports();
+  } catch(e) {
+    notify('✗ Fehler beim Storno');
+    console.error('stornoBill:', e);
+  }
+}
+
+// Auto-load today when reports panel opens
+var _origShowPanel = showPanel;
+showPanel = function(id) {
+  _origShowPanel(id);
+  if(id === 'reports') {
+    loadReports('today');
+  }
+};
+
 </script>
 
 </body>

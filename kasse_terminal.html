@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-05 15:27 -->
+<!-- Mata Villas v2026-06-05 16:36:58 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -525,6 +525,24 @@ async function loadBillsFromSB() {
 }
 confirmPayment = async function() {
   if(!selectedBill) return;
+  
+  // Check if bar items are all ready/served
+  var barCats = ['Cocktails','Spanish Drinks','Drinks'];
+  var hasBarItems = selectedBill.items && selectedBill.items.some(function(it){
+    return barCats.indexOf(it.cat||it.category) >= 0;
+  });
+  if(hasBarItems && selectedBill.status !== 'served') {
+    // Check via Supabase if bar items are ready
+    try {
+      var orderData = await sbGet('orders','select=status&id=eq.'+selectedBill.id);
+      if(orderData && orderData[0] && orderData[0].status !== 'ready' && orderData[0].status !== 'served') {
+        var warnMsg = lang==='de' ? '⚠ Getränke noch nicht fertig!' : lang==='en' ? '⚠ Drinks not ready yet!' : '⚠ Minuman belum siap!';
+        notify(warnMsg);
+        return;
+      }
+    } catch(e) {}
+  }
+  
   if(payMethod==='cash') {
     var given=parseFloat(document.getElementById('cash-given').value)||0;
     if(given<selectedBill.total){notify('⚠ Betrag zu niedrig!');return;}

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-05 15:27 -->
+<!-- Mata Villas v2026-06-05 16:36:58 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>POS Terminal — Mata Villas</title>
 <style>
 :root{
@@ -17,7 +17,7 @@
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
 /* LOGIN */
 .login{position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%);display:flex;align-items:center;justify-content:center;z-index:999}
@@ -150,7 +150,13 @@ body.id .l-id{display:inline}
 }
 
 /* ── MOBILE LAYOUT ─────────────────────────────────────── */
-@media(max-width:700px){
+
+@media(max-width:900px){
+  .topbar{padding-top:env(safe-area-inset-top,0px)}
+  body{padding-top:0}
+}
+
+@media(max-width:900px){
   .pos-layout{flex-direction:column;position:relative}
   .menu-side{flex:1;overflow-y:auto;min-height:0}
   .order-side{
@@ -204,7 +210,7 @@ body.id .l-id{display:inline}
   /* Table grid mobile */
   .tables-grid{grid-template-columns:repeat(4,1fr)!important}
 }
-@media(min-width:701px){
+@media(min-width:901px){
   .cart-fab{display:none!important}
   .cart-backdrop{display:none!important}
   .order-side-handle{display:none}
