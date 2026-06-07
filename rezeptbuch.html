@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 03:57:46 -->
+<!-- Mata Villas v2026-06-07 04:02:40 -->
 <html>
 <head>
 <meta charset="UTF-8">
@@ -65,6 +65,15 @@ input.hr,input.cr,input.rck{display:none}
 @media(max-width:500px){.rg{grid-template-columns:1fr}}
 @media print{.topbar,.catbar,.edbtn,.editform,.addbtn{display:none!important}}
 </style>
+
+<script>
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Tourmanager/sw.js')
+    .then(function(reg) {
+      reg.update();
+    });
+}
+</script>
 </head>
 <body>
 <input type="radio" name="lng" id="lng-de" class="hr" checked>

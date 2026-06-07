@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 03:57:46 -->
+<!-- Mata Villas v2026-06-07 04:02:40 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -123,6 +123,15 @@ body.de .l-de{display:inline}
 body.en .l-en{display:inline}
 body.id .l-id{display:inline}
 </style>
+
+<script>
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Tourmanager/sw.js')
+    .then(function(reg) {
+      reg.update();
+    });
+}
+</script>
 </head>
 <body class="de">
 
