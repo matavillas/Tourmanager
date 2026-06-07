@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 01:24:35 -->
+<!-- Mata Villas v2026-06-07 03:49:53 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="2026-06-06 05:45:45">
+<meta name="build" content="2026-06-07 03:49:53">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Manager Terminal — Mata Villas</title>
 <style>
@@ -638,6 +638,7 @@ function setLang(l) {
   document.querySelectorAll('.lb').forEach(function(b,i){
     b.classList.toggle('on',['de','en','id'][i]===l);
   });
+  renderAll();
 }
 
 // ── PANELS ────────────────────────────────────────────────────────

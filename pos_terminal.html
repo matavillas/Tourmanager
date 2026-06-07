@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 01:24:40 -->
+<!-- Mata Villas v2026-06-07 03:49:15 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="2026-06-07 01:24:40">
+<meta name="build" content="2026-06-07 03:49:15">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>POS Terminal — Mata Villas</title>
 <style>
@@ -625,8 +625,6 @@ function renderOrder() {
   var total = subtotal + tax;
 
   document.getElementById('order-count').textContent = total_items;
-  document.getElementById('subtotal').textContent = 'Rp '+subtotal+'k';
-  document.getElementById('tax').textContent = 'Rp '+tax+'k';
   document.getElementById('total').textContent = 'Rp '+total+'k';
 
   var hasOrder = order.length > 0 && currentTable;
