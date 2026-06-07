@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 01:24:35 -->
+<!-- Mata Villas v2026-06-07 01:49:14 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -326,7 +326,7 @@ var demoOrders = [
 
 async function loadOrders() {
   try {
-    var data = await sbGet('orders','select=*,order_items(*)&status=not.in.(paid,served)&order=created_at');
+    var data = await sbGet('orders','select=*,order_items(*)&status=not.in.(paid,served)&order=created_at&created_at=gte.'+new Date(Date.now()-24*60*60*1000).toISOString());
     var result = [];
     data.forEach(function(o) {
       var drinkItems = (o.order_items||[]).filter(function(i){return BAR_CATS.indexOf(i.category)>=0;});
