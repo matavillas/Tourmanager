@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 12:50:46 -->
+<!-- Mata Villas v2026-06-07 13:08:45 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build" content="2026-06-07 12:50:46">
+<meta name="build" content="2026-06-07 13:08:45">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>KDS — Mata Villas</title>
 <style>
@@ -524,7 +524,7 @@ buildLoginSelect();
 // ═══════════════════════════════════════════════════════
 
 var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
-var SUPABASE_KEY = 'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 
 // ── REST API Helper ───────────────────────────────────
 async function sbGet(table, query) {
@@ -641,7 +641,7 @@ setStatus = async function(orderId, newStatus) {
   try {
     await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/orders?id=eq.'+orderId, {
       method:'PATCH',
-      headers:{'apikey':'sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Authorization':'Bearer sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe','Content-Type':'application/json'},
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Content-Type':'application/json'},
       body:JSON.stringify({status:newStatus,updated_at:new Date().toISOString()})
     });
   } catch(e) {}

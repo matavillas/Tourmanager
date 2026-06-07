@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 04:02:40 -->
+<!-- Mata Villas v2026-06-07 13:08:45 -->
 <html>
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build" content="2026-06-07 03:57:46">
+<meta name="build" content="2026-06-07 13:08:45">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Rezeptbuch — Mata Villas</title>
 <style>
@@ -912,7 +912,7 @@ loadFromStorage();
 
 // ── SUPABASE ──────────────────────────────────────────────────
 var SB_URL_RZ = "https://pxzdkyvndosikdmstnpp.supabase.co";
-var SB_KEY_RZ = "sb_publishable_5n5o0frwleZ9srDUedY_mg_cjJQ8eMe";
+var SB_KEY_RZ = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw";
 
 async function sbRzGet() {
   var r = await fetch(SB_URL_RZ+'/rest/v1/kitchen_recipes?order=sort_order', {
