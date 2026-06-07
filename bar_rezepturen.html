@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 04:02:40 -->
+<!-- Mata Villas v2026-06-07 04:17:48 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -145,9 +145,10 @@ var catLabels = {
 };
 
 // ── Supabase ──────────────────────────────────────────────────
+var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 async function sbGet(table, query) {
   var r = await fetch(SB_URL+'/rest/v1/'+table+'?'+(query||''), {
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'}
+    headers:{'apikey':ANON_KEY,'Authorization':'Bearer '+ANON_KEY,'Content-Type':'application/json'}
   });
   if(!r.ok) throw new Error(r.status);
   return r.json();
@@ -155,7 +156,7 @@ async function sbGet(table, query) {
 async function sbPost(table, data) {
   var r = await fetch(SB_URL+'/rest/v1/'+table, {
     method:'POST',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    headers:{'apikey':ANON_KEY,'Authorization':'Bearer '+ANON_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(data)
   });
   if(!r.ok) throw new Error(r.status);
@@ -164,7 +165,7 @@ async function sbPost(table, data) {
 async function sbPatch(id, data) {
   var r = await fetch(SB_URL+'/rest/v1/bar_recipes?id=eq.'+id, {
     method:'PATCH',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+    headers:{'apikey':ANON_KEY,'Authorization':'Bearer '+ANON_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
     body:JSON.stringify(data)
   });
   if(!r.ok) throw new Error(r.status);
@@ -173,7 +174,7 @@ async function sbPatch(id, data) {
 async function sbDelete(id) {
   return fetch(SB_URL+'/rest/v1/bar_recipes?id=eq.'+id, {
     method:'DELETE',
-    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    headers:{'apikey':ANON_KEY,'Authorization':'Bearer '+ANON_KEY}
   });
 }
 
@@ -185,8 +186,9 @@ async function loadRecipes() {
     render();
   } catch(e) {
     document.getElementById('content').innerHTML =
-      '<div class="loading" style="color:var(--red)">&#10006; <span class="l-de">Verbindungsfehler</span><span class="l-en">Connection error</span><span class="l-id">Gagal terhubung</span></div>';
+      '<div class="loading" style="color:var(--red)">&#10006; Fehler: '+e.message+'</div>';
     document.body.className = lang;
+    console.error('loadRecipes error:', e);
   }
 }
 
