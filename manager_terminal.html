@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-06 05:45:45 -->
+<!-- Mata Villas v2026-06-07 01:24:35 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -619,8 +619,8 @@ function doLogin() {
     return;
   }
   document.getElementById('login').classList.add('hidden');
-  document.getElementById('user-name').textContent = [member.fname, member.lname].filter(Boolean).join(' ');
-  document.getElementById('user-initials').textContent = (member.fname||'?')[0].toUpperCase() + (member.lname||'')[0].toUpperCase();
+  document.getElementById('user-name').textContent = [member.fname, member.lname].filter(function(x){return x && x!=='undefined' && x!=='null';}).join(' ');
+  var _fn=member.fname||'?'; var _ln=(member.lname&&member.lname!=='undefined')?member.lname:''; document.getElementById('user-initials').textContent = _fn[0].toUpperCase() + (_ln?_ln[0].toUpperCase():'');
   renderAll();
 }
 
@@ -1253,7 +1253,7 @@ var _origShowPanel = showPanel;
 showPanel = function(id) {
   _origShowPanel(id);
   if(id === 'reports') {
-    loadReports('today');
+    setTimeout(function(){ loadReports('today'); }, 100);
   }
 };
 

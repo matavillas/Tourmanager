@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-06 03:25:41 -->
+<!-- Mata Villas v2026-06-07 01:24:40 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="2026-06-06 03:25:41">
+<meta name="build" content="2026-06-07 01:24:40">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>POS Terminal — Mata Villas</title>
 <style>
@@ -296,24 +296,12 @@ body.id .l-id{display:inline}
       <input type="text" id="order-note" placeholder="Notiz / Note / Catatan...">
     </div>
     <div class="order-footer">
-      <div class="order-totals">
-        <div class="order-row">
-          <span class="l-de">Zwischensumme</span>
-          <span class="l-en">Subtotal</span>
-          <span class="l-id">Subtotal</span>
-          <span id="subtotal">Rp 0k</span>
-        </div>
-        <div class="order-row">
-          <span class="l-de">PPN 10%</span>
-          <span class="l-en">Tax 10%</span>
-          <span class="l-id">PPN 10%</span>
-          <span id="tax">Rp 0k</span>
-        </div>
-        <div class="order-row total">
-          <span>Total</span>
-          <span id="total">Rp 0k</span>
-        </div>
-      </div>
+  <div class="order-totals">
+  <div class="order-row total">
+  <span>Total</span>
+  <span id="total">Rp 0k</span>
+  </div>
+  </div>
       <div class="order-actions">
         <button class="action-btn clear" onclick="clearOrder()">
           🗑 <span class="l-de">Leeren</span><span class="l-en">Clear</span><span class="l-id">Hapus</span>

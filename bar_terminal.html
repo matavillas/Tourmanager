@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-06 05:47:04 -->
+<!-- Mata Villas v2026-06-07 01:24:35 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -341,8 +341,8 @@ async function loadOrders() {
         });
       }
     });
-    if(result.length > 0) orders = result;
-    else orders = demoOrders;
+    // If Supabase responded (even with 0 drink orders), use real data
+    orders = result;
   } catch(e) {
     orders = demoOrders;
   }
