@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 04:49:40 -->
+<!-- Mata Villas v2026-06-07 12:50:59 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -183,10 +183,10 @@ if('serviceWorker' in navigator) {
       </option>
     </select>
     <div class="login-pin">
-      <input class="pin-dot" type="password" maxlength="1" id="p1" oninput="pinInput(0)" autocomplete="off" inputmode="numeric">
-      <input class="pin-dot" type="password" maxlength="1" id="p2" oninput="pinInput(1)" autocomplete="off" inputmode="numeric">
-      <input class="pin-dot" type="password" maxlength="1" id="p3" oninput="pinInput(2)" autocomplete="off" inputmode="numeric">
-      <input class="pin-dot" type="password" maxlength="1" id="p4" oninput="pinInput(3)" autocomplete="off" inputmode="numeric">
+      <input class="pin-dot" type="tel" maxlength="1" id="p1" oninput="pinInput(0)" autocomplete="new-password" inputmode="numeric" pattern="[0-9]*">
+      <input class="pin-dot" type="tel" maxlength="1" id="p2" oninput="pinInput(1)" autocomplete="new-password" inputmode="numeric" pattern="[0-9]*">
+      <input class="pin-dot" type="tel" maxlength="1" id="p3" oninput="pinInput(2)" autocomplete="new-password" inputmode="numeric" pattern="[0-9]*">
+      <input class="pin-dot" type="tel" maxlength="1" id="p4" oninput="pinInput(3)" autocomplete="new-password" inputmode="numeric" pattern="[0-9]*">
     </div>
     <button class="login-btn" onclick="doLogin()">
       <span class="l-de">Anmelden</span>

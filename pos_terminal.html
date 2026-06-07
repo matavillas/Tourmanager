@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 04:02:40 -->
+<!-- Mata Villas v2026-06-07 12:50:59 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -239,10 +239,10 @@ if('serviceWorker' in navigator) {
     <div class="login-title">POS Terminal</div>
     <select class="login-role" id="login-role"></select>
     <div class="login-pin">
-      <input class="pin-dot" type="password" maxlength="1" id="p1" oninput="pinNext(0)">
-      <input class="pin-dot" type="password" maxlength="1" id="p2" oninput="pinNext(1)">
-      <input class="pin-dot" type="password" maxlength="1" id="p3" oninput="pinNext(2)">
-      <input class="pin-dot" type="password" maxlength="1" id="p4" oninput="pinNext(3)">
+      <input class="pin-dot" type="tel" maxlength="1" id="p1" autocomplete="new-password" inputmode="numeric" oninput="pinNext(0)">
+      <input class="pin-dot" type="tel" maxlength="1" id="p2" autocomplete="new-password" inputmode="numeric" oninput="pinNext(1)">
+      <input class="pin-dot" type="tel" maxlength="1" id="p3" autocomplete="new-password" inputmode="numeric" oninput="pinNext(2)">
+      <input class="pin-dot" type="tel" maxlength="1" id="p4" autocomplete="new-password" inputmode="numeric" oninput="pinNext(3)">
     </div>
     <button class="login-btn" onclick="doLogin()">
       <span class="l-de">Anmelden</span><span class="l-en">Sign In</span><span class="l-id">Masuk</span>
