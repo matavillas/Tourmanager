@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 04:45:00 -->
+<!-- Mata Villas v2026-06-07 04:49:40 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build" content="2026-06-07 04:45:00">
+<meta name="build" content="2026-06-07 04:49:40">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Manager Terminal — Mata Villas</title>
 <style>
@@ -638,6 +638,12 @@ function doLogin() {
 
 function doLogout() {
   document.getElementById('login').classList.remove('hidden');
+  ['p1','p2','p3','p4'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+  setTimeout(function(){
+    var p1=document.getElementById('p1'); if(p1) p1.value='';
+  }, 100);
   ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('login-err').textContent = '';
   buildLoginSelect();
@@ -1158,6 +1164,13 @@ saveRole = async function() {
   } catch(e) { _origSaveRole(); }
   closeModal('modal-add-role'); notify('✓ Rolle gespeichert');
 };
+
+// Clear PIN on load
+setTimeout(function(){
+  ['p1','p2','p3','p4'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.value='';
+  });
+}, 300);
 
 loadAllFromSB();
 
