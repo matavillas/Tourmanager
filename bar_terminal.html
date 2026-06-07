@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 02:01:38 -->
+<!-- Mata Villas v2026-06-07 03:38:18 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="build" content="2026-06-06 05:47:04">
+<meta name="build" content="2026-06-07 03:38:18">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Bar Terminal — Mata Villas</title>
 <style>
@@ -380,7 +380,7 @@ function render() {
       var done = it.done||false;
       return '<div class="ticket-item'+(done?' ticket-done':'')+'">'
         +'<div class="item-qty">'+it.quantity+'×</div>'
-        +'<span class="item-name">'+it.name+'</span>'+(RECIPES[it.name]?'<button class="recipe-btn" data-rname="'+it.name.replace(/"/g,'&quot;')+'">&#128218;</button>':'');
+        +'<span class="item-name">'+it.name+'</span>'+(RECIPES[it.name]?'<button class="recipe-btn" data-rname="'+it.name.replace(/"/g,'&quot;')+'">&#128218;</button>':'')
         +'<div class="item-done'+(done?' checked':'')+'" onclick="toggleItem('+o.id+','+idx+')">'+(done?'✓':'')+'</div>'
         +'</div>';
     }).join('');
