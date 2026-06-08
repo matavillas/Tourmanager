@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-08 04:19:19 -->
+<!-- Mata Villas v2026-06-08 04:24:49 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -290,12 +290,23 @@ async function sbPatch(id,d){
 
 var BAR=['Cocktails','Spanish Drinks','Drinks'];
 
+async function loadStaff(){
+  try{
+    var d=await sbFetch('employees','select=id,fname,lname,pin,active,role_id&active=eq.true');
+    if(d&&d.length>0){
+      staff=d.map(function(s){return {id:s.id,fname:s.fname,lname:s.lname||'',pin:s.pin,active:true};});
+      buildSelect();
+    }
+  }catch(e){}
+}
+
 async function loadOrders(){
   try{
     var d=await sbFetch('orders','select=*,order_items(*)&status=in.(new,cooking,ready)&order=created_at');
     orders=d.map(function(o){
       var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)<0;});
-      if(!items.length) return null;
+      // Show order even if only bar items - kitchen needs to see all
+      if(!items.length) items = o.order_items||[];
       return {id:Number(o.id),table:o.table_number,status:o.status,note:o.note||'',ts:new Date(o.created_at).getTime(),
               items:items.map(function(i){return {name:i.name,qty:i.quantity,cat:i.category,done:false};})};
     }).filter(Boolean);
