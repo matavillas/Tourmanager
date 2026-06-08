@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 16:15:04 -->
+<!-- Mata Villas v2026-06-08 04:04:27 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build" content="2026-06-07 13:32:07">
+<meta name="build" content="2026-06-08 03:59:51">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Kassen-Terminal — Mata Villas</title>
 <style>
@@ -441,7 +441,7 @@ buildLoginSelect();
 // ═══════════════════════════════════════════════════════
 
 var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
+var SUPABASE_KEY = 'sb_publishable_qpej7F47va30On464iajww_VVSYGlWU';
 
 // ── REST API Helper ───────────────────────────────────
 async function sbGet(table, query) {
@@ -572,13 +572,13 @@ confirmPayment = async function() {
   try {
     await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/orders?id=eq.'+selectedBill.id, {
       method:'PATCH',
-      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Content-Type':'application/json'},
+      headers:{'apikey':'sb_publishable_qpej7F47va30On464iajww_VVSYGlWU','Authorization':'Bearer sb_publishable_qpej7F47va30On464iajww_VVSYGlWU','Content-Type':'application/json'},
       body:JSON.stringify({status:'paid',payment_method:payMethod})
     });
     await sbPost('sales',{order_id:selectedBill.id,table_number:parseInt(selectedBill.table),total_k:selectedBill.total,payment_method:payMethod});
     await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/tables?number=eq.'+parseInt(selectedBill.table), {
       method:'PATCH',
-      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Content-Type':'application/json'},
+      headers:{'apikey':'sb_publishable_qpej7F47va30On464iajww_VVSYGlWU','Authorization':'Bearer sb_publishable_qpej7F47va30On464iajww_VVSYGlWU','Content-Type':'application/json'},
       body:JSON.stringify({status:'free',pax:0})
     });
   } catch(e) {
