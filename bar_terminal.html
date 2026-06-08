@@ -90,6 +90,10 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .dir-row select{flex:1}
 .dir-row input{width:60px}
 .dir-btn{padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.dir-item-row{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.dir-item-row select{flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);background:#fff;outline:none}
+.dir-item-row input{width:55px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--font);background:#fff;outline:none}
+.dir-del{width:28px;height:28px;border-radius:6px;background:var(--red-bg);color:var(--red);border:1.5px solid var(--red-bd);cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 </style>
 </head>
 <body class="de">
@@ -132,11 +136,14 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="direct">
   <div class="direct-head" onclick="toggleDirect()">▶ <span class="l-de">Direktbestellung</span><span class="l-en">Direct order</span><span class="l-id">Pesan langsung</span></div>
   <div class="direct-body" id="direct-body">
-    <div class="dir-row">
-      <select id="dir-item"></select>
-      <input type="number" id="dir-qty" value="1" min="1" max="20">
-      <button class="dir-btn" onclick="sendDirect()"><span class="l-de">Hinzufügen</span><span class="l-en">Add</span><span class="l-id">Tambah</span></button>
+    <div class="dir-row" style="margin-bottom:8px">
+      <select id="dir-table" style="width:120px;flex:none">
+        <option value="">Tisch...</option>
+      </select>
+      <button class="dir-btn" onclick="addDirectItem()" style="white-space:nowrap">+ Position</button>
+      <button class="dir-btn" onclick="sendDirect()" style="background:#276749;white-space:nowrap"><span class="l-de">Abschicken</span><span class="l-en">Send</span><span class="l-id">Kirim</span></button>
     </div>
+    <div id="dir-items"></div>
   </div>
 </div>
 <div class="notif" id="notif"></div>
@@ -245,19 +252,47 @@ var barMenu=[
   {id:720,name:"Sprite",cat:"Drinks",price:25},
 ];
 
+var directItems=[];
+
 function buildDirectMenu(){
-  var sel=document.getElementById('dir-item');
-  sel.innerHTML=barMenu.map(function(m){return '<option value="'+m.id+'">'+m.name+' (Rp '+m.price+'k)</option>';}).join('');
+  // Build table selector
+  var tsel=document.getElementById('dir-table');
+  tsel.innerHTML='<option value="">Tisch...</option>';
+  for(var i=1;i<=15;i++) tsel.innerHTML+='<option value="'+i+'">Tisch '+i+'</option>';
+  // Add first item row
+  directItems=[];
+  addDirectItem();
 }
 
 function toggleDirect(){document.getElementById('direct-body').classList.toggle('open');}
+
+function addDirectItem(){
+  directItems.push({id:Date.now()});
+  renderDirectItems();
+}
+
+function removeDirectItem(id){
+  directItems=directItems.filter(function(x){return x.id!==id;});
+  renderDirectItems();
+}
+
+function renderDirectItems(){
+  var el=document.getElementById('dir-items');
+  el.innerHTML=directItems.map(function(item){
+    return '<div class="dir-item-row" data-id="'+item.id+'">'+
+      '<select>'+barMenu.map(function(m){return '<option value="'+m.id+'">'+m.name+' (Rp '+m.price+'k)</option>';}).join('')+'</select>'+
+      '<input type="number" value="1" min="1" max="20">'+
+      (directItems.length>1?'<div class="dir-del" onclick="removeDirectItem('+item.id+')">✕</div>':'')+
+    '</div>';
+  }).join('');
+}
 function tw(){return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';}
 function setF(f,btn){curF=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');render();}
 function onLangChange(){render();}
 
 async function load(){
   try{
-    var d=await sbGet('orders','select=id,table_number,status,note,created_at,order_items(id,name,quantity,price_k,category)&bar_status=in.(new,making)&status=neq.paid&order=created_at.asc');
+    var d=await sbGet('orders','select=id,table_number,status,bar_status,note,created_at,order_items(id,name,quantity,price_k,category)&bar_status=in.(new,making)&status=neq.paid&order=created_at.asc');
     orders=d.map(function(o){
       var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)>=0;});
       if(!items.length) return null;
@@ -328,15 +363,26 @@ async function upd(oid,ns){
 }
 
 async function sendDirect(){
-  var itemId=parseInt(document.getElementById('dir-item').value);
-  var qty=parseInt(document.getElementById('dir-qty').value)||1;
-  var item=barMenu.find(function(m){return m.id===itemId;});
-  if(!item)return;
+  var tableNum=parseInt(document.getElementById('dir-table').value);
+  if(!tableNum){notify('⚠ Bitte Tisch wählen');return;}
+  var rows=document.querySelectorAll('#dir-items .dir-item-row');
+  var items=[];
+  var total=0;
+  rows.forEach(function(row){
+    var itemId=parseInt(row.querySelector('select').value);
+    var qty=parseInt(row.querySelector('input').value)||1;
+    var item=barMenu.find(function(m){return m.id===itemId;});
+    if(item){items.push({name:item.name,price_k:item.price,quantity:qty,category:item.cat});total+=item.price*qty;}
+  });
+  if(!items.length){notify('⚠ Keine Positionen');return;}
   try{
-    var order=await sbPost('orders',{table_number:99,note:'Direktbestellung Bar',status:'new',bar_status:'new',kitchen_status:'served',total_k:item.price*qty});
+    var order=await sbPost('orders',{table_number:tableNum,note:'Direktbestellung Bar',status:'new',bar_status:'new',kitchen_status:'served',total_k:total});
     var oid=order[0].id;
-    await sbPost('order_items',[{order_id:oid,name:item.name,price_k:item.price,quantity:qty,category:item.cat}]);
-    notify('✓ Direktbestellung gespeichert');
+    await sbPost('order_items',items.map(function(i){return Object.assign({order_id:oid},i);}));
+    notify('✓ Direktbestellung Tisch '+tableNum+' gespeichert');
+    directItems=[];
+    addDirectItem();
+    document.getElementById('dir-table').value='';
     load();
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
