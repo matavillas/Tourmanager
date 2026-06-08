@@ -405,7 +405,7 @@ async function sendDirect(){
   try{
     var order=await sbPost('orders',{table_number:99,note:'Direktbestellung Bar',status:'new',total_k:item.price*qty});
     var oid=order[0].id;
-    await sbPost('order_items',[{order_id:oid,menu_item_id:item.id,name:item.name,price_k:item.price,quantity:qty,category:item.cat}]);
+    await sbPost('order_items',[{order_id:oid,name:item.name,price_k:item.price,quantity:qty,category:item.cat}]);
     notify('✓ Direktbestellung gespeichert');
     load();
   }catch(e){notify('⚠ Fehler: '+e.message);}
