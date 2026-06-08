@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-08 04:39:41 -->
+<!-- Mata Villas v2026-06-08 04:46:33 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -259,6 +259,8 @@ window.addEventListener('DOMContentLoaded',function(){
     el.addEventListener('keydown',function(e){if(e.key==='Backspace'&&!this.value&&idx>0) dots[idx-1].focus();});
   });
   buildSelect();
+  loadStaff();
+  startKDS();
 });
 
 function clearPins(){document.querySelectorAll('.pin-dot').forEach(function(el){el.value='';el.setAttribute('readonly','');});}
