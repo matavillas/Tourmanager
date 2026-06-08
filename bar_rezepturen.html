@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-08 04:39:41 -->
+<!-- Mata Villas v2026-06-08 06:15:13 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -131,7 +131,7 @@ if('serviceWorker' in navigator) {
 
 <script>
 var SB_URL = "https://pxzdkyvndosikdmstnpp.supabase.co";
-var SB_KEY = "sb_publishable_s_f3ki3749BUTt3jlqVXkQ_36Fklb1A";
+var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw";
 var lang = 'de';
 var currentCat = '';
 var recipes = [];
@@ -145,7 +145,7 @@ var catLabels = {
 };
 
 // ── Supabase ──────────────────────────────────────────────────
-var ANON_KEY = 'sb_publishable_s_f3ki3749BUTt3jlqVXkQ_36Fklb1A';
+var ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 async function sbGet(table, query) {
   var r = await fetch(SB_URL+'/rest/v1/'+table+'?'+(query||''), {
     headers:{'apikey':ANON_KEY,'Authorization':'Bearer '+ANON_KEY,'Content-Type':'application/json'}
