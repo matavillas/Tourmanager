@@ -428,7 +428,7 @@ async function sendOrder(){
   try{
     var res=await sbPost('orders',{table_number:selTable,note:note,status:'new',total_k:total});
     var oid=res[0].id;
-    await sbPost('order_items',order.map(function(o){return {order_id:oid,menu_item_id:o.id,name:o.name,price_k:o.price,quantity:o.qty,category:o.cat};}));
+    await sbPost('order_items',order.map(function(o){return {order_id:oid,name:o.name,price_k:o.price,quantity:o.qty,category:o.cat};}));
     var t=tables.find(function(x){return x.num===selTable;});if(t) t.status='occupied';
     var ol=document.getElementById('sent-overlay');
     var msgs={de:'Bestellung gesendet!',en:'Order sent!',id:'Dikirim!'};
