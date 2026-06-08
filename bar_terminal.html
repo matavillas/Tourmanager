@@ -261,7 +261,7 @@ async function load(){
     orders=d.map(function(o){
       var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)>=0;});
       if(!items.length) return null;
-      return {id:o.id,table:o.table_number,status:o.status,note:o.note||'',
+      return {id:o.id,table:o.table_number,status:o.bar_status||'new',note:o.note||'',
                ts:new Date(o.created_at).getTime(),
                items:items.map(function(i){return {id:i.id,name:i.name,qty:i.quantity,cat:i.category};})
       };
@@ -333,7 +333,7 @@ async function sendDirect(){
   var item=barMenu.find(function(m){return m.id===itemId;});
   if(!item)return;
   try{
-    var order=await sbPost('orders',{table_number:99,note:'Direktbestellung Bar',status:'new',total_k:item.price*qty});
+    var order=await sbPost('orders',{table_number:99,note:'Direktbestellung Bar',status:'new',bar_status:'new',kitchen_status:'served',total_k:item.price*qty});
     var oid=order[0].id;
     await sbPost('order_items',[{order_id:oid,name:item.name,price_k:item.price,quantity:qty,category:item.cat}]);
     notify('✓ Direktbestellung gespeichert');
