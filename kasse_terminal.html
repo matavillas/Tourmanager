@@ -225,7 +225,7 @@ async function loadBills(){
   try{
     // Zeige Bestellungen die von Küche ODER Bar bereits served wurden (status=served)
     // Auch new/making anzeigen falls Tisch manuell abrechnen will
-    var d=await sbGet('orders','select=id,table_number,total_k,status,created_at,order_items(name,quantity,price_k,category)&status=in.(served,new,making)&order=created_at.asc');
+    var d=await sbGet('orders','select=id,table_number,total_k,status,kitchen_status,bar_status,created_at,order_items(name,quantity,price_k,category)&status=neq.paid&or=(kitchen_status.eq.served,bar_status.eq.served)&order=created_at.asc');
     bills=d;
     renderBills();
     if(selBill&&!bills.find(function(b){return b.id===selBill.id;})){
@@ -240,13 +240,10 @@ function getPendingWarn(b){
   var items=b.order_items||[];
   var hasBar=items.some(function(i){return BAR_CATS.indexOf(i.category)>=0;});
   var hasKitchen=items.some(function(i){return KITCHEN_CATS.indexOf(i.category)>=0;});
-  var st=b.status;
-  if(st==='new'||st==='making'){
-    if(hasBar&&hasKitchen) return '⚠ Küche & Bar noch ausstehend';
-    if(hasBar) return '⚠ Bar noch ausstehend';
-    if(hasKitchen) return '⚠ Küche noch ausstehend';
-  }
-  return '';
+  var warns=[];
+  if(hasKitchen&&b.kitchen_status!=='served') warns.push('⚠ Küche noch ausstehend');
+  if(hasBar&&b.bar_status!=='served') warns.push('⚠ Bar noch ausstehend');
+  return warns.join(' · ');
 }
 
 function renderBills(){
