@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 16:15:03 -->
+<!-- Mata Villas v2026-06-08 03:37:50 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build" content="2026-06-07 13:32:07">
+<meta name="build" content="2026-06-08 03:37:50">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Manager Terminal — Mata Villas</title>
 <style>
@@ -909,7 +909,13 @@ var statusColors = {new:'#fee2e2;color:#991b1b',cooking:'#fef3c7;color:#92400e',
 
 function renderOrders() {
   document.body.className = lang;
-  document.getElementById('orders-tbody').innerHTML = orders.map(function(o) {
+  var tbody = document.getElementById('orders-tbody');
+  if(!tbody) return;
+  if(!orders || orders.length===0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)"><span class="l-de">Keine aktiven Bestellungen</span><span class="l-en">No active orders</span><span class="l-id">Tidak ada pesanan aktif</span></td></tr>';
+    document.body.className=lang; return;
+  }
+  tbody.innerHTML = orders.map(function(o) {
     var sc = statusColors[o.status]||statusColors.new;
     return '<tr>'
       +'<td>#'+o.id+'</td>'

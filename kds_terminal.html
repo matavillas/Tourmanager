@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-07 16:15:25 -->
+<!-- Mata Villas v2026-06-08 03:37:50 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="build" content="2026-06-07 13:32:07">
+<meta name="build" content="2026-06-08 03:37:50">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>KDS — Mata Villas</title>
 <style>
@@ -134,24 +134,6 @@ body.id .l-id{display:inline}
 .slabel.ready{background:var(--green-bg);color:var(--green)}
 .slabel.served{background:var(--bg4);color:var(--text3)}
 </style>
-
-<script>
-if('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/Tourmanager/sw.js')
-    .then(function(reg) {
-      reg.update();
-    });
-}
-
-function clearPins(){
-  ['p1','p2','p3','p4'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el){el.value='';el.setAttribute('readonly','');
-    setTimeout(function(){el.removeAttribute('readonly');},100);}
-  });
-}
-window.addEventListener("load",function(){clearPins();document.querySelectorAll(".pin-dot").forEach(function(el){el.addEventListener("focus",function(){this.removeAttribute("readonly");});});});
-</script>
 </head>
 <body class="de">
 
@@ -231,451 +213,150 @@ window.addEventListener("load",function(){clearPins();document.querySelectorAll(
 
 <div class="notif" id="notif"></div>
 
-
-
-
 <script>
 
-var LOGO = "data:image/jpeg;base64,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";
-document.getElementById("login-logo").src = LOGO;
-document.getElementById("topbar-logo").src = LOGO;
-
-// ── DATA ─────────────────────────────────────────────────────────
-var MSTORE = 'mata_manager_v1';
-var ORDER_KEY = 'mata_orders';
+var SB = 'https://pxzdkyvndosikdmstnpp.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 var lang = 'de';
 var currentFilter = 'all';
-var soundOn = true;
-var knownOrderIds = new Set();
-var refreshInterval = null;
-
-var defaultStaff = [
-  {id:1,fname:"Marco",lname:"Rossi",role:"kitchen",pin:"1234",active:true},
-  {id:2,fname:"Anna",lname:"Koch",role:"kitchen",pin:"4567",active:true},
-  {id:7,fname:"Admin",lname:"Manager",role:"manager",pin:"0000",active:true},
+var orders = [];
+var staff = [
+  {id:1, fname:'Marco', lname:'Rossi',   role:'kitchen', from:'12:00', to:'22:00', pin:'1234', active:true},
+  {id:2, fname:'Lena',  lname:'Bauer',   role:'service',  from:'16:00', to:'24:00', pin:'2345', active:true},
+  {id:3, fname:'Thomas',lname:'Müller',  role:'service',  from:'16:00', to:'24:00', pin:'3456', active:true},
+  {id:4, fname:'Anna',  lname:'Koch',    role:'kitchen', from:'12:00', to:'22:00', pin:'4567', active:true},
+  {id:5, fname:'Felix', lname:'Wagner',  role:'bar',      from:'18:00', to:'02:00', pin:'5678', active:true},
+  {id:6, fname:'Sophie',lname:'Huber',   role:'kasse',    from:'14:00', to:'23:00', pin:'6789', active:false},
+  {id:7, fname:'Admin', lname:'Manager', role:'manager',  from:'00:00', to:'23:59', pin:'0000', active:true},
 ];
+var refreshTimer = null;
+var LOGO = 'data:image/jpeg;base64,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';
 
-// Demo orders when no POS orders exist
-var demoOrders = [
-  {id:1,table:3,items:[{id:202,name:"Patatas Bravas",price:40,qty:2,cat:"Tapas"},{id:206,name:"Albondigas",price:45,qty:1,cat:"Tapas"}],note:"ohne Chili bitte",total:125,status:"new",time:"12:34",ts:Date.now()-8*60000},
-  {id:2,table:7,items:[{id:401,name:"Crema Catalana",price:40,qty:2,cat:"Dessert"},{id:402,name:"Churros",price:40,qty:1,cat:"Dessert"}],note:"",total:120,status:"cooking",time:"12:28",ts:Date.now()-14*60000},
-  {id:3,table:11,items:[{id:203,name:"Tortilla Espanola",price:50,qty:1,cat:"Tapas"},{id:208,name:"Gambas al Ajilo",price:80,qty:1,cat:"Tapas"}],note:"Garnelen medium",total:130,status:"ready",time:"12:15",ts:Date.now()-27*60000},
-  {id:4,table:2,items:[{id:303,name:"Nicoise Salad",price:70,qty:1,cat:"Larger Plates"},{id:306,name:"Beef Rendang",price:90,qty:1,cat:"Larger Plates"}],note:"",total:160,status:"new",time:"12:41",ts:Date.now()-1*60000},
-];
+document.getElementById('login-logo').src = LOGO;
+document.getElementById('topbar-logo').src = LOGO;
 
-function lsLoad(key, def) {
-  try { var v=localStorage.getItem(key); return v?JSON.parse(v):def; } catch(e){return def;}
+setInterval(function(){
+  var el=document.getElementById('topbar-time');
+  if(el) el.textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+},1000);
+
+function buildSelect(){
+  var sel=document.getElementById('login-role');
+  sel.innerHTML='<option value="">— Mitarbeiter wählen —</option>';
+  staff.filter(function(s){return s.active;}).forEach(function(s){
+    var o=document.createElement('option'); o.value=s.id; o.textContent=s.fname+' '+(s.lname||''); sel.appendChild(o);
+  });
 }
-function lsSave(key, val) {
-  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){}
-}
 
-var staff = lsLoad(MSTORE+'_staff', defaultStaff);
-// Item completion state: {orderId_itemIdx: true}
-var itemDone = lsLoad('mata_kds_items', {});
-
-// ── LOGIN ─────────────────────────────────────────────────────────
-function buildLoginSelect() {
-  var sel = document.getElementById('login-role');
-  sel.innerHTML = '<option value="">— Mitarbeiter wählen —</option>';
-  staff.filter(function(s){return s.active && (s.role==='kitchen'||s.role==='manager');})
-    .forEach(function(s){
-      var opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = s.fname + ' ' + s.lname + ' (' + s.role + ')';
-      sel.appendChild(opt);
+window.addEventListener('DOMContentLoaded',function(){
+  var dots=document.querySelectorAll('.pin-dot');
+  dots.forEach(function(el,idx){
+    el.addEventListener('focus',function(){this.removeAttribute('readonly');this.value='';});
+    el.addEventListener('input',function(){
+      if(this.value&&idx<3) dots[idx+1].focus();
+      if(idx===3&&dots[0].value&&dots[1].value&&dots[2].value&&dots[3].value) doLogin();
     });
-}
+    el.addEventListener('keydown',function(e){if(e.key==='Backspace'&&!this.value&&idx>0) dots[idx-1].focus();});
+  });
+  buildSelect();
+});
 
-function pinNext(idx) {
-  var ids=['p1','p2','p3','p4'];
-  if(idx<3&&document.getElementById(ids[idx]).value) document.getElementById(ids[idx+1]).focus();
-}
+function clearPins(){document.querySelectorAll('.pin-dot').forEach(function(el){el.value='';el.setAttribute('readonly','');});}
 
-function doLogin() {
-  var sid = parseInt(document.getElementById('login-role').value);
-  var pin = ['p1','p2','p3','p4'].map(function(id){return document.getElementById(id).value;}).join('');
-  var member = staff.find(function(s){return s.id===sid;});
-  if(!member){document.getElementById('login-err').textContent='Bitte Mitarbeiter wählen';return;}
-  if(member.pin!==pin&&pin!=='0000'){
-    document.getElementById('login-err').textContent='Falscher PIN';
-    ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
-    document.getElementById('p1').focus(); return;
-  }
+function doLogin(){
+  var sid=parseInt(document.getElementById('login-role').value);
+  var pin=Array.from(document.querySelectorAll('.pin-dot')).map(function(p){return p.value;}).join('');
+  var member=staff.find(function(s){return s.id===sid;});
+  if(!member){document.getElementById('login-err').textContent='Bitte Mitarbeiter waehlen';return;}
+  if(member.pin!==pin&&pin!=='0000'){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin-dot')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
-  document.getElementById('user-name').textContent = member.fname;
+  document.getElementById('topbar-user').textContent=member.fname;
   startKDS();
 }
 
-function doLogout(){
-  clearInterval(refreshInterval);
-  document.getElementById('login').classList.remove('hidden');
-  ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
-  document.getElementById('login-err').textContent='';
-  buildLoginSelect();
+function doLogout(){stopKDS();document.getElementById('login').classList.remove('hidden');clearPins();document.getElementById('login-err').textContent='';}
+function setLang(l){lang=l;document.body.className=l;document.querySelectorAll('.lb').forEach(function(b,i){b.classList.toggle('on',['de','en','id'][i]===l);});render();}
+function setFilter(f,btn){currentFilter=f;document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');render();}
+function tWord(){return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';}
+
+async function sbFetch(table,query){
+  var r=await fetch(SB+'/rest/v1/'+table+'?'+(query||''),{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function sbPatch(id,d){
+  return fetch(SB+'/rest/v1/orders?id=eq.'+id,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});
 }
 
-// ── LANG ──────────────────────────────────────────────────────────
-function setLang(l){
-  lang=l; document.body.className=l;
-  document.querySelectorAll('.lb').forEach(function(b,i){
-    b.classList.toggle('on',['de','en','id'][i]===l);
-  });
-}
+var BAR=['Cocktails','Spanish Drinks','Drinks'];
 
-// ── FILTER ────────────────────────────────────────────────────────
-function setFilter(f, el){
-  currentFilter=f;
-  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('on');});
-  el.classList.add('on');
-  renderKDS();
-}
-
-// ── SOUND ─────────────────────────────────────────────────────────
-function toggleSound(){
-  soundOn=!soundOn;
-  var btn=document.getElementById('sound-btn');
-  btn.textContent=soundOn?'🔔':'🔕';
-  btn.classList.toggle('on',soundOn);
-}
-
-function playNewOrderSound(){
-  if(!soundOn) return;
+async function loadOrders(){
   try{
-    var ctx=new(window.AudioContext||window.webkitAudioContext)();
-    [880,1100,880].forEach(function(freq,i){
-      var osc=ctx.createOscillator();
-      var gain=ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value=freq;
-      osc.type='sine';
-      gain.gain.setValueAtTime(0.3,ctx.currentTime+i*0.15);
-      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.15+0.12);
-      osc.start(ctx.currentTime+i*0.15);
-      osc.stop(ctx.currentTime+i*0.15+0.12);
-    });
-  }catch(e){}
+    var d=await sbFetch('orders','select=*,order_items(*)&status=in.(new,cooking,ready)&order=created_at');
+    orders=d.map(function(o){
+      var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)<0;});
+      if(!items.length) return null;
+      return {id:Number(o.id),table:o.table_number,status:o.status,note:o.note||'',ts:new Date(o.created_at).getTime(),
+              items:items.map(function(i){return {name:i.name,qty:i.quantity,cat:i.category,done:false};})};
+    }).filter(Boolean);
+    var ld=document.getElementById('live-dot'); if(ld) ld.style.background='#48bb78';
+    render();
+  }catch(e){var ld=document.getElementById('live-dot'); if(ld) ld.style.background='#fc8181';}
 }
 
-// ── KDS CORE ─────────────────────────────────────────────────────
-function getOrders(){
-  var orders = lsLoad(ORDER_KEY, []);
-  // Only kitchen-relevant items (not bar items for now)
-  if(orders.length===0) return demoOrders;
-  return orders.filter(function(o){return o.status!=='served';});
-}
+function startKDS(){loadOrders();refreshTimer=setInterval(loadOrders,10000);}
+function stopKDS(){if(refreshTimer)clearInterval(refreshTimer);orders=[];}
 
-function startKDS(){
-  renderKDS();
-  refreshInterval = setInterval(function(){
-    checkNewOrders();
-    renderKDS();
-    document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  }, 5000);
-}
-
-function checkNewOrders(){
-  var orders = getOrders();
-  orders.forEach(function(o){
-    if(!knownOrderIds.has(o.id)){
-      knownOrderIds.add(o.id);
-      if(knownOrderIds.size>1) playNewOrderSound();
-    }
-  });
-}
-
-function tWord(){ return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja '; }
-function elapsedMin(ts){ return Math.floor((Date.now()-ts)/60000); }
-
-function timeClass(mins){
-  if(mins<10) return 'time-ok';
-  if(mins<20) return 'time-warn';
-  return 'time-late';
-}
-
-function renderKDS(){
-  var orders = getOrders();
-
-  // Update counts
-  var counts = {all:0,new:0,cooking:0,ready:0};
-  orders.forEach(function(o){
-    counts.all++;
-    if(counts[o.status]!==undefined) counts[o.status]++;
-  });
+function render(){
+  var tw=tWord();
+  var filtered=currentFilter==='all'?orders:orders.filter(function(o){return o.status===currentFilter;});
   ['all','new','cooking','ready'].forEach(function(k){
     var el=document.getElementById('cnt-'+k);
-    if(el) el.textContent = counts[k]>0?'('+counts[k]+')':'';
+    if(el) el.textContent=(k==='all'?orders:orders.filter(function(o){return o.status===k;})).length;
   });
-
-  // Stat chips
-  document.getElementById('stat-counts').innerHTML =
-    '<span class="stat-chip stat-new">🔴 '+counts.new+'</span>'
-    +'<span class="stat-chip stat-cooking">🟡 '+counts.cooking+'</span>'
-    +'<span class="stat-chip stat-ready">🟢 '+counts.ready+'</span>';
-
-  // Filter
-  var filtered = currentFilter==='all' ? orders : orders.filter(function(o){return o.status===currentFilter;});
-
-  // Sort: new first, then by time
-  filtered.sort(function(a,b){
-    var order = {new:0,cooking:1,ready:2,served:3};
-    if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
-    return a.ts-b.ts;
-  });
-
-  var main = document.getElementById('kds-main');
-
-  if(filtered.length===0){
-    main.innerHTML = '<div class="kds-empty"><span style="font-size:48px">✅</span>'
-      +'<span style="font-size:16px;font-weight:600"><span class="l-de">Keine offenen Bestellungen</span><span class="l-en">No open orders</span><span class="l-id">Tidak ada pesanan</span></span>'
-      +'<span style="font-size:13px"><span class="l-de">Küche hat Pause 🍳</span><span class="l-en">Kitchen is clear 🍳</span><span class="l-id">Dapur bersih 🍳</span></span></div>';
-    document.body.className=lang;
-    return;
+  if(!filtered.length){
+    var msg={de:'Keine Bestellungen',en:'No orders',id:'Tidak ada pesanan'};
+    document.getElementById('kds-main').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text3)">'+msg[lang]+'</div>';
+    document.body.className=lang; return;
   }
-
-  main.innerHTML = filtered.map(function(o){
-    var mins = elapsedMin(o.ts);
-    var tc = timeClass(mins);
-
-    var itemsHtml = o.items.map(function(it,idx){
-      var key = o.id+'_'+idx;
-      var done = itemDone[key]||false;
-      // Only show food items (not drinks) — show all in KDS for now
-      return '<div class="ticket-item'+(done?' done':'')+'">'
-        +'<div class="item-qty">'+it.qty+'×</div>'
-        +'<div style="flex:1"><div class="item-name">'+it.name+'</div>'
-        +'<div class="item-cat">'+it.cat+'</div></div>'
-        +'<div class="item-check'+(done?' checked':'')+'" onclick="toggleItem('+o.id+','+idx+')">'+(done?'✓':'')+'</div>'
-        +'</div>';
+  document.getElementById('kds-main').innerHTML=filtered.map(function(o){
+    var mins=Math.round((Date.now()-o.ts)/60000);
+    var tc=mins>20?'urgent':mins>10?'warn':'ok';
+    var iHtml=o.items.map(function(it,idx){
+      return '<div class="ticket-item'+(it.done?' done':'')+'">'+
+        '<div class="item-qty">'+it.qty+'x</div>'+
+        '<div style="flex:1"><div class="item-name">'+it.name+'</div><div class="item-cat">'+it.cat+'</div></div>'+
+        '<div class="item-check'+(it.done?' checked':'')+'" onclick="toggleItem('+o.id+','+idx+')">'+(it.done?'v':'')+'</div>'+
+        '</div>';
     }).join('');
-
-    var noteHtml = o.note ? '<div class="ticket-note">📝 '+o.note+'</div>' : '';
-
-    var statusL = {
-      new:{de:'Neu',en:'New',id:'Baru'},
-      cooking:{de:'In Zubereitung',en:'Cooking',id:'Sedang masak'},
-      ready:{de:'Fertig',en:'Ready',id:'Siap'},
-      served:{de:'Serviert',en:'Served',id:'Disajikan'}
-    };
-
-    var footerBtns = '';
-    if(o.status==='new'){
-      footerBtns += '<button class="ticket-btn btn-start" onclick="setStatus(' + o.id + ',1)">'
-        +'🍳 <span class="l-de">Beginnen</span><span class="l-en">Start</span><span class="l-id">Mulai</span></button>';
-    }
-    if(o.status==='cooking'){
-      footerBtns += '<button class="ticket-btn btn-ready" onclick="setStatus(' + o.id + ',2)">'
-        +'✅ <span class="l-de">Fertig</span><span class="l-en">Ready</span><span class="l-id">Siap</span></button>';
-    }
-    if(o.status==='ready'){
-      footerBtns += '<button class="ticket-btn btn-served" onclick="setStatus(' + o.id + ',3)">'
-        +'🚀 <span class="l-de">Abgeholt</span><span class="l-en">Picked up</span><span class="l-id">Diambil</span></button>';
-    }
-
-    return '<div class="ticket '+o.status+'" id="ticket-'+o.id+'">'
-      +'<div class="ticket-header '+o.status+'">'
-      +'<div class="ticket-table">'+tWord()+o.table+'</div>'
-      +'<span class="ticket-num">#'+o.id+'</span>'
-      +'<span class="ticket-time '+tc+'">'+mins+' min</span>'
-      +'</div>'
-      +'<div class="ticket-body">'+itemsHtml+'</div>'
-      +noteHtml
-      +'<div class="ticket-footer">'+footerBtns+'</div>'
-      +'</div>';
+    var note=o.note?'<div class="ticket-note">Notiz: '+o.note+'</div>':'';
+    var footer='';
+    if(o.status==='new') footer='<button class="ticket-btn btn-start" onclick="setStatus('+o.id+',1)"><span class="l-de">Beginnen</span><span class="l-en">Start</span><span class="l-id">Mulai</span></button>';
+    else if(o.status==='cooking') footer='<button class="ticket-btn btn-ready" onclick="setStatus('+o.id+',2)"><span class="l-de">Fertig</span><span class="l-en">Ready</span><span class="l-id">Siap</span></button>';
+    else if(o.status==='ready') footer='<button class="ticket-btn btn-served" onclick="setStatus('+o.id+',3)"><span class="l-de">Abgeholt</span><span class="l-en">Picked up</span><span class="l-id">Diambil</span></button>';
+    return '<div class="ticket '+o.status+'">'+
+      '<div class="ticket-header '+o.status+'"><div class="ticket-table">'+tw+o.table+'</div><span class="ticket-time '+tc+'">'+mins+' min</span></div>'+
+      '<div class="ticket-body">'+iHtml+'</div>'+note+
+      '<div class="ticket-footer">'+footer+'</div></div>';
   }).join('');
-
   document.body.className=lang;
 }
 
-function setStatus(orderId, newStatus){
-  var statusMap = {1:'cooking', 2:'ready', 3:'served'};
-  if(typeof newStatus === 'number') newStatus = statusMap[newStatus];
-  var orders = lsLoad(ORDER_KEY, []);
-  var isDemo = orders.length===0;
-  var list = isDemo ? demoOrders : orders;
-  orderId = isNaN(orderId) ? orderId : Number(orderId);
-  var o = list.find(function(x){return x.id===orderId||String(x.id)===String(orderId);});
-  if(!o) return;
-  var old = o.status;
-  o.status = newStatus;
-  if(!isDemo) lsSave(ORDER_KEY, orders);
+function toggleItem(oid,idx){var o=orders.find(function(x){return x.id===oid;});if(o&&o.items[idx]){o.items[idx].done=!o.items[idx].done;render();}}
 
-  var msgs = {
-    cooking:{de:'In Zubereitung: ',en:'Cooking: ',id:'Sedang masak: '},
-    ready:{de:'Fertig: ',en:'Ready: ',id:'Siap: '},
-    served:{de:'Abgeholt: ',en:'Picked up: ',id:'Diambil: '}
-  };
-  notify('✓ ' + (msgs[newStatus]||{de:'',en:'',id:''})[lang] + o.table);
-  renderKDS();
+var SM={1:'cooking',2:'ready',3:'served'};
+async function setStatus(oid,ns){
+  if(typeof ns==='number') ns=SM[ns];
+  var o=orders.find(function(x){return x.id===oid;});
+  if(!o){return;}
+  o.status=ns;
+  if(ns==='served') orders=orders.filter(function(x){return x.id!==oid;});
+  render();
+  try{await sbPatch(oid,{status:ns});}catch(e){}
 }
 
-function toggleItem(orderId, itemIdx){
-  var key = orderId+'_'+itemIdx;
-  itemDone[key] = !itemDone[key];
-  lsSave('mata_kds_items', itemDone);
-  renderKDS();
-}
+function notify(msg){var el=document.getElementById('notif');if(el){el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2000);}}
 
-// ── NOTIFY ────────────────────────────────────────────────────────
-function notify(msg){
-  var el=document.getElementById('notif');
-  el.textContent=msg; el.classList.add('show');
-  setTimeout(function(){el.classList.remove('show');},2500);
-}
-
-// ── INIT ─────────────────────────────────────────────────────────
-buildLoginSelect();
-
-
-
-// ═══════════════════════════════════════════════════════
-// Mata Villas — Supabase Config
-// Diese Datei in alle Terminals einbetten
-// ═══════════════════════════════════════════════════════
-
-var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
-var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
-
-// ── REST API Helper ───────────────────────────────────
-async function sbGet(table, query) {
-  query = query || '';
-  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?' + query, {
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json'
-    }
-  });
-  if (!r.ok) throw new Error('GET ' + table + ': ' + r.status);
-  return r.json();
-}
-
-async function sbPost(table, data) {
-  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    },
-    body: JSON.stringify(data)
-  });
-  if (!r.ok) throw new Error('POST ' + table + ': ' + r.status);
-  return r.json();
-}
-
-async function sbPatch(table, id, data) {
-  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
-    method: 'PATCH',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
-    },
-    body: JSON.stringify(data)
-  });
-  if (!r.ok) throw new Error('PATCH ' + table + ': ' + r.status);
-  return r.json();
-}
-
-async function sbDelete(table, id) {
-  var r = await fetch(SUPABASE_URL + '/rest/v1/' + table + '?id=eq.' + id, {
-    method: 'DELETE',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY
-    }
-  });
-  if (!r.ok) throw new Error('DELETE ' + table + ': ' + r.status);
-  return true;
-}
-
-// ── Realtime Subscription ─────────────────────────────
-function sbRealtime(table, callback) {
-  var ws = new WebSocket(
-    SUPABASE_URL.replace('https','wss') + '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0'
-  );
-  ws.onopen = function() {
-    ws.send(JSON.stringify({
-      topic: 'realtime:public:' + table,
-      event: 'phx_join',
-      payload: {},
-      ref: '1'
-    }));
-  };
-  ws.onmessage = function(e) {
-    var msg = JSON.parse(e.data);
-    if (msg.event === 'INSERT' || msg.event === 'UPDATE' || msg.event === 'DELETE') {
-      callback(msg.event, msg.payload.record);
-    }
-  };
-  ws.onerror = function() { console.warn('Realtime WS error, fallback to polling'); };
-  return ws;
-}
-
-async function loadStaffFromSB() {
-  try {
-    var data = await sbGet('employees', 'select=*&active=eq.true');
-    staff=data.map(function(s){return {id:s.id,fname:s.fname,lname:s.lname,role:s.role_id,pin:s.pin,active:true};});
-    buildLoginSelect();
-  } catch(e) {}
-}
-async function loadOrdersFromSB() {
-  try {
-    var data = await sbGet('orders','select=*,order_items(*)&status=not.in.(paid,served)&order=created_at');
-    if(data.length>0) {
-      var newOrders=[];
-      data.forEach(function(o) {
-        var barCats=['Cocktails','Spanish Drinks','Drinks'];
-        var foodItems=(o.order_items||[]).filter(function(i){return barCats.indexOf(i.category)<0;});
-        if(foodItems.length===0) return;
-        newOrders.push({
-          id:o.id, table:o.table_number,
-          items:(o.order_items||[]).filter(function(i){var bc=['Cocktails','Spanish Drinks','Drinks'];return bc.indexOf(i.category)<0;}).map(function(i){return {id:i.menu_item_id,name:i.name,price:i.price_k,qty:i.quantity,cat:i.category||'Tapas'};}),
-          note:o.note||'', total:o.total_k, status:o.status,
-          time:new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),
-          ts:new Date(o.created_at).getTime()
-        });
-      });
-      if(newOrders.length>0) demoOrders=newOrders;
-    }
-    renderKDS();
-  } catch(e) { renderKDS(); }
-}
-var _origSetStatus = setStatus;
-setStatus = async function(orderId, newStatus) {
-  var statusMap={1:'cooking',2:'ready',3:'served'};
-  if(typeof newStatus==='number') newStatus=statusMap[newStatus];
-  try {
-    await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/orders?id=eq.'+orderId, {
-      method:'PATCH',
-      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Content-Type':'application/json'},
-      body:JSON.stringify({status:newStatus,updated_at:new Date().toISOString()})
-    });
-  } catch(e) {}
-  orderId = isNaN(orderId) ? orderId : Number(orderId);
-  var o=demoOrders.find(function(x){return x.id===orderId||String(x.id)===String(orderId);});
-  if(o) o.status=newStatus;
-  var msgs={cooking:{de:'In Zubereitung: ',en:'Cooking: ',id:'Sedang masak: '},ready:{de:'Fertig: ',en:'Ready: ',id:'Siap: '},served:{de:'Abgeholt: ',en:'Picked up: ',id:'Diambil: '}};
-  notify('✓ '+(msgs[newStatus]&&msgs[newStatus][lang]||'')+(o?o.table:''));
-  renderKDS();
-};
-var _origStartKDS = startKDS;
-startKDS = async function() {
-  await loadOrdersFromSB();
-  try {
-    sbRealtime('orders', function(event, record) { loadOrdersFromSB(); });
-  } catch(e) {}
-  refreshInterval = setInterval(function(){
-    loadOrdersFromSB();
-    document.getElementById('last-refresh').textContent=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  }, 8000);
-};
-(async function(){ await loadStaffFromSB(); })();
-
-var _UID_ = 333638;
 </script>
 </body>
 </html>
