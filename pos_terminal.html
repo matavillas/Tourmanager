@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-08 04:04:27 -->
+<!-- Mata Villas v2026-06-08 04:39:41 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -756,7 +756,7 @@ buildLoginSelect();
 // ═══════════════════════════════════════════════════════
 
 var SUPABASE_URL = 'https://pxzdkyvndosikdmstnpp.supabase.co';
-var SUPABASE_KEY = 'sb_publishable_qpej7F47va30On464iajww_VVSYGlWU';
+var SUPABASE_KEY = 'sb_publishable_s_f3ki3749BUTt3jlqVXkQ_36Fklb1A';
 
 // ── REST API Helper ───────────────────────────────────
 async function sbGet(table, query) {
@@ -872,7 +872,7 @@ sendOrder = async function() {
     await sbPost('order_items', items);
     await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/tables?number=eq.'+tableNum, {
       method:'PATCH',
-      headers:{'apikey':'sb_publishable_qpej7F47va30On464iajww_VVSYGlWU','Authorization':'Bearer sb_publishable_qpej7F47va30On464iajww_VVSYGlWU','Content-Type':'application/json'},
+      headers:{'apikey':'sb_publishable_s_f3ki3749BUTt3jlqVXkQ_36Fklb1A','Authorization':'Bearer sb_publishable_s_f3ki3749BUTt3jlqVXkQ_36Fklb1A','Content-Type':'application/json'},
       body:JSON.stringify({status:'occupied'})
     });
   } catch(e) {
