@@ -250,7 +250,7 @@ function onLangChange(){renderBills();if(selBill)renderReceipt(selBill);}
 
 async function loadBills(){
   try{
-    var d=await sbGet('orders','select=id,table_number,total_k,status,created_at,order_items(name,quantity,price_k,category)&status=eq.ready&order=created_at.asc');
+    var d=await sbGet('orders','select=id,table_number,total_k,status,created_at,order_items(name,quantity,price_k,category)&status=eq.served&order=created_at.asc');
     bills=d;
     renderBills();
     // If selected bill is now paid/gone, deselect
