@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<!-- Mata Villas Tischplan v2026-06-08 -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tischplan — Mata Villas</title>
+<style>
+:root{
+  --bg:#f5f0eb;--panel:#fff;--border:#e0d8cf;
+  --text:#1a1815;--text2:#6b6258;--text3:#b8afa6;
+  --accent:#c4621a;--accent-bg:#fdf0e8;
+  --green:#2d7a4f;--green-bg:#edf7f1;
+  --red:#b83232;--red-bg:#fdf0f0;
+  --blue:#1a7fa8;--blue-bg:#e8f4f9;
+  --yellow:#c4960a;--yellow-bg:#fdf8e8;
+  --font:'Georgia',serif;--ui:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ui);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* TOPBAR */
+.topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:var(--shadow)}
+.topbar img{height:32px;object-fit:contain}
+.topbar-title{font-family:var(--font);font-size:16px;font-weight:700;color:var(--text)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--ui)}
+.tb.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tb.danger{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.mode-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.05em}
+.mode-badge.view{background:var(--blue-bg);color:var(--blue)}
+.mode-badge.edit{background:var(--yellow-bg);color:var(--yellow)}
+
+/* MAIN LAYOUT */
+.layout{flex:1;display:flex;overflow:hidden;min-height:0}
+
+/* SIDEBAR */
+.sidebar{width:220px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+.sidebar-section{padding:12px 14px;border-bottom:1px solid var(--border)}
+.sidebar-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.legend-item{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:var(--text2)}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.res-list{display:flex;flex-direction:column;gap:6px}
+.res-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer}
+.res-card:hover{border-color:var(--accent)}
+.res-card-table{font-weight:700;font-size:13px;margin-bottom:2px}
+.res-card-time{color:var(--text3);font-size:11px}
+.res-card-name{color:var(--text2)}
+.add-table-btn{width:100%;padding:8px;border-radius:8px;border:2px dashed var(--border);background:transparent;color:var(--text3);cursor:pointer;font-size:12px;font-weight:600;font-family:var(--ui)}
+.add-table-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* FLOOR PLAN */
+.floor-wrap{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+.floor-area{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+
+/* INDOOR AREA */
+.area{position:absolute;border-radius:4px;pointer-events:none}
+.area-indoor{background:rgba(255,255,255,.6);border:2px solid var(--border)}
+.area-outdoor{background:rgba(210,240,220,.4);border:2px dashed #7dc494}
+.area-label{position:absolute;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;top:6px;left:10px}
+
+/* ENTRANCE */
+.entrance{position:absolute;display:flex;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.entrance-arrow{font-size:16px;color:var(--accent)}
+
+/* TABLE */
+.table-el{position:absolute;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-direction:column;border:2px solid;transition:all .15s;user-select:none}
+.table-el.free{background:#fff;border-color:#c8bfb5;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.table-el.free:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(196,98,26,.2)}
+.table-el.occupied{background:var(--accent-bg);border-color:var(--accent)}
+.table-el.reserved{background:var(--blue-bg);border-color:var(--blue)}
+.table-el.selected{border-color:var(--accent);box-shadow:0 0 0 3px rgba(196,98,26,.3)}
+.table-num{font-size:13px;font-weight:800;color:var(--text)}
+.table-status{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
+.table-el.free .table-status{color:var(--text3)}
+.table-el.occupied .table-status{color:var(--accent)}
+.table-el.reserved .table-status{color:var(--blue)}
+
+/* DRAG HANDLE */
+.table-el.editable{cursor:grab}
+.table-el.editable:active{cursor:grabbing}
+.table-el.editable.selected{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(196,150,10,.3)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal-bg.hidden{display:none}
+.modal{background:#fff;border-radius:14px;padding:24px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-title{font-family:var(--font);font-size:17px;font-weight:700;margin-bottom:16px}
+.modal label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;margin-top:12px}
+.modal input,.modal select{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:var(--ui);background:#fff;outline:none;color:var(--text)}
+.modal input:focus,.modal select:focus{border-color:var(--accent)}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn-primary{flex:1;padding:10px;border-radius:8px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--ui)}
+.btn-secondary{padding:10px 16px;border-radius:8px;background:var(--bg);color:var(--text2);border:1.5px solid var(--border);font-size:13px;cursor:pointer;font-family:var(--ui)}
+.btn-danger{padding:10px 16px;border-radius:8px;background:var(--red-bg);color:var(--red);border:1.5px solid var(--red);font-size:13px;cursor:pointer;font-family:var(--ui)}
+
+.notif{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;border-radius:8px;padding:10px 20px;font-size:13px;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.notif.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <img id="topbar-logo" src="" alt="Mata Villas">
+  <span class="topbar-title">Tischplan</span>
+  <span class="mode-badge view" id="mode-badge">Ansicht</span>
+  <div class="topbar-right">
+    <button class="tb" id="btn-edit" onclick="toggleEditMode()">✏️ Bearbeiten</button>
+    <button class="tb" id="btn-add-table" onclick="showAddTable()" style="display:none">+ Tisch</button>
+    <button class="tb on" id="btn-save" onclick="savePlan()" style="display:none">💾 Speichern</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Legende</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fff;border:2px solid #c8bfb5"></div>Frei</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-bg);border:2px solid var(--accent)"></div>Besetzt</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue-bg);border:2px solid var(--blue)"></div>Reserviert</div>
+    </div>
+    <div class="sidebar-section" style="flex:1">
+      <div class="sidebar-title">Heutige Reservierungen</div>
+      <div class="res-list" id="res-list">
+        <div style="font-size:12px;color:var(--text3)">Keine Reservierungen</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="floor-wrap" id="floor-wrap">
+    <div class="floor-area" id="floor-area">
+      <!-- Areas and tables rendered by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Reservation Modal -->
+<div class="modal-bg hidden" id="res-modal">
+  <div class="modal">
+    <div class="modal-title" id="res-modal-title">Tisch reservieren</div>
+    <label>Name</label>
+    <input id="res-name" placeholder="Gastname">
+    <label>Datum</label>
+    <input id="res-date" type="date">
+    <label>Uhrzeit</label>
+    <input id="res-time" type="time" value="19:00">
+    <label>Personen</label>
+    <input id="res-pax" type="number" value="2" min="1" max="20">
+    <label>Notiz</label>
+    <input id="res-note" placeholder="Optional">
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('res-modal')">Abbrechen</button>
+      <button class="btn-danger" id="res-delete-btn" onclick="deleteReservation()" style="display:none">Löschen</button>
+      <button class="btn-primary" onclick="saveReservation()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Table Modal -->
+<div class="modal-bg hidden" id="add-table-modal">
+  <div class="modal">
+    <div class="modal-title">Tisch hinzufügen</div>
+    <label>Tischnummer</label>
+    <input id="new-table-num" type="number" min="1" max="50">
+    <label>Form</label>
+    <select id="new-table-shape">
+      <option value="square">Quadratisch (70×70cm)</option>
+      <option value="rect">Rechteckig (100×70cm)</option>
+    </select>
+    <label>Bereich</label>
+    <select id="new-table-area">
+      <option value="indoor">Innen</option>
+      <option value="outdoor">Außen</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('add-table-modal')">Abbrechen</button>
+      <button class="btn-primary" onclick="addNewTable()">Hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<div class="notif" id="notif"></div>
+
+<script>
+var SB='https://pxzdkyvndosikdmstnpp.supabase.co';
+var KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
+
+var LOGO='data:image/jpeg;base64,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';
+document.getElementById('topbar-logo').src=LOGO;
+
+// Scale: 1m = 60px
+var SCALE=60;
+
+// Default table layout
+var tables=[
+  // Indoor square tables (70x70cm)
+  {id:1,num:1,shape:'square',area:'indoor',x:40,y:40,w:42,h:42,status:'free',reservations:[]},
+  {id:2,num:2,shape:'square',area:'indoor',x:120,y:40,w:42,h:42,status:'free',reservations:[]},
+  {id:3,num:3,shape:'square',area:'indoor',x:40,y:130,w:42,h:42,status:'free',reservations:[]},
+  {id:4,num:4,shape:'square',area:'indoor',x:120,y:130,w:42,h:42,status:'free',reservations:[]},
+  // Indoor rect tables (100x70cm)
+  {id:5,num:5,shape:'rect',area:'indoor',x:220,y:40,w:60,h:42,status:'free',reservations:[]},
+  {id:6,num:6,shape:'rect',area:'indoor',x:220,y:110,w:60,h:42,status:'free',reservations:[]},
+  {id:7,num:7,shape:'rect',area:'indoor',x:220,y:180,w:60,h:42,status:'free',reservations:[]},
+  {id:8,num:8,shape:'rect',area:'indoor',x:310,y:110,w:60,h:42,status:'free',reservations:[]},
+  // Outdoor square tables
+  {id:9,num:9,shape:'square',area:'outdoor',x:20,y:20,w:42,h:42,status:'free',reservations:[]},
+  {id:10,num:10,shape:'square',area:'outdoor',x:80,y:20,w:42,h:42,status:'free',reservations:[]},
+];
+
+var reservations=[];
+var editMode=false;
+var selectedTable=null;
+var editResId=null;
+
+// Floor dimensions
+var INDOOR_W=420, INDOOR_H=260;
+var OUTDOOR_W=160, OUTDOOR_H=100;
+var TOTAL_W=INDOOR_W+20; // outdoor is left of indoor
+var OUTDOOR_X=-OUTDOOR_W-20;
+
+function init(){
+  document.getElementById('topbar-logo').src=LOGO;
+  renderFloor();
+  loadData();
+}
+
+function renderFloor(){
+  var fa=document.getElementById('floor-area');
+  fa.style.width=(TOTAL_W+OUTDOOR_W+40)+'px';
+  fa.style.height=(INDOOR_H+60)+'px';
+  fa.style.position='relative';
+
+  fa.innerHTML='';
+
+  // Outdoor area
+  var out=document.createElement('div');
+  out.className='area area-outdoor';
+  out.style.cssText='left:0;top:30px;width:'+OUTDOOR_W+'px;height:'+OUTDOOR_H+'px';
+  out.innerHTML='<div class="area-label">Außen</div>';
+  fa.appendChild(out);
+
+  // Indoor area
+  var ind=document.createElement('div');
+  ind.className='area area-indoor';
+  ind.style.cssText='left:'+(OUTDOOR_W+20)+'px;top:0;width:'+INDOOR_W+'px;height:'+INDOOR_H+'px';
+  ind.innerHTML='<div class="area-label">Innen</div>';
+  fa.appendChild(ind);
+
+  // Entrance
+  var ent=document.createElement('div');
+  ent.className='entrance';
+  ent.style.cssText='right:0;top:-28px;left:'+(OUTDOOR_W+20+INDOOR_W-80)+'px';
+  ent.innerHTML='<span class="entrance-arrow">▼</span><span>Eingang</span>';
+  fa.appendChild(ent);
+
+  // Tables
+  tables.forEach(function(t){
+    var el=document.createElement('div');
+    el.className='table-el '+t.status+(editMode?' editable':'');
+    if(selectedTable&&selectedTable.id===t.id) el.classList.add('selected');
+
+    var ox=t.area==='outdoor'?0:(OUTDOOR_W+20);
+    var oy=t.area==='outdoor'?30:0;
+
+    el.style.cssText='left:'+(ox+t.x)+'px;top:'+(oy+t.y)+'px;width:'+t.w+'px;height:'+t.h+'px';
+    el.innerHTML='<div class="table-num">'+t.num+'</div>'
+      +'<div class="table-status">'+(t.status==='free'?'Frei':t.status==='occupied'?'Besetzt':'Reserviert')+'</div>';
+
+    if(editMode){
+      makeDraggable(el,t);
+    } else {
+      el.onclick=function(){onTableClick(t);};
+    }
+    fa.appendChild(el);
+  });
+}
+
+function onTableClick(t){
+  selectedTable=t;
+  // Check today's reservation
+  var today=new Date().toISOString().split('T')[0];
+  var todayRes=reservations.find(function(r){return r.table_id===t.id&&r.date===today;});
+  openResModal(t,todayRes||null);
+}
+
+function openResModal(t,res){
+  document.getElementById('res-modal-title').textContent='Tisch '+t.num+(res?' — Reservierung bearbeiten':' reservieren');
+  document.getElementById('res-name').value=res?res.name:'';
+  document.getElementById('res-date').value=res?res.date:new Date().toISOString().split('T')[0];
+  document.getElementById('res-time').value=res?res.time:'19:00';
+  document.getElementById('res-pax').value=res?res.pax:2;
+  document.getElementById('res-note').value=res?res.note:'';
+  document.getElementById('res-delete-btn').style.display=res?'block':'none';
+  editResId=res?res.id:null;
+  document.getElementById('res-modal').classList.remove('hidden');
+}
+
+function saveReservation(){
+  var name=document.getElementById('res-name').value.trim();
+  if(!name){notify('⚠ Name eingeben');return;}
+  var res={
+    id:editResId||Date.now(),
+    table_id:selectedTable.id,
+    table_num:selectedTable.num,
+    name:name,
+    date:document.getElementById('res-date').value,
+    time:document.getElementById('res-time').value,
+    pax:parseInt(document.getElementById('res-pax').value)||2,
+    note:document.getElementById('res-note').value
+  };
+  if(editResId){
+    reservations=reservations.map(function(r){return r.id===editResId?res:r;});
+  } else {
+    reservations.push(res);
+  }
+  // Update table status
+  var today=new Date().toISOString().split('T')[0];
+  if(res.date===today){
+    var t=tables.find(function(x){return x.id===selectedTable.id;});
+    if(t&&t.status==='free') t.status='reserved';
+  }
+  saveToStorage();
+  closeModal('res-modal');
+  renderFloor();
+  renderResList();
+  notify('✓ Reservierung gespeichert');
+}
+
+function deleteReservation(){
+  reservations=reservations.filter(function(r){return r.id!==editResId;});
+  var t=tables.find(function(x){return x.id===selectedTable.id;});
+  if(t) t.status='free';
+  saveToStorage();
+  closeModal('res-modal');
+  renderFloor();
+  renderResList();
+  notify('✓ Reservierung gelöscht');
+}
+
+function renderResList(){
+  var today=new Date().toISOString().split('T')[0];
+  var todayRes=reservations.filter(function(r){return r.date===today;}).sort(function(a,b){return a.time.localeCompare(b.time);});
+  var el=document.getElementById('res-list');
+  if(!todayRes.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text3)">Keine Reservierungen</div>';
+    return;
+  }
+  el.innerHTML=todayRes.map(function(r){
+    return '<div class="res-card" onclick="editResFromList('+r.id+')">'
+      +'<div class="res-card-table">Tisch '+r.table_num+'</div>'
+      +'<div class="res-card-time">'+r.time+' Uhr · '+r.pax+' Pers.</div>'
+      +'<div class="res-card-name">'+r.name+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function editResFromList(id){
+  var r=reservations.find(function(x){return x.id===id;});
+  if(!r)return;
+  var t=tables.find(function(x){return x.id===r.table_id;});
+  if(!t)return;
+  selectedTable=t;
+  openResModal(t,r);
+}
+
+// EDIT MODE
+function toggleEditMode(){
+  editMode=!editMode;
+  document.getElementById('mode-badge').textContent=editMode?'Bearbeiten':'Ansicht';
+  document.getElementById('mode-badge').className='mode-badge '+(editMode?'edit':'view');
+  document.getElementById('btn-edit').textContent=editMode?'👁 Ansicht':'✏️ Bearbeiten';
+  document.getElementById('btn-add-table').style.display=editMode?'':'none';
+  document.getElementById('btn-save').style.display=editMode?'':'none';
+  renderFloor();
+}
+
+function makeDraggable(el,t){
+  var startX,startY,startLeft,startTop;
+  el.onmousedown=function(e){
+    e.preventDefault();
+    selectedTable=t;
+    startX=e.clientX;startY=e.clientY;
+    startLeft=t.x;startTop=t.y;
+    document.onmousemove=function(e){
+      var dx=e.clientX-startX,dy=e.clientY-startY;
+      t.x=Math.max(0,startLeft+dx);
+      t.y=Math.max(0,startTop+dy);
+      renderFloor();
+    };
+    document.onmouseup=function(){
+      document.onmousemove=null;document.onmouseup=null;
+    };
+  };
+  // Touch support
+  el.ontouchstart=function(e){
+    var touch=e.touches[0];
+    startX=touch.clientX;startY=touch.clientY;
+    startLeft=t.x;startTop=t.y;
+    document.ontouchmove=function(e){
+      var touch=e.touches[0];
+      var dx=touch.clientX-startX,dy=touch.clientY-startY;
+      t.x=Math.max(0,startLeft+dx);
+      t.y=Math.max(0,startTop+dy);
+      renderFloor();
+    };
+    document.ontouchend=function(){
+      document.ontouchmove=null;document.ontouchend=null;
+    };
+  };
+}
+
+function showAddTable(){
+  // Suggest next table number
+  var maxNum=tables.reduce(function(m,t){return Math.max(m,t.num);},0);
+  document.getElementById('new-table-num').value=maxNum+1;
+  document.getElementById('add-table-modal').classList.remove('hidden');
+}
+
+function addNewTable(){
+  var num=parseInt(document.getElementById('new-table-num').value);
+  var shape=document.getElementById('new-table-shape').value;
+  var area=document.getElementById('new-table-area').value;
+  if(!num||tables.find(function(t){return t.num===num;})){
+    notify('⚠ Ungültige oder bereits vorhandene Tischnummer');return;
+  }
+  var w=shape==='square'?42:60,h=42;
+  tables.push({id:Date.now(),num:num,shape:shape,area:area,x:20,y:20,w:w,h:h,status:'free',reservations:[]});
+  closeModal('add-table-modal');
+  renderFloor();
+  notify('✓ Tisch '+num+' hinzugefügt');
+}
+
+function savePlan(){
+  saveToStorage();
+  notify('✓ Tischplan gespeichert');
+}
+
+function saveToStorage(){
+  try{
+    localStorage.setItem('mata_tables',JSON.stringify(tables));
+    localStorage.setItem('mata_reservations',JSON.stringify(reservations));
+  }catch(e){}
+}
+
+function loadData(){
+  try{
+    var st=localStorage.getItem('mata_tables');
+    if(st) tables=JSON.parse(st);
+    var sr=localStorage.getItem('mata_reservations');
+    if(sr) reservations=JSON.parse(sr);
+  }catch(e){}
+  // Load occupied tables from Supabase
+  loadOccupied();
+  renderFloor();
+  renderResList();
+}
+
+async function loadOccupied(){
+  try{
+    var r=await fetch(SB+'/rest/v1/orders?select=table_number&status=in.(new,cooking,making,served)',{
+      headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}
+    });
+    if(!r.ok)return;
+    var data=await r.json();
+    var busy=data.map(function(o){return o.table_number;});
+    tables.forEach(function(t){
+      if(busy.indexOf(t.num)>=0) t.status='occupied';
+      else if(t.status==='occupied') t.status='free';
+    });
+    renderFloor();
+  }catch(e){}
+}
+
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+function notify(msg){var el=document.getElementById('notif');el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},2500);}
+
+window.addEventListener('DOMContentLoaded',init);
+setInterval(loadOccupied,15000);
+</script>
+</body>
+</html>
