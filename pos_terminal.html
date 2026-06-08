@@ -441,7 +441,7 @@ async function sendOrder(){
 
 async function loadTables(){
   try{
-    var d=await sbGet('orders','select=table_number&status=in.(new,cooking,making,ready)');
+    var d=await sbGet('orders','select=table_number&status=in.(new,cooking,making,served)');
     var busy=d.map(function(o){return o.table_number;});
     tables.forEach(function(t){t.status=busy.indexOf(t.num)>=0?'occupied':'free';});
     renderTables();
