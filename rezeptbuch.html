@@ -371,6 +371,12 @@ function parseIngs(txt){
   });
 }
 
+
+function closeEdit(id){
+  var ef=document.getElementById('ef-'+id);
+  if(ef) ef.classList.remove('open');
+}
+
 function editRecipe(id, e){
   e.stopPropagation();
   var r=R.find(function(x){return x.id===id;});
@@ -396,7 +402,7 @@ function editRecipe(id, e){
     +'<div id="trans-status-'+id+'" class="translating"></div>'
     +'<button class="savebtn" onclick="saveEdit('+id+')">Speichern</button>'
     +'<button class="savebtn" style="background:#2d7a4f;margin-left:8px" onclick="autoTranslate('+id+')">🌐 Auto-Übersetzen</button>'
-    +'<button class="cancelbtn" onclick="document.getElementById('ef-'+id+'').classList.remove('open')">Abbrechen</button>';
+    +'<button class="cancelbtn" onclick="closeEdit('+id+')" >Abbrechen</button>';
   ef.classList.add('open');
 }
 
