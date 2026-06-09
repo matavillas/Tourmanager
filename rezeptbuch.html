@@ -462,7 +462,7 @@ function saveEdit(id){
   r.s.en=document.getElementById('es-en-'+id).value.split('\n').filter(function(l){return l.trim();});
   r.s.id=document.getElementById('es-id-'+id).value.split('\n').filter(function(l){return l.trim();});
   r.note=document.getElementById('enote-'+id).value;
-  try{localStorage.setItem('mata_rezepte_kueche',JSON.stringify(R));}catch(e){}
+  saveToSupabase(r).catch(function(e){console.warn('Save failed:',e);});
   document.getElementById('ef-'+id).classList.remove('open');
   renderRecipes();
   var n=document.getElementById('notif');
@@ -470,15 +470,53 @@ function saveEdit(id){
   setTimeout(function(){n.classList.remove('sh');},2000);
 }
 
-// Load saved recipes from localStorage
-try{
-  var saved=localStorage.getItem('mata_rezepte_kueche');
-  if(saved){var parsed=JSON.parse(saved);if(parsed&&parsed.length)R=parsed;}
-}catch(e){}
+// Supabase
+var SB_URL='https://pxzdkyvndosikdmstnpp.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
+
+function sbRowToR(row){
+  return {
+    id:row.id, cat:row.category,
+    n:{de:row.name_de||'',en:row.name_en||'',id:row.name_id||''},
+    i:{de:row.ingredients_de||[],en:row.ingredients_en||[],id:row.ingredients_id||[]},
+    s:{de:row.steps_de||[],en:row.steps_en||[],id:row.steps_id||[]},
+    note:row.note||''
+  };
+}
+
+async function loadFromSupabase(){
+  try{
+    var resp=await fetch(SB_URL+'/rest/v1/recipes?order=id',{
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+    });
+    if(!resp.ok) throw new Error(resp.status);
+    var data=await resp.json();
+    if(data&&data.length>0){
+      R=data.map(sbRowToR);
+      renderCatBar();
+      renderRecipes();
+    }
+  }catch(e){console.warn('Supabase offline, using local data');}
+}
+
+async function saveToSupabase(r){
+  return fetch(SB_URL+'/rest/v1/recipes?id=eq.'+r.id,{
+    method:'PATCH',
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({
+      name_de:r.n.de,name_en:r.n.en,name_id:r.n.id,
+      category:r.cat,
+      ingredients_de:r.i.de,ingredients_en:r.i.en,ingredients_id:r.i.id,
+      steps_de:r.s.de,steps_en:r.s.en,steps_id:r.s.id,
+      note:r.note,updated_at:new Date().toISOString()
+    })
+  });
+}
 
 window.addEventListener('DOMContentLoaded',function(){
   renderCatBar();
   renderRecipes();
+  loadFromSupabase();
 });
 </script>
 </body>
