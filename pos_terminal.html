@@ -448,7 +448,7 @@ async function loadTables(){
   }catch(e){}
 }
 
-function afterLogin(){renderAll();loadTables();}
+function afterLogin(){renderAll();loadTables();setInterval(loadTables,15000);}
 function afterLogout(){order=[];selTable=null;clearOrder();}
 
 window.addEventListener('DOMContentLoaded',function(){buildSelect();initPins();});
