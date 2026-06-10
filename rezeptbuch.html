@@ -401,21 +401,8 @@ function editRecipe(id, e){
     +'<label>Notiz</label><input id="enote-'+id+'" value="'+(r.note||'')+'">'
     +'<div id="trans-status-'+id+'" class="translating"></div>'
     +'<button class="savebtn" onclick="saveEdit('+id+')">Speichern</button>'
-    +'en</button>'
     +'<button class="cancelbtn" onclick="closeEdit('+id+')" >Abbrechen</button>';
   ef.classList.add('open');
-}
-
-    if(parsed.id){
-      document.getElementById('en-id-'+id).value = parsed.id.name||deName;
-      document.getElementById('ei-id-'+id).value = parsed.id.ings||'';
-      document.getElementById('es-id-'+id).value = parsed.id.steps||'';
-    }
-    statusEl.textContent = '✓ Übersetzung abgeschlossen';
-    setTimeout(function(){statusEl.textContent='';},3000);
-  }catch(e){
-    statusEl.textContent = '⚠ Fehler: '+e.message;
-  }
 }
 
 function saveEdit(id){
