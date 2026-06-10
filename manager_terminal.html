@@ -518,7 +518,7 @@ async function delStaff(id){
 }
 
 // SPEISEKARTE
-async async function loadMenuAdmin(){
+async function loadMenuAdmin(){
   try{
     allMenu=await sbGet('menu_items','select=*&order=sort_order,name');
     document.getElementById('menu-tbody').innerHTML=allMenu.map(function(m){
