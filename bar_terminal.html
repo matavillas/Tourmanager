@@ -194,15 +194,17 @@ async function sbPatch(table,filter,data){
   return fetch(SB_URL+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},body:JSON.stringify(data)});
 }
 
-var staff=[
-  {id:1,fname:'Marco',lname:'Rossi',role:'kitchen',pin:'1234',active:true},
-  {id:2,fname:'Lena',lname:'Bauer',role:'service',pin:'2345',active:true},
-  {id:3,fname:'Thomas',lname:'Müller',role:'service',pin:'3456',active:true},
-  {id:4,fname:'Anna',lname:'Koch',role:'kitchen',pin:'4567',active:true},
-  {id:5,fname:'Felix',lname:'Wagner',role:'bar',pin:'5678',active:true},
-  {id:6,fname:'Sophie',lname:'Huber',role:'kasse',pin:'6789',active:false},
-  {id:7,fname:'Admin',lname:'Manager',role:'manager',pin:'0000',active:true},
-];
+var staff=[];
+async function loadStaff(){
+  try{
+    var r=await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/staff?active=eq.true&order=fname',{
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw'}
+    });
+    if(!r.ok) throw new Error(r.status);
+    staff=await r.json();
+    buildLoginSelect();
+  }catch(e){console.warn('Staff load failed:',e);buildLoginSelect();}
+}
 
 function buildLoginSelect(){
   var sel=document.getElementById('login-role');
@@ -220,7 +222,7 @@ function doLogin(){
   var pin=['p1','p2','p3','p4'].map(function(id){return document.getElementById(id).value;}).join('');
   var m=staff.find(function(s){return s.id===sid;});
   if(!m){document.getElementById('login-err').textContent='Bitte wählen';return;}
-  if(m.pin!==pin&&pin!=='0000'){
+  if(m.pin!==pin&&!(pin==='0000'&&m.role==='manager')){
     document.getElementById('login-err').textContent='Falscher PIN';
     ['p1','p2','p3','p4'].forEach(function(id){document.getElementById(id).value='';});
     document.getElementById('p1').focus();return;
@@ -435,7 +437,7 @@ async function sendDirectOrder(){
 }
 
 // v2026-06-08-D
-buildLoginSelect();
+loadStaff();
 </script>
 </body>
 </html>

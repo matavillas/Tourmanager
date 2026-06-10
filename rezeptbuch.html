@@ -401,49 +401,11 @@ function editRecipe(id, e){
     +'<label>Notiz</label><input id="enote-'+id+'" value="'+(r.note||'')+'">'
     +'<div id="trans-status-'+id+'" class="translating"></div>'
     +'<button class="savebtn" onclick="saveEdit('+id+')">Speichern</button>'
-    +'<button class="savebtn" style="background:#2d7a4f;margin-left:8px" onclick="autoTranslate('+id+')">🌐 Auto-Übersetzen</button>'
+    +'en</button>'
     +'<button class="cancelbtn" onclick="closeEdit('+id+')" >Abbrechen</button>';
   ef.classList.add('open');
 }
 
-async function autoTranslate(id){
-  var statusEl = document.getElementById('trans-status-'+id);
-  statusEl.textContent = '⏳ Übersetze...';
-  
-  var deName = document.getElementById('en-de-'+id).value;
-  var deIngs = document.getElementById('ei-de-'+id).value;
-  var deSteps = document.getElementById('es-de-'+id).value;
-  
-  var prompt = 'Translate this recipe from German to English and Indonesian.\n'
-    +'Return ONLY valid JSON, no markdown, no explanation.\n'
-    +'Format:\n'
-    +'{"en":{"name":"...","ings":"ingredient1|amount1\\ningredient2|amount2","steps":"step1\\nstep2"},'
-    +'"id":{"name":"...","ings":"ingredient1|amount1\\ningredient2|amount2","steps":"step1\\nstep2"}}\n\n'
-    +'German recipe:\n'
-    +'Name: '+deName+'\n'
-    +'Ingredients (Name|Amount format):\n'+deIngs+'\n'
-    +'Steps:\n'+deSteps;
-  
-  try{
-    var resp = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    var data = await resp.json();
-    var text = data.content[0].text;
-    var clean = text.replace(/```json|```/g,'').trim();
-    var parsed = JSON.parse(clean);
-    
-    if(parsed.en){
-      document.getElementById('en-en-'+id).value = parsed.en.name||deName;
-      document.getElementById('ei-en-'+id).value = parsed.en.ings||'';
-      document.getElementById('es-en-'+id).value = parsed.en.steps||'';
-    }
     if(parsed.id){
       document.getElementById('en-id-'+id).value = parsed.id.name||deName;
       document.getElementById('ei-id-'+id).value = parsed.id.ings||'';

@@ -142,6 +142,12 @@ tr:last-child td{border-bottom:none}
     <div class="nav-section"><span class="l-de">Verwaltung</span><span class="l-en">Management</span><span class="l-id">Manajemen</span></div>
     <div class="nav-item" onclick="showPanel('personal',this)">👥 <span class="l-de">Personal</span><span class="l-en">Staff</span><span class="l-id">Staf</span></div>
     <div class="nav-item" onclick="showPanel('speisekarte',this)">🍽️ <span class="l-de">Speisekarte</span><span class="l-en">Menu</span><span class="l-id">Menu</span></div>
+    <div class="nav-item" onclick="showPanel('tischplan',this)">🗺️ <span class="l-de">Tischplan</span><span class="l-en">Floor Plan</span><span class="l-id">Denah</span></div>
+    <div class="nav-item" onclick="showPanel('bestellungen',this)">📋 <span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span></div>
+    <div class="nav-item" onclick="showPanel('rezepte',this)">📖 <span class="l-de">Rezepte</span><span class="l-en">Recipes</span><span class="l-id">Resep</span></div>
+    <div class="nav-item" onclick="showPanel('tischplan',this)">🗺️ <span class="l-de">Tischplan</span><span class="l-en">Floor Plan</span><span class="l-id">Denah</span></div>
+    <div class="nav-item" onclick="showPanel('bestellungen',this)">📋 <span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span></div>
+    <div class="nav-item" onclick="showPanel('rezepte',this)">📖 <span class="l-de">Rezepte</span><span class="l-en">Recipes</span><span class="l-id">Resep</span></div>
   </div>
   <!-- Panel wrap -->
   <div class="panel-wrap">
@@ -230,6 +236,43 @@ tr:last-child td{border-bottom:none}
         <tbody id="menu-tbody"></tbody></table>
       </div>
     </div>
+    <!-- TISCHPLAN -->
+    <div class="panel" id="panel-tischplan">
+      <div style="padding:20px 0">
+        <p style="margin-bottom:16px;color:var(--text2);font-size:14px"><span class="l-de">Tischplan direkt hier öffnen oder in neuem Tab.</span><span class="l-en">Open floor plan here or in new tab.</span><span class="l-id">Buka denah meja di sini atau tab baru.</span></p>
+        <a href="tischplan.html" target="_blank" style="display:inline-block;padding:12px 24px;background:var(--accent);color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none;margin-bottom:16px">🗺️ <span class="l-de">Tischplan öffnen</span><span class="l-en">Open Floor Plan</span><span class="l-id">Buka Denah</span></a>
+        <div style="margin-top:16px;border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+          <iframe src="tischplan.html" style="width:100%;height:500px;border:none"></iframe>
+        </div>
+      </div>
+    </div>
+    <!-- BESTELLUNGEN -->
+    <div class="panel" id="panel-bestellungen">
+      <div class="date-row">
+        <input type="date" id="ord-date">
+        <button onclick="loadOrders()"><span class="l-de">Anzeigen</span><span class="l-en">Show</span><span class="l-id">Tampilkan</span></button>
+        <button class="ghost" onclick="loadOrdersToday()"><span class="l-de">Heute</span><span class="l-en">Today</span><span class="l-id">Hari ini</span></button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head" id="ord-label">—</div>
+        <table><thead><tr>
+          <th>#</th>
+          <th><span class="l-de">Tisch</span><span class="l-en">Table</span><span class="l-id">Meja</span></th>
+          <th><span class="l-de">Zeit</span><span class="l-en">Time</span><span class="l-id">Waktu</span></th>
+          <th>Status</th>
+          <th>Total</th>
+          <th><span class="l-de">Artikel</span><span class="l-en">Items</span><span class="l-id">Item</span></th>
+        </tr></thead>
+        <tbody id="ord-tbody"></tbody></table>
+      </div>
+    </div>
+    <!-- REZEPTE -->
+    <div class="panel" id="panel-rezepte">
+      <div style="padding:20px 0">
+        <p style="margin-bottom:16px;color:var(--text2);font-size:14px"><span class="l-de">Rezepte werden im Küchen-Rezeptbuch verwaltet.</span><span class="l-en">Recipes are managed in the kitchen recipe book.</span><span class="l-id">Resep dikelola di buku resep dapur.</span></p>
+        <a href="rezeptbuch.html" target="_blank" style="display:inline-block;padding:12px 24px;background:var(--accent);color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none">📖 <span class="l-de">Rezeptbuch öffnen</span><span class="l-en">Open Recipe Book</span><span class="l-id">Buka Buku Resep</span></a>
+      </div>
+    </div>
   </div>
 </div>
 <div class="notif" id="notif"></div>
@@ -247,15 +290,17 @@ var lang='de';
 function setLang(l){lang=l;document.body.className=l;document.querySelectorAll('.lb').forEach(function(b,i){b.classList.toggle('on',['de','en','id'][i]===l);}); if(typeof onLangChange==='function') onLangChange();}
 
 
-var staff=[
-  {id:1, fname:'Marco', lname:'Rossi',   role:'kitchen', from:'12:00', to:'22:00', pin:'1234', active:true},
-  {id:2, fname:'Lena',  lname:'Bauer',   role:'service',  from:'16:00', to:'24:00', pin:'2345', active:true},
-  {id:3, fname:'Thomas',lname:'Müller',  role:'service',  from:'16:00', to:'24:00', pin:'3456', active:true},
-  {id:4, fname:'Anna',  lname:'Koch',    role:'kitchen', from:'12:00', to:'22:00', pin:'4567', active:true},
-  {id:5, fname:'Felix', lname:'Wagner',  role:'bar',      from:'18:00', to:'02:00', pin:'5678', active:true},
-  {id:6, fname:'Sophie',lname:'Huber',   role:'kasse',    from:'14:00', to:'23:00', pin:'6789', active:false},
-  {id:7, fname:'Admin', lname:'Manager', role:'manager',  from:'00:00', to:'23:59', pin:'0000', active:true},
-];
+var staff=[];
+async function loadStaff(){
+  try{
+    var r=await fetch('https://pxzdkyvndosikdmstnpp.supabase.co/rest/v1/staff?active=eq.true&order=fname',{
+      headers:{'apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw'}
+    });
+    if(!r.ok) throw new Error(r.status);
+    staff=await r.json();
+    buildSelect();
+  }catch(e){console.warn('Staff load failed:',e);buildSelect();}
+}
 var LOGO='data:image/jpeg;base64,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';
 document.querySelectorAll('.login-logo').forEach(function(el){el.src=LOGO;});
 document.querySelectorAll('.topbar-logo').forEach(function(el){el.src=LOGO;});
@@ -294,7 +339,7 @@ function doLogin(){
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
   var m=staff.find(function(s){return s.id===sid;});
   if(!m){document.getElementById('login-err').textContent='Bitte Mitarbeiter wählen';return;}
-  if(m.pin!==pin&&pin!=='0000'){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin')[0].focus();return;}
+  if(m.pin!==pin&&!(pin==='0000'&&m.role==='manager')){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
   var un=document.getElementById('topbar-user');if(un)un.textContent=m.fname;
   if(typeof afterLogin==='function')afterLogin(m);
@@ -322,7 +367,11 @@ function showPanel(id,el){
   if(el) el.classList.add('on');
   if(id==='dashboard') loadDashboard();
   else if(id==='berichte') loadReports('today');
-  else if(id==='personal') loadStaff();
+  else if(id==='personal') loadStaffTable();
+  else if(id==='bestellungen') loadOrdersToday();
+  else if(id==='tischplan'){}
+  else if(id==='bestellungen') loadOrdersToday();
+  else if(id==='tischplan'){}
   else if(id==='speisekarte') loadMenuAdmin();
 }
 
@@ -395,7 +444,7 @@ async function storno(sid,oid){
 }
 
 // PERSONAL
-async function loadStaff(){
+async function loadStaffTable(){
   try{
     allStaff=await sbGet('employees','select=*&order=fname');
     document.getElementById('staff-tbody').innerHTML=allStaff.map(function(s){
@@ -418,13 +467,13 @@ async function saveStaff(){
     await sbPost('employees',{fname:fname,lname:lname,pin:pin,role_id:role,active:true});
     document.getElementById('add-staff-form').style.display='none';
     notify('✓ '+(lang==='de'?'Gespeichert':'Saved'));
-    loadStaff();
+    loadStaffTable();
   }catch(e){notify('⚠ '+e.message);}
 }
 
 async function delStaff(id){
   if(!confirm(lang==='de'?'Mitarbeiter löschen?':'Delete staff member?')) return;
-  try{await sbDel('employees','id=eq.'+id);loadStaff();notify('✓ Gelöscht');}catch(e){notify('⚠ '+e.message);}
+  try{await sbDel('employees','id=eq.'+id);loadStaffTable();notify('✓ Gelöscht');}catch(e){notify('⚠ '+e.message);}
 }
 
 // SPEISEKARTE
@@ -442,13 +491,41 @@ async function toggleAvail(id,cur){
   try{await sbPatch('menu_items','id=eq.'+id,{available:!cur});loadMenuAdmin();}catch(e){notify('⚠ '+e.message);}
 }
 
+async function loadOrdersToday(){
+  var today=new Date().toISOString().slice(0,10);
+  document.getElementById('ord-date').value=today;
+  loadOrders();
+}
+
+async function loadOrders(){
+  var date=document.getElementById('ord-date').value||new Date().toISOString().slice(0,10);
+  try{
+    var orders=await sbGet('orders','select=id,table_number,status,kitchen_status,bar_status,total_k,created_at,order_items(name,quantity,price_k)&created_at=gte.'+date+'T00:00:00&created_at=lte.'+date+'T23:59:59&order=created_at.desc');
+    document.getElementById('ord-label').textContent=orders.length+(lang==='de'?' Bestellungen':lang==='en'?' orders':' pesanan');
+    var statusLabel=function(o){
+      if(o.status==='paid') return '<span style="color:#2d7a4f">✓ Bezahlt</span>';
+      if(o.status==='served') return '<span style="color:#1a7fa8">Serviert</span>';
+      return '<span style="color:#e67e22">'+o.status+'</span>';
+    };
+    document.getElementById('ord-tbody').innerHTML=orders.length?orders.map(function(o){
+      var time=new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      var items=(o.order_items||[]).map(function(i){return i.quantity+'× '+i.name;}).join(', ');
+      return '<tr><td>#'+o.id+'</td><td>'+tw()+o.table_number+'</td><td>'+time+'</td>'+
+        '<td>'+statusLabel(o)+'</td>'+
+        '<td><b>Rp '+(o.total_k||0)+'k</b></td>'+
+        '<td style="font-size:11px;color:var(--text2)">'+items+'</td></tr>';
+    }).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)"><span class="l-de">Keine Bestellungen</span><span class="l-en">No orders</span></td></tr>';
+    document.body.className=lang;
+  }catch(e){notify('⚠ '+e.message);}
+}
+
 function afterLogin(){
   loadDashboard();
   timer=setInterval(loadDashboard,15000);
 }
 function afterLogout(){if(timer)clearInterval(timer);}
 
-window.addEventListener('DOMContentLoaded',function(){buildSelect();initPins();});
+window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();});
 </script>
 </body>
 </html>
