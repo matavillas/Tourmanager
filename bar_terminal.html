@@ -326,7 +326,9 @@ function updateStatus(id,newStatus){
   if(newStatus==='served')orders=orders.filter(function(x){return x.id!==id;});
   render();
   // FIX: patch bar_status not status
-  sbPatch('orders','id=eq.'+id,{bar_status:newStatus}).catch(function(){});
+  var barPatch={bar_status:newStatus};
+  if(newStatus==='served') barPatch.bar_served_at=new Date().toISOString();
+  sbPatch('orders','id=eq.'+id,barPatch).catch(function(){});
   notify('✓ '+tWord()+o.table_number);
 }
 

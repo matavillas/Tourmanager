@@ -246,9 +246,10 @@ async function upd(oid,ns){
   var o=orders.find(function(x){return x.id===oid;});
   if(!o) return;
   o.status=ns;
-  if(ns==='served') orders=orders.filter(function(x){return x.id!==oid;});
+  var patch={kitchen_status:ns};
+  if(ns==='served') { patch.kitchen_served_at=new Date().toISOString(); orders=orders.filter(function(x){return x.id!==oid;}); }
   render();
-  try{await sbPatch('orders','id=eq.'+oid,{kitchen_status:ns});}catch(e){notify('⚠ Verbindungsfehler');}
+  try{await sbPatch('orders','id=eq.'+oid,patch);}catch(e){notify('⚠ Verbindungsfehler');}
 }
 
 function afterLogin(){load();timer=setInterval(load,10000);}

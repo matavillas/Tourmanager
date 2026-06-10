@@ -430,7 +430,48 @@ async function loadReports(preset){
         '<td><button class="storno-btn" onclick="storno('+s.id+','+s.order_id+')">✕ <span class="l-de">Storno</span><span class="l-en">Cancel</span></button></td></tr>';
     }).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)"><span class="l-de">Keine Einträge</span><span class="l-en">No entries</span></td></tr>';
     document.body.className=lang;
+  // Load orders for same period
+    var ordFrom=document.getElementById('rpt-from').value||new Date().toISOString().slice(0,10);
+    var ordTo=document.getElementById('rpt-to').value||ordFrom;
+    var ords=await sbGet('orders?select=id,table_number,status,total_k,created_at,order_items(name,quantity)&created_at=gte.'+ordFrom+'T00:00:00&created_at=lte.'+ordTo+'T23:59:59&order=created_at.desc');
+    document.getElementById('r-orders-label').textContent=ords.length+(lang==='de'?' Bestellungen':' orders');
+    window._mgr_orders=ords;
+    showOrdersGrouped();
   }catch(e){notify('⚠ '+e.message);}
+}
+
+function _ordRow(table,time,status,total,items){
+  var sc=status==='paid'?'#2d7a4f':status==='served'?'#1a7fa8':'#e67e22';
+  return '<tr><td>'+tw()+table+'</td><td>'+time+'</td><td style="color:'+sc+'">'+status+'</td><td><b>Rp '+total+'k</b></td><td style="font-size:11px;color:#aaa">'+items+'</td></tr>';
+}
+function showOrdersGrouped(){
+  document.getElementById('btn-grouped').style.fontWeight='700';
+  document.getElementById('btn-individual').style.fontWeight='normal';
+  var ords=window._mgr_orders||[];
+  var grp={};
+  ords.forEach(function(o){
+    var k=o.table_number;
+    if(!grp[k]) grp[k]={t:k,total:0,time:o.created_at,status:o.status,items:[]};
+    grp[k].total+=(o.total_k||0);
+    grp[k].items=grp[k].items.concat((o.order_items||[]).map(function(i){return i.quantity+'×'+i.name;}));
+  });
+  var rows=Object.values(grp).sort(function(a,b){return b.time.localeCompare(a.time);});
+  document.getElementById('r-orders-tbody').innerHTML=rows.length
+    ?rows.map(function(g){return _ordRow(g.t,new Date(g.time).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),g.status,g.total,g.items.join(', ').slice(0,80));}).join('')
+    :'<tr><td colspan="5" style="text-align:center;padding:16px;color:#aaa">—</td></tr>';
+  document.body.className=lang;
+}
+function showOrdersIndividual(){
+  document.getElementById('btn-individual').style.fontWeight='700';
+  document.getElementById('btn-grouped').style.fontWeight='normal';
+  var ords=window._mgr_orders||[];
+  document.getElementById('r-orders-tbody').innerHTML=ords.length
+    ?ords.map(function(o){
+      var items=(o.order_items||[]).map(function(i){return i.quantity+'×'+i.name;}).join(', ');
+      return _ordRow(o.table_number,new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}),o.status,(o.total_k||0),items.slice(0,80));
+    }).join('')
+    :'<tr><td colspan="5" style="text-align:center;padding:16px;color:#aaa">—</td></tr>';
+  document.body.className=lang;
 }
 
 async function storno(sid,oid){
@@ -477,13 +518,41 @@ async function delStaff(id){
 }
 
 // SPEISEKARTE
-async function loadMenuAdmin(){
+async async function loadMenuAdmin(){
   try{
     allMenu=await sbGet('menu_items','select=*&order=sort_order,name');
     document.getElementById('menu-tbody').innerHTML=allMenu.map(function(m){
       return '<tr><td>'+m.name+'</td><td>'+m.category+'</td><td>Rp '+m.price_k+'k</td>'+
-        '<td><button class="avail-toggle'+(m.available?' on':'')+'" onclick="toggleAvail('+m.id+','+m.available+')"></button></td></tr>';
+        '<td><button class="avail-toggle'+(m.available?' on':'')+'" onclick="toggleAvail('+m.id+','+m.available+')"></button></td>'+
+        '<td><button onclick="deleteMenuItem('+m.id+')" style="padding:3px 8px;border:1px solid #e74c3c;background:#ffeaea;color:#c0392b;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit">✕</button></td></tr>';
     }).join('');
+  }catch(e){notify('⚠ '+e.message);}
+}
+
+async function addMenuItem(){
+  var name=document.getElementById('mi-name').value.trim();
+  var cat=document.getElementById('mi-cat').value;
+  var price=parseInt(document.getElementById('mi-price').value)||0;
+  if(!name){notify('⚠ Name eingeben');return;}
+  try{
+    await fetch(SB+'/rest/v1/menu_items',{method:'POST',
+      headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({name:name,category:cat,price_k:price,available:true,sort_order:999})});
+    document.getElementById('mi-name').value='';
+    document.getElementById('mi-price').value='';
+    await loadMenuAdmin();
+    notify('✓ '+name+' hinzugefügt');
+  }catch(e){notify('⚠ '+e.message);}
+}
+
+async function deleteMenuItem(id){
+  var m=allMenu.find(function(x){return x.id===id;});
+  if(!m||!confirm((m?m.name:'Gericht')+' entfernen?')) return;
+  try{
+    await fetch(SB+'/rest/v1/menu_items?id=eq.'+id,{method:'DELETE',
+      headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
+    await loadMenuAdmin();
+    notify('✓ Entfernt');
   }catch(e){notify('⚠ '+e.message);}
 }
 

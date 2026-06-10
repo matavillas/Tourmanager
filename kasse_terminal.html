@@ -327,7 +327,7 @@ async function confirmPay(){
   var total=selBill.total_k;
   var table=selBill.table_number;
   try{
-    await sbPatch('orders','id=eq.'+bid,{status:'paid',payment_method:payMethod});
+    await sbPatch('orders','id=eq.'+bid,{status:'paid',payment_method:payMethod,paid_at:new Date().toISOString()});
     try{await sbPost('sales',{order_id:bid,table_number:table,total_k:total,payment_method:payMethod});}catch(e){}
     bills=bills.filter(function(b){return b.id!==bid;});
     selBill=null;
