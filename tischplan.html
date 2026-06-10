@@ -13,8 +13,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;background:#e
 .topbar-title{font-size:15px;font-weight:700;flex:1}
 .tbtn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid #ddd;background:#f5f2ed;color:#555;cursor:pointer;font-family:inherit}
 .tbtn.on{background:#1a7fa8;color:#fff;border-color:#1a7fa8}
-.plan-outer{padding:16px;overflow:auto}
+.plan-outer{padding:16px;overflow:auto;-webkit-overflow-scrolling:touch}
 .plan{position:relative;margin:0 auto;background:#d8cfc0}
+@media(max-width:600px){.plan-outer{padding:8px}.topbar-title{font-size:13px}}
 .tisch{position:absolute;display:flex;align-items:center;justify-content:center;border:2px solid #bbb;background:#fff;cursor:pointer}
 .tisch.occupied{background:#ffeaea;border-color:#e74c3c}
 .tisch.reserved{background:#fff8e1;border-color:#f39c12}
@@ -361,7 +362,7 @@ function openTableModal(t){
       resHtml='<div style="margin-bottom:12px;padding:10px;background:#fff8e1;border-radius:8px;border:1px solid #f39c12">'
         +'<div style="font-size:12px;font-weight:700;color:#e67e22;margin-bottom:6px">Reservierungen heute</div>'
         +res.map(function(r){
-          return '<div style="font-size:13px;color:#555;margin-bottom:3px">'+r.time+' — '+r.name+(r.persons?' ('+r.persons+' Pers.)':'')+'</div>';
+          return '<div style="font-size:13px;color:#555;margin-bottom:3px">'+r.time+' — '+r.name+(r.persons?' ('+r.persons+' Pers.)':'')+(r.phone?' 📞'+r.phone:'')+'</div>';
         }).join('')+'</div>';
     }
     
@@ -380,7 +381,9 @@ function openTableModal(t){
       +'<label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">Uhrzeit</label>'
       +'<input id="res-time" type="time" style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:7px;font-size:13px;margin-bottom:8px;font-family:inherit">'
       +'<label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">Personen</label>'
-      +'<input id="res-persons" type="number" min="1" max="20" placeholder="Anzahl" style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:7px;font-size:13px;font-family:inherit">'
+      +'<input id="res-persons" type="number" min="1" max="20" placeholder="Anzahl" style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:7px;font-size:13px;margin-bottom:8px;font-family:inherit">'
+      +'<label style="font-size:11px;color:#aaa;display:block;margin-bottom:3px">Telefon</label>'
+      +'<input id="res-phone" type="tel" placeholder="+62..." style="width:100%;padding:7px 10px;border:1px solid #ccc;border-radius:7px;font-size:13px;font-family:inherit">'
       +'</div>';
     
     document.getElementById('tbl-modal-btns').innerHTML=
@@ -398,13 +401,14 @@ async function saveReservation(tableNum){
   var date=document.getElementById('res-date').value;
   var time=document.getElementById('res-time').value;
   var persons=parseInt(document.getElementById('res-persons').value)||null;
+  var phone=document.getElementById('res-phone')?document.getElementById('res-phone').value.trim():'';
   if(!name){notify('⚠ Name eingeben');return;}
   if(!date||!time){notify('⚠ Datum und Uhrzeit eingeben');return;}
   try{
     await fetch(SB_URL+'/rest/v1/reservations',{
       method:'POST',
       headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({table_num:tableNum,date:date,time:time,name:name,persons:persons})
+      body:JSON.stringify({table_num:tableNum,date:date,time:time,name:name,persons:persons,phone:phone})
     });
     tableStatus[tableNum]='reserved';
     closeTblModal();

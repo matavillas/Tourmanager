@@ -144,10 +144,8 @@ tr:last-child td{border-bottom:none}
     <div class="nav-item" onclick="showPanel('speisekarte',this)">🍽️ <span class="l-de">Speisekarte</span><span class="l-en">Menu</span><span class="l-id">Menu</span></div>
     <div class="nav-item" onclick="showPanel('tischplan',this)">🗺️ <span class="l-de">Tischplan</span><span class="l-en">Floor Plan</span><span class="l-id">Denah</span></div>
     <div class="nav-item" onclick="showPanel('bestellungen',this)">📋 <span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span></div>
-    <div class="nav-item" onclick="showPanel('rezepte',this)">📖 <span class="l-de">Rezepte</span><span class="l-en">Recipes</span><span class="l-id">Resep</span></div>
-    <div class="nav-item" onclick="showPanel('tischplan',this)">🗺️ <span class="l-de">Tischplan</span><span class="l-en">Floor Plan</span><span class="l-id">Denah</span></div>
-    <div class="nav-item" onclick="showPanel('bestellungen',this)">📋 <span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span></div>
-    <div class="nav-item" onclick="showPanel('rezepte',this)">📖 <span class="l-de">Rezepte</span><span class="l-en">Recipes</span><span class="l-id">Resep</span></div>
+    <div class="nav-item" onclick="showPanel('rezepte',this)">📖 <span class="l-de">Rezepte Küche</span><span class="l-en">Kitchen Recipes</span><span class="l-id">Resep Dapur</span></div>
+    <div class="nav-item" onclick="showPanel('barrezepte',this)">🍹 <span class="l-de">Rezepte Bar</span><span class="l-en">Bar Recipes</span><span class="l-id">Resep Bar</span></div> <span class="l-de">Rezepte</span><span class="l-en">Recipes</span><span class="l-id">Resep</span></div>
   </div>
   <!-- Panel wrap -->
   <div class="panel-wrap">
@@ -169,6 +167,16 @@ tr:last-child td{border-bottom:none}
         </tr></thead>
         <tbody id="dash-orders"></tbody></table>
       </div>
+      <!-- KITCHEN TIMER -->
+      <div class="table-wrap" style="margin-top:16px">
+        <div class="table-head">🔴 <span class="l-de">Überfällige Küchen-Bestellungen (&gt;20 Min.)</span><span class="l-en">Overdue Kitchen Orders (&gt;20 min)</span></div>
+        <table><thead><tr>
+          <th><span class="l-de">Tisch</span><span class="l-en">Table</span></th>
+          <th><span class="l-de">Artikel</span><span class="l-en">Items</span></th>
+          <th><span class="l-de">Wartezeit</span><span class="l-en">Waiting</span></th>
+        </tr></thead>
+        <tbody id="dash-overdue"></tbody></table>
+      </div>
     </div>
     <!-- BERICHTE -->
     <div class="panel" id="panel-berichte">
@@ -183,6 +191,8 @@ tr:last-child td{border-bottom:none}
         <div class="card"><div class="card-label"><span class="l-de">Rechnungen</span><span class="l-en">Bills</span><span class="l-id">Tagihan</span></div><div class="card-value" id="r-count">—</div></div>
         <div class="card"><div class="card-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div><div class="card-value" id="r-cash">—</div></div>
         <div class="card"><div class="card-label"><span class="l-de">Karte/QRIS</span><span class="l-en">Card/QRIS</span><span class="l-id">Kartu/QRIS</span></div><div class="card-value" id="r-card">—</div></div>
+        <div class="card"><div class="card-label"><span class="l-de">Ø pro Rechnung</span><span class="l-en">Avg/bill</span></div><div class="card-value" id="r-avg">—</div></div>
+        <div class="card"><div class="card-label"><span class="l-de">Ø Zubereitung</span><span class="l-en">Avg prep</span></div><div class="card-value" id="r-avgtime">—</div></div>
       </div>
       <div class="table-wrap">
         <div class="table-head" id="r-label">—</div>
@@ -195,6 +205,35 @@ tr:last-child td{border-bottom:none}
           <th></th>
         </tr></thead>
         <tbody id="r-tbody"></tbody></table>
+      </div>
+      <!-- ORDERS TABLE -->
+      <div class="table-wrap" style="margin-top:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="table-head" id="r-orders-label" style="flex:1">—</div>
+          <button class="ghost" id="btn-grouped" onclick="showOrdersGrouped()" style="font-size:12px;padding:4px 10px"><span class="l-de">Nach Tisch</span><span class="l-en">By table</span></button>
+          <button class="ghost" id="btn-individual" onclick="showOrdersIndividual()" style="font-size:12px;padding:4px 10px"><span class="l-de">Einzeln</span><span class="l-en">Individual</span></button>
+        </div>
+        <table><thead><tr>
+          <th><span class="l-de">Tisch</span><span class="l-en">Table</span></th>
+          <th><span class="l-de">Zeit</span><span class="l-en">Time</span></th>
+          <th>Status</th><th>Total</th>
+          <th><span class="l-de">Artikel</span><span class="l-en">Items</span></th>
+        </tr></thead>
+        <tbody id="r-orders-tbody"></tbody></table>
+      </div>
+      <!-- TIMING TABLE -->
+      <div class="table-wrap" style="margin-top:16px">
+        <div class="table-head">⏱ <span class="l-de">Fertigstellungszeiten</span><span class="l-en">Preparation Times</span></div>
+        <table><thead><tr>
+          <th>#</th>
+          <th><span class="l-de">Tisch</span></th>
+          <th><span class="l-de">Bestellt</span><span class="l-en">Ordered</span></th>
+          <th><span class="l-de">Küche</span><span class="l-en">Kitchen</span></th>
+          <th><span class="l-de">Bar</span></th>
+          <th><span class="l-de">Bezahlt</span><span class="l-en">Paid</span></th>
+          <th><span class="l-de">Gesamt</span><span class="l-en">Total</span></th>
+        </tr></thead>
+        <tbody id="r-timing-tbody"></tbody></table>
       </div>
     </div>
     <!-- PERSONAL -->
@@ -225,6 +264,35 @@ tr:last-child td{border-bottom:none}
     </div>
     <!-- SPEISEKARTE -->
     <div class="panel" id="panel-speisekarte">
+      <div style="background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text2)">+ <span class="l-de">Neues Gericht</span><span class="l-en">New Item</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px"><span class="l-de">Name</span></div>
+            <input id="mi-name" placeholder="Name" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:150px">
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px"><span class="l-de">Kategorie</span></div>
+            <select id="mi-cat" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit">
+              <option value="Tapas">Tapas</option>
+              <option value="Fleisch">Fleisch &amp; Fisch</option>
+              <option value="Brot">Brot</option>
+              <option value="Dessert">Dessert</option>
+              <option value="Cocktails">Cocktails</option>
+              <option value="Softdrinks">Softdrinks</option>
+              <option value="Wein">Wein</option>
+              <option value="Sonstiges">Sonstiges</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:3px">Preis (Rp k)</div>
+            <input id="mi-price" type="number" min="0" placeholder="45" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;width:90px">
+          </div>
+          <button onclick="addMenuItem()" style="padding:7px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;background:var(--green);color:#fff;cursor:pointer;font-family:inherit">
+            <span class="l-de">Hinzufügen</span><span class="l-en">Add</span>
+          </button>
+        </div>
+      </div>
       <div class="table-wrap">
         <div class="table-head"><span class="l-de">Speisekarte</span><span class="l-en">Menu</span><span class="l-id">Menu</span></div>
         <table><thead><tr>
@@ -232,6 +300,7 @@ tr:last-child td{border-bottom:none}
           <th><span class="l-de">Kategorie</span><span class="l-en">Category</span></th>
           <th>Preis</th>
           <th><span class="l-de">Verfügbar</span><span class="l-en">Available</span></th>
+          <th></th>
         </tr></thead>
         <tbody id="menu-tbody"></tbody></table>
       </div>
@@ -266,14 +335,18 @@ tr:last-child td{border-bottom:none}
         <tbody id="ord-tbody"></tbody></table>
       </div>
     </div>
-    <!-- REZEPTE -->
-    <div class="panel" id="panel-rezepte">
-      <div style="padding:20px 0">
-        <p style="margin-bottom:16px;color:var(--text2);font-size:14px"><span class="l-de">Rezepte werden im Küchen-Rezeptbuch verwaltet.</span><span class="l-en">Recipes are managed in the kitchen recipe book.</span><span class="l-id">Resep dikelola di buku resep dapur.</span></p>
-        <a href="rezeptbuch.html" target="_blank" style="display:inline-block;padding:12px 24px;background:var(--accent);color:#fff;border-radius:10px;font-weight:700;font-size:14px;text-decoration:none">📖 <span class="l-de">Rezeptbuch öffnen</span><span class="l-en">Open Recipe Book</span><span class="l-id">Buka Buku Resep</span></a>
+    <!-- BAR REZEPTE -->
+    <div class="panel" id="panel-barrezepte">
+      <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+        <iframe src="bar_rezepturen.html" style="width:100%;height:600px;border:none"></iframe>
       </div>
     </div>
-  </div>
+    <!-- REZEPTE -->
+    <div class="panel" id="panel-rezepte">
+      <div style="border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+        <iframe src="rezeptbuch.html" style="width:100%;height:600px;border:none" id="rezepte-iframe"></iframe>
+      </div>
+    </div>
 </div>
 <div class="notif" id="notif"></div>
 
@@ -370,8 +443,10 @@ function showPanel(id,el){
   else if(id==='personal') loadStaffTable();
   else if(id==='bestellungen') loadOrdersToday();
   else if(id==='tischplan'){}
+  else if(id==='barrezepte'){}
   else if(id==='bestellungen') loadOrdersToday();
   else if(id==='tischplan'){}
+  else if(id==='barrezepte'){}
   else if(id==='speisekarte') loadMenuAdmin();
 }
 
@@ -380,7 +455,7 @@ async function loadDashboard(){
   try{
     var today=new Date().toISOString().slice(0,10);
     var [orders,sales]=await Promise.all([
-      sbGet('orders','select=id,table_number,status,total_k,created_at,order_items(name)&status=in.(new,cooking,making,ready)&order=created_at.asc'),
+      sbGet('orders','select=id,table_number,status,kitchen_status,total_k,created_at,order_items(name)&status=in.(new,cooking,making,ready,served)&order=created_at.asc'),
       sbGet('sales','select=total_k&created_at=gte.'+today+'T00:00:00&created_at=lte.'+today+'T23:59:59')
     ]);
     var revenue=sales.reduce(function(s,x){return s+(x.total_k||0);},0);
@@ -399,6 +474,24 @@ async function loadDashboard(){
         '<td>Rp '+o.total_k+'k</td>'+
         '<td>'+mins+' min</td></tr>';
     }).join('');
+    document.body.className=lang;
+    // Overdue kitchen orders (>20 min, kitchen_status not served)
+    var overdue=orders.filter(function(o){
+      var mins=Math.round((Date.now()-new Date(o.created_at).getTime())/60000);
+      return mins>20 && o.kitchen_status!=='served';
+    });
+    var odbody=document.getElementById('dash-overdue');
+    if(odbody){
+      odbody.innerHTML=overdue.length
+        ?overdue.map(function(o){
+          var mins=Math.round((Date.now()-new Date(o.created_at).getTime())/60000);
+          var items=(o.order_items||[]).map(function(i){return i.name;}).join(', ');
+          return '<tr style="background:#fff5f5"><td><b>'+tw()+o.table_number+'</b></td>'+
+            '<td style="font-size:12px;color:#555">'+items+'</td>'+
+            '<td><b style="color:#e74c3c">'+mins+' min ⚠</b></td></tr>';
+        }).join('')
+        :'<tr><td colspan="3" style="text-align:center;padding:12px;color:#2d7a4f"><span class="l-de">✓ Keine überfälligen Bestellungen</span><span class="l-en">✓ No overdue orders</span></td></tr>';
+    }
     document.body.className=lang;
   }catch(e){notify('⚠ '+e.message);}
 }
@@ -420,6 +513,8 @@ async function loadReports(preset){
     document.getElementById('r-count').textContent=sales.length;
     document.getElementById('r-cash').textContent='Rp '+cash+'k';
     document.getElementById('r-card').textContent='Rp '+card+'k';
+    var avg=sales.length?Math.round(total/sales.length):0;
+    document.getElementById('r-avg').textContent='Rp '+avg+'k';
     document.getElementById('r-label').textContent=sales.length+(lang==='de'?' Einträge':lang==='en'?' entries':' entri');
     var pm={cash:'💵 Bar',card:'💳 Karte',qr:'📱 QRIS'};
     document.getElementById('r-tbody').innerHTML=sales.length?sales.map(function(s){
@@ -433,10 +528,15 @@ async function loadReports(preset){
   // Load orders for same period
     var ordFrom=document.getElementById('rpt-from').value||new Date().toISOString().slice(0,10);
     var ordTo=document.getElementById('rpt-to').value||ordFrom;
-    var ords=await sbGet('orders?select=id,table_number,status,total_k,created_at,order_items(name,quantity)&created_at=gte.'+ordFrom+'T00:00:00&created_at=lte.'+ordTo+'T23:59:59&order=created_at.desc');
+    var ords=await sbGet('orders?select=id,table_number,status,total_k,created_at,kitchen_served_at,bar_served_at,paid_at,order_items(name,quantity)&created_at=gte.'+ordFrom+'T00:00:00&created_at=lte.'+ordTo+'T23:59:59&order=created_at.desc');
     document.getElementById('r-orders-label').textContent=ords.length+(lang==='de'?' Bestellungen':' orders');
     window._mgr_orders=ords;
     showOrdersGrouped();
+    showTimingTable(ords);
+    // Avg prep time
+    var paidT=ords.filter(function(o){return o.paid_at&&o.created_at;});
+    var el=document.getElementById('r-avgtime');
+    if(el){el.textContent=paidT.length?Math.round(paidT.reduce(function(s,o){return s+(new Date(o.paid_at)-new Date(o.created_at));},0)/paidT.length/60000)+' min':'—';}
   }catch(e){notify('⚠ '+e.message);}
 }
 
@@ -444,6 +544,26 @@ function _ordRow(table,time,status,total,items){
   var sc=status==='paid'?'#2d7a4f':status==='served'?'#1a7fa8':'#e67e22';
   return '<tr><td>'+tw()+table+'</td><td>'+time+'</td><td style="color:'+sc+'">'+status+'</td><td><b>Rp '+total+'k</b></td><td style="font-size:11px;color:#aaa">'+items+'</td></tr>';
 }
+function showTimingTable(ords){
+  function mins(a,b){
+    if(!a||!b) return '—';
+    var diff=Math.round((new Date(b)-new Date(a))/60000);
+    return diff+'min';
+  }
+  function t(ts){return ts?new Date(ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}):'—';}
+  document.getElementById('r-timing-tbody').innerHTML=ords.length
+    ?ords.map(function(o){
+      var total=o.paid_at?mins(o.created_at,o.paid_at):'—';
+      return '<tr><td>#'+o.id+'</td><td>'+tw()+o.table_number+'</td>'+
+        '<td>'+t(o.created_at)+'</td>'+
+        '<td>'+t(o.kitchen_served_at)+'</td>'+
+        '<td>'+t(o.bar_served_at)+'</td>'+
+        '<td>'+t(o.paid_at)+'</td>'+
+        '<td><b>'+total+'</b></td></tr>';
+    }).join('')
+    :'<tr><td colspan="7" style="text-align:center;padding:16px;color:#aaa">—</td></tr>';
+}
+
 function showOrdersGrouped(){
   document.getElementById('btn-grouped').style.fontWeight='700';
   document.getElementById('btn-individual').style.fontWeight='normal';
