@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=3.0">
 <title>Tischplan — Mata Villas</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -15,7 +15,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;background:#e
 .tbtn.on{background:#1a7fa8;color:#fff;border-color:#1a7fa8}
 .plan-outer{padding:16px;overflow:auto;-webkit-overflow-scrolling:touch}
 .plan{position:relative;margin:0 auto;background:#d8cfc0}
-@media(max-width:600px){.plan-outer{padding:8px}.topbar-title{font-size:13px}}
+@media(max-width:600px){
+  .plan-outer{padding:4px;overflow:auto;-webkit-overflow-scrolling:touch}
+  .topbar-title{font-size:12px}
+  .tbtn{padding:4px 8px;font-size:11px}
+  .topbar{padding:6px 8px}
+}
 .tisch{position:absolute;display:flex;align-items:center;justify-content:center;border:2px solid #bbb;background:#fff;cursor:pointer}
 .tisch.occupied{background:#ffeaea;border-color:#e74c3c}
 .tisch.reserved{background:#fff8e1;border-color:#f39c12}
@@ -405,11 +410,12 @@ async function saveReservation(tableNum){
   if(!name){notify('⚠ Name eingeben');return;}
   if(!date||!time){notify('⚠ Datum und Uhrzeit eingeben');return;}
   try{
-    await fetch(SB_URL+'/rest/v1/reservations',{
+    var resp=await fetch(SB_URL+'/rest/v1/reservations',{
       method:'POST',
-      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'},
+      headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
       body:JSON.stringify({table_num:tableNum,date:date,time:time,name:name,persons:persons,phone:phone})
     });
+    if(!resp.ok){var err=await resp.text();throw new Error(resp.status+' '+err);}
     tableStatus[tableNum]='reserved';
     closeTblModal();
     renderPlan();

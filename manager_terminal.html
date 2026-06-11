@@ -62,6 +62,12 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .nav-item.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
 .nav-badge{background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:auto}
 .panel-wrap{flex:1;overflow-y:auto;padding:20px}
+.overdue-panel{position:fixed;top:60px;right:16px;width:280px;background:#fff;border:2px solid #e74c3c;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:50;display:none}
+.overdue-panel.has-items{display:block}
+.overdue-header{background:#e74c3c;color:#fff;padding:8px 12px;border-radius:10px 10px 0 0;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.overdue-body{max-height:200px;overflow-y:auto;padding:8px}
+.overdue-row{padding:6px 8px;border-bottom:1px solid #fde8e8;font-size:12px}
+.overdue-row:last-child{border-bottom:none}
 .panel{display:none}
 .panel.on{display:block}
 /* Cards */
@@ -350,6 +356,13 @@ tr:last-child td{border-bottom:none}
     </div>
   </div>
 </div>
+<div class="overdue-panel" id="overdue-panel">
+  <div class="overdue-header">
+    <span>⚠ <span class="l-de">Überfällig</span><span class="l-en">Overdue</span></span>
+    <span id="overdue-count" style="background:rgba(255,255,255,.3);padding:1px 6px;border-radius:10px">0</span>
+  </div>
+  <div class="overdue-body" id="overdue-body"></div>
+</div>
 <div class="notif" id="notif"></div>
 
 <script>
@@ -446,9 +459,15 @@ function showPanel(id,el){
   else if(id==='bestellungen') loadOrdersToday();
   else if(id==='tischplan'){}
   else if(id==='barrezepte'){}
+  // Auto-refresh dashboard every 30s
+  if(window._dashInterval) clearInterval(window._dashInterval);
+  if(id==='dashboard') window._dashInterval=setInterval(loadDashboard,30000);
   else if(id==='bestellungen') loadOrdersToday();
   else if(id==='tischplan'){}
   else if(id==='barrezepte'){}
+  // Auto-refresh dashboard every 30s
+  if(window._dashInterval) clearInterval(window._dashInterval);
+  if(id==='dashboard') window._dashInterval=setInterval(loadDashboard,30000);
   else if(id==='speisekarte') loadMenuAdmin();
 }
 
@@ -482,17 +501,22 @@ async function loadDashboard(){
       var mins=Math.round((Date.now()-new Date(o.created_at).getTime())/60000);
       return mins>20 && o.kitchen_status!=='served';
     });
-    var odbody=document.getElementById('dash-overdue');
-    if(odbody){
-      odbody.innerHTML=overdue.length
-        ?overdue.map(function(o){
+    // Floating overdue panel
+    var panel=document.getElementById('overdue-panel');
+    var body=document.getElementById('overdue-body');
+    var count=document.getElementById('overdue-count');
+    if(panel&&body){
+      if(overdue.length>0){
+        panel.classList.add('has-items');
+        count.textContent=overdue.length;
+        body.innerHTML=overdue.map(function(o){
           var mins=Math.round((Date.now()-new Date(o.created_at).getTime())/60000);
           var items=(o.order_items||[]).map(function(i){return i.name;}).join(', ');
-          return '<tr style="background:#fff5f5"><td><b>'+tw()+o.table_number+'</b></td>'+
-            '<td style="font-size:12px;color:#555">'+items+'</td>'+
-            '<td><b style="color:#e74c3c">'+mins+' min ⚠</b></td></tr>';
-        }).join('')
-        :'<tr><td colspan="3" style="text-align:center;padding:12px;color:#2d7a4f"><span class="l-de">✓ Keine überfälligen Bestellungen</span><span class="l-en">✓ No overdue orders</span></td></tr>';
+          return '<div class="overdue-row"><b>'+tw()+o.table_number+'</b> · <span style="color:#e74c3c;font-weight:700">'+mins+'min</span><br><span style="color:#888">'+items.slice(0,40)+'</span></div>';
+        }).join('');
+      } else {
+        panel.classList.remove('has-items');
+      }
     }
     document.body.className=lang;
   }catch(e){notify('⚠ '+e.message);}
@@ -530,7 +554,7 @@ async function loadReports(preset){
   // Load orders for same period
     var ordFrom=document.getElementById('rpt-from').value||new Date().toISOString().slice(0,10);
     var ordTo=document.getElementById('rpt-to').value||ordFrom;
-    var ords=await sbGet('orders?select=id,table_number,status,total_k,created_at,kitchen_served_at,bar_served_at,paid_at,order_items(name,quantity)&created_at=gte.'+ordFrom+'T00:00:00&created_at=lte.'+ordTo+'T23:59:59&order=created_at.desc');
+    var ords=await sbGet('orders?select=id,table_number,status,total_k,created_at,kitchen_served_at,bar_served_at,paid_at,order_items(name,quantity)&order=created_at.desc&created_at=gte.'+ordFrom+'T00:00:00&created_at=lte.'+ordTo+'T23:59:59&order=created_at.desc');
     document.getElementById('r-orders-label').textContent=ords.length+(lang==='de'?' Bestellungen':' orders');
     window._mgr_orders=ords;
     showOrdersGrouped();
@@ -640,7 +664,7 @@ async function delStaff(id){
 }
 
 // SPEISEKARTE
-async function loadMenuAdmin(){
+async async function loadMenuAdmin(){
   try{
     allMenu=await sbGet('menu_items','select=*&order=sort_order,name');
     document.getElementById('menu-tbody').innerHTML=allMenu.map(function(m){
@@ -659,10 +683,12 @@ async function addMenuItem(){
   try{
     await fetch(SB+'/rest/v1/menu_items',{method:'POST',
       headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({name:name,category:cat,price_k:price,available:true,sort_order:999})});
+      body:JSON.stringify({name:name,category:cat,price_k:price,available:true,sort_order:(function(){var catOrder={'Breakfast':1,'Tapas':2,'Larger Plates':3,'Fleisch':4,'Brot':5,'Dessert':6,'Cocktails':7,'Softdrinks':8,'Wein':9,'Sonstiges':10};return (catOrder[cat]||5)*100+50;})()})});
     document.getElementById('mi-name').value='';
     document.getElementById('mi-price').value='';
     await loadMenuAdmin();
+    document.getElementById('mi-name').value='';
+    document.getElementById('mi-price').value='';
     notify('✓ '+name+' hinzugefügt');
   }catch(e){notify('⚠ '+e.message);}
 }
