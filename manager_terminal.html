@@ -274,13 +274,11 @@ tr:last-child td{border-bottom:none}
           <div>
             <div style="font-size:11px;color:var(--text3);margin-bottom:3px"><span class="l-de">Kategorie</span></div>
             <select id="mi-cat" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit">
+              <option value="Frühstück">Frühstück</option>
               <option value="Tapas">Tapas</option>
-              <option value="Fleisch">Fleisch &amp; Fisch</option>
-              <option value="Brot">Brot</option>
-              <option value="Dessert">Dessert</option>
-              <option value="Cocktails">Cocktails</option>
-              <option value="Softdrinks">Softdrinks</option>
-              <option value="Wein">Wein</option>
+              <option value="Hauptgerichte">Hauptgerichte</option>
+              <option value="Nachspeisen">Nachspeisen</option>
+              <option value="Getränke">Getränke</option>
               <option value="Sonstiges">Sonstiges</option>
             </select>
           </div>
@@ -676,7 +674,7 @@ async function addMenuItem(){
   try{
     await fetch(SB+'/rest/v1/menu_items',{method:'POST',
       headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({name:name,category:cat,price_k:price,available:true,sort_order:(function(){var catOrder={'Breakfast':1,'Tapas':2,'Larger Plates':3,'Fleisch':4,'Brot':5,'Dessert':6,'Cocktails':7,'Softdrinks':8,'Wein':9,'Sonstiges':10};return (catOrder[cat]||5)*100+50;})()})});
+      body:JSON.stringify({name:name,category:cat,price_k:price,available:true,sort_order:(function(){var catOrder={'Frühstück':1,'Tapas':2,'Hauptgerichte':3,'Nachspeisen':4,'Getränke':5,'Sonstiges':6};return (catOrder[cat]||5)*100+50;})()})});
     document.getElementById('mi-name').value='';
     document.getElementById('mi-price').value='';
     await loadMenuAdmin();
