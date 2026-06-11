@@ -596,17 +596,19 @@ function showTimingTable(ords){
 async function loadStaffTable(){
   try{
     var data=await sbGet('staff?order=fname');
+    window.staffAll=data;
     document.getElementById('staff-tbody').innerHTML=data.map(function(s){
-      var activeBtn='<button onclick="toggleStaffActive('+s.id+','+s.active+')" style="padding:2px 8px;border-radius:4px;font-size:11px;cursor:pointer;border:1px solid '+(s.active?'var(--green-bd)':'var(--border)')+'background:'+(s.active?'var(--green-bg)':'var(--bg)')+'color:'+(s.active?'var(--green)':'var(--text3)')+'">'+(s.active?'✓ Aktiv':'— Inaktiv')+'</button>';
       return '<tr><td>'+s.fname+' '+(s.lname||'')+'</td><td style="font-family:monospace">'+s.pin+'</td><td>'+s.role+'</td>'+
         '<td>'+(s.active?'✓':'—')+'</td>'+
-        '<td><button class="btn-del" onclick="deleteStaff('+s.id+',''+s.fname+'')">&#10005;</button></td></tr>';
+        '<td><button class="btn-del" onclick="deleteStaff('+s.id+')">&#10005;</button></td></tr>';
     }).join('');
   }catch(e){notify('⚠ '+e.message);}
 }
 
-async function deleteStaff(id,name){
-  if(!confirm(name+' entfernen?')) return;
+async function deleteStaff(id){
+  var s=staffAll?staffAll.find(function(x){return x.id===id;}):null;
+  var name=s?s.fname:'Mitarbeiter';
+  if(!confirm(name+' deaktivieren?')) return;
   try{
     await sbPatch('staff','id=eq.'+id,{active:false});
     await loadStaffTable();
