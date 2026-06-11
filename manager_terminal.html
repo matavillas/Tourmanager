@@ -552,9 +552,15 @@ async function loadMenuAdmin(){
     // Build category bar from actual data
     var cats=[''];
     allMenu.forEach(function(m){if(cats.indexOf(m.category)<0) cats.push(m.category);});
-    document.getElementById('menu-cat-bar').innerHTML=cats.map(function(c,i){
-      return '<button class="cat-btn'+(i===0?' on':'')+'" onclick="filterMenuCat(''+c+'',this)">'+(c||'<span class="l-de">Alle</span><span class="l-en">All</span>')+'</button>';
-    }).join('');
+    var bar=document.getElementById('menu-cat-bar');
+    bar.innerHTML='';
+    cats.forEach(function(c,i){
+      var btn=document.createElement('button');
+      btn.className='cat-btn'+(i===0?' on':'');
+      btn.innerHTML=c||'<span class="l-de">Alle</span><span class="l-en">All</span>';
+      btn.addEventListener('click',function(){filterMenuCat(c,btn);});
+      bar.appendChild(btn);
+    });
     window._menuCat='';
     renderMenuTable();
     document.body.className=lang;
