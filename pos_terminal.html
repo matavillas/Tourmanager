@@ -72,6 +72,8 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .mitem-cat{font-size:10px;color:var(--text3);margin-bottom:3px}
 .mitem-name{font-size:13px;font-weight:600;line-height:1.3}
 .mitem-price{font-size:13px;color:var(--accent);font-weight:700;margin-top:4px}
+.mitem-unavail{opacity:0.45;cursor:not-allowed!important;background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(0,0,0,.04) 4px,rgba(0,0,0,.04) 8px)!important;}
+.mitem-unavail:active{transform:none!important;}
 .mitem-badge{position:absolute;top:-6px;right:-6px;background:var(--accent);color:#fff;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .order-side{width:300px;flex-shrink:0;background:#fff;border-left:1.5px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 @media(max-width:680px){
@@ -252,77 +254,21 @@ function doLogout(){
 function notify(msg,dur){var el=document.getElementById('notif');if(!el)return;el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show');},dur||2500);}
 
 
-var menu=[
-  // Breakfast
-  {id:101,name:"Salty Soft Crepes",cat:"Breakfast",price:40,avail:true},
-  {id:102,name:"Sweet Soft Crepes",cat:"Breakfast",price:35,avail:true},
-  {id:103,name:"Herb Cream Cheese",cat:"Breakfast",price:40,avail:true},
-  {id:104,name:"Morning Power",cat:"Breakfast",price:55,avail:true},
-  {id:105,name:"Baguette",cat:"Breakfast",price:50,avail:true},
-  {id:106,name:"Tortilla Espanola",cat:"Breakfast",price:30,avail:true},
-  {id:107,name:"Overnight Oat",cat:"Breakfast",price:35,avail:true},
-  {id:108,name:"Toast",cat:"Breakfast",price:30,avail:true},
-  {id:109,name:"Nasi Goreng",cat:"Breakfast",price:50,avail:true},
-  {id:110,name:"Mie Goreng",cat:"Breakfast",price:50,avail:true},
-  // Tapas
-  {id:201,name:"Alioli Con Pan",cat:"Tapas",price:25,avail:true},
-  {id:202,name:"Patatas Bravas",cat:"Tapas",price:40,avail:true},
-  {id:203,name:"Tortilla Espanola",cat:"Tapas",price:50,avail:true},
-  {id:204,name:"Croquetas de Pollo",cat:"Tapas",price:50,avail:true},
-  {id:205,name:"Croquetas de Champiñones",cat:"Tapas",price:50,avail:true},
-  {id:206,name:"Albondigas",cat:"Tapas",price:45,avail:true},
-  {id:207,name:"Boquerones",cat:"Tapas",price:55,avail:true},
-  {id:208,name:"Gambas al Ajilo",cat:"Tapas",price:80,avail:true},
-  {id:209,name:"Calamares Fritos",cat:"Tapas",price:50,avail:true},
-  {id:210,name:"Pita Pocket",cat:"Tapas",price:55,avail:true},
-  {id:211,name:"Berenjenas Fritos",cat:"Tapas",price:40,avail:true},
-  {id:212,name:"Vegan Patatas Bravas",cat:"Tapas",price:40,avail:true},
-  // Larger Plates
-  {id:301,name:"Fish & Chips",cat:"Larger Plates",price:85,avail:true},
-  {id:302,name:"Nasi Goreng Vegetable",cat:"Larger Plates",price:60,avail:true},
-  {id:303,name:"Nicoise Salad",cat:"Larger Plates",price:70,avail:true},
-  {id:304,name:"Nasi Goreng Seafood",cat:"Larger Plates",price:80,avail:true},
-  {id:305,name:"Nasi Goreng Chicken",cat:"Larger Plates",price:75,avail:true},
-  {id:306,name:"Beef Rendang",cat:"Larger Plates",price:90,avail:true},
-  // Dessert
-  {id:401,name:"Crema Catalana",cat:"Dessert",price:40,avail:true},
-  {id:402,name:"Churros",cat:"Dessert",price:40,avail:true},
-  {id:403,name:"Ice Cream",cat:"Dessert",price:35,avail:true},
-  // Cocktails
-  {id:501,name:"Signature Blue Mata",cat:"Cocktails",price:80,avail:true},
-  {id:502,name:"Margarita",cat:"Cocktails",price:80,avail:true},
-  {id:503,name:"Gin Fizz",cat:"Cocktails",price:80,avail:true},
-  {id:504,name:"Pina Colada",cat:"Cocktails",price:80,avail:true},
-  {id:505,name:"Lime Daiquiri",cat:"Cocktails",price:80,avail:true},
-  {id:506,name:"Arak Attack",cat:"Cocktails",price:80,avail:true},
-  // Spanish Drinks
-  {id:601,name:"Gili Sangria",cat:"Spanish Drinks",price:55,avail:true},
-  {id:602,name:"Calimocho",cat:"Spanish Drinks",price:60,avail:true},
-  {id:603,name:"Tinto Verano",cat:"Spanish Drinks",price:60,avail:true},
-  {id:604,name:"Red Wine",cat:"Spanish Drinks",price:80,avail:true},
-  {id:605,name:"White Wine",cat:"Spanish Drinks",price:80,avail:true},
-  // Drinks
-  {id:701,name:"Espresso",cat:"Drinks",price:25,avail:true},
-  {id:702,name:"Lombok Black Coffee",cat:"Drinks",price:25,avail:true},
-  {id:703,name:"Hot Latte",cat:"Drinks",price:35,avail:true},
-  {id:704,name:"Iced Coffee Latte",cat:"Drinks",price:40,avail:true},
-  {id:705,name:"Hot Tea",cat:"Drinks",price:20,avail:true},
-  {id:706,name:"Iced Tea",cat:"Drinks",price:25,avail:true},
-  {id:707,name:"Ice Lemon Tea",cat:"Drinks",price:25,avail:true},
-  {id:708,name:"Mineral Water",cat:"Drinks",price:10,avail:true},
-  {id:709,name:"Fresh Coconut",cat:"Drinks",price:25,avail:true},
-  {id:710,name:"Kombucha",cat:"Drinks",price:45,avail:true},
-  {id:711,name:"Banana Juice",cat:"Drinks",price:35,avail:true},
-  {id:712,name:"Mango Juice",cat:"Drinks",price:35,avail:true},
-  {id:713,name:"Pineapple Juice",cat:"Drinks",price:35,avail:true},
-  {id:714,name:"Avocado Juice",cat:"Drinks",price:35,avail:true},
-  {id:715,name:"Orange Juice",cat:"Drinks",price:35,avail:true},
-  {id:716,name:"Green Booster",cat:"Drinks",price:40,avail:true},
-  {id:717,name:"Small Bintang",cat:"Drinks",price:40,avail:true},
-  {id:718,name:"Coca-Cola",cat:"Drinks",price:25,avail:true},
-  {id:719,name:"Coca-Cola Zero",cat:"Drinks",price:25,avail:true},
-  {id:720,name:"Sprite",cat:"Drinks",price:25,avail:true},
-];
+var menu=[];
+
+async function loadMenu(){
+  try{
+    var data=await sbGet('menu_items','select=id,name,category,price_k,available&order=sort_order,name');
+    menu=data.map(function(m){
+      return {id:m.id,name:m.name,cat:m.category,price:m.price_k,avail:m.available};
+    });
+    renderAll();
+  }catch(e){
+    console.warn('Menu load failed, using cache');
+    renderAll();
+  }
+}
+
 var tables=Array.from({length:15},function(_,i){return {num:i+1,status:'free'};});
 var order=[],selTable=null,curCat='';
 
@@ -370,14 +316,18 @@ function buildMenuGrid(){
   grid.innerHTML=filtered.map(function(m){
     var inOrder=order.find(function(o){return o.id===m.id;});
     var qty=inOrder?inOrder.qty:0;
-    return '<div class="mitem" data-id="'+m.id+'">'+
+    var unavail=m.avail===false;
+    return '<div class="mitem'+(unavail?' mitem-unavail':'')+'" data-id="'+m.id+'" data-avail="'+(unavail?'0':'1')+'">'+
       '<div class="mitem-cat">'+m.cat+'</div>'+
       '<div class="mitem-name">'+m.name+'</div>'+
-      '<div class="mitem-price">Rp '+m.price+'k</div>'+
+      '<div class="mitem-price">'+(unavail?'<span style="font-size:10px;color:#e74c3c">N/A</span> ':'')+'Rp '+m.price+'k</div>'+
       (qty>0?'<div class="mitem-badge">'+qty+'</div>':'')+
       '</div>';
   }).join('');
-  grid.onclick=function(e){var el=e.target.closest('.mitem');if(el)addItem(parseInt(el.getAttribute('data-id')));}
+  grid.onclick=function(e){
+    var el=e.target.closest('.mitem');
+    if(el&&el.getAttribute('data-avail')!=='0') addItem(parseInt(el.getAttribute('data-id')));
+  }
 }
 
 function addItem(id){
@@ -451,7 +401,7 @@ async function loadTables(){
   }catch(e){}
 }
 
-function afterLogin(){renderAll();loadTables();setInterval(loadTables,15000);}
+function afterLogin(){loadMenu();loadTables();setInterval(loadTables,15000);setInterval(loadMenu,60000);}
 function afterLogout(){order=[];selTable=null;clearOrder();}
 
 window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();});
