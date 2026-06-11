@@ -182,9 +182,26 @@ async function savePositions(){
 
 async function loadStatus(){
   try{
+    // Load active orders
     var data=await sbGet('orders?status=in.(new,cooking,making,served)&select=table_number');
     tableStatus={};
     data.forEach(function(o){tableStatus[o.table_number]='occupied';});
+
+    // Load today's reservations and apply time-based logic
+    var today=new Date().toISOString().slice(0,10);
+    var now=new Date();
+    var resData=await sbGet('reservations?date=eq.'+today+'&select=table_num,time');
+    resData.forEach(function(r){
+      if(tableStatus[r.table_num]==='occupied') return; // already occupied
+      var resTime=new Date(today+'T'+r.time);
+      var diffMins=Math.round((now-resTime)/60000);
+      // -60 to +30 min window: show as reserved
+      // after +30 min: no-show, treat as free
+      if(diffMins>=-60 && diffMins<=30){
+        tableStatus[r.table_num]='reserved';
+      }
+      // else: free (no-show or too far in future)
+    });
   }catch(e){}
   renderPlan();
 }
