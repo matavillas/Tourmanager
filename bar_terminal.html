@@ -45,7 +45,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
 .main{flex:1;overflow-y:auto;padding:12px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;align-content:start}
 .main::-webkit-scrollbar{width:4px}
 .main::-webkit-scrollbar-thumb{background:var(--border)}
-.ticket{background:#fff;border:2px solid var(--border);border-radius:12px;overflow:hidden}
+.ticket{background:#fff;border:2px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
 .ticket.new{border-color:#fca5a5}
 .ticket.making{border-color:var(--yellow-border)}
 .ticket-head{padding:10px 12px;display:flex;align-items:center;gap:8px}
@@ -56,13 +56,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
 .t-ok{background:var(--green-bg);color:var(--green)}
 .t-warn{background:var(--yellow-bg);color:var(--yellow)}
 .t-late{background:var(--red-bg);color:var(--red)}
-.ticket-body{padding:8px 12px;display:flex;flex-direction:column}
+.ticket-body{padding:8px 12px;display:flex;flex-direction:column;overflow-y:auto;max-height:200px;flex:1}
 .ticket-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);width:100%}
 .ticket-item:last-child{border-bottom:none}
 .item-qty{width:24px;height:24px;border-radius:6px;background:var(--accent-bg);color:var(--accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .item-name{flex:1;font-size:13px;font-weight:600}
 .ticket-note{padding:5px 12px;font-size:11px;color:var(--orange);font-style:italic;background:var(--orange-bg);border-top:1px solid var(--orange-border)}
-.ticket-foot{padding:8px 12px;border-top:1.5px solid var(--border);background:var(--bg2);display:flex;gap:6px}
+.ticket-foot{flex-shrink:0;padding:8px 12px;border-top:1.5px solid var(--border);background:var(--bg2);display:flex;gap:6px}
 .act-btn{flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:var(--font)}
 .btn-make{background:var(--yellow-bg);color:var(--yellow);border:1.5px solid var(--yellow-border)}
 .btn-make:hover{background:var(--yellow);color:#fff}
