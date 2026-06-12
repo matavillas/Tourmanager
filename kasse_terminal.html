@@ -276,6 +276,8 @@ function renderBills(){
 function selectBill(id){
   selBill=bills.find(function(b){return b.id===id;});
   if(!selBill)return;
+  window._discountPercent=0;
+  window._discountReason=null;
   renderBills();
   renderReceipt(selBill);
   document.getElementById('paysec').style.display='block';
@@ -286,18 +288,64 @@ function selectBill(id){
 }
 
 function renderReceipt(b){
-  var items=b.order_items||[];
+  var items=(b.order_items||[]).filter(function(i){return i.status!=='cancelled';});
   var rows=items.map(function(i){
-    return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span></div>';
+    return '<div class="ritem" data-itemid="'+i.id+'"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span>'+
+      '<span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span>'+
+      '<button class="ritem-del" onclick="removeBillItem('+b.id+','+i.id+')" title="Entfernen" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:14px;margin-left:8px">&#10005;</button></div>';
   }).join('');
   var t=new Date(b.created_at).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   var warn=getPendingWarn(b);
+  var subtotal=items.reduce(function(s,i){return s+(i.price_k*i.quantity);},0);
+  var discount=window._discountPercent||0;
+  var discountAmt=Math.round(subtotal*discount/100);
+  var finalTotal=subtotal-discountAmt;
+  b._displayTotal=finalTotal;
   document.getElementById('receipt').innerHTML=
     '<div class="receipt-head"><div class="receipt-logo">Mata Tapas Bar</div><div class="receipt-sub">Gili Trawangan · '+t+'</div><div class="receipt-sub">'+tw()+b.table_number+'</div></div>'+
     (warn?'<div class="receipt-warn">'+warn+'</div>':'')+
     rows+
-    '<div class="rtotal"><span>Total</span><span>Rp '+b.total_k+'k</span></div>';
+    '<div class="rtotal" style="border-top:1px solid #eee;padding-top:6px;margin-top:6px"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'+
+    '<div class="discount-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;padding:8px;background:#f5f2ed;border-radius:8px;flex-wrap:wrap">'+
+      '<span style="font-size:13px;color:#888">Rabatt:</span>'+
+      '<button class="disc-btn" onclick="setDiscount(0)" style="padding:4px 10px;border-radius:6px;border:1px solid '+(discount===0?'#3182ce':'#ddd')+';background:'+(discount===0?'#ebf8ff':'#fff')+';font-size:12px;cursor:pointer">0%</button>'+
+      '<button class="disc-btn" onclick="setDiscount(10)" style="padding:4px 10px;border-radius:6px;border:1px solid '+(discount===10?'#3182ce':'#ddd')+';background:'+(discount===10?'#ebf8ff':'#fff')+';font-size:12px;cursor:pointer">10%</button>'+
+      '<button class="disc-btn" onclick="setDiscount(20)" style="padding:4px 10px;border-radius:6px;border:1px solid '+(discount===20?'#3182ce':'#ddd')+';background:'+(discount===20?'#ebf8ff':'#fff')+';font-size:12px;cursor:pointer">20%</button>'+
+      '<input type="number" id="disc-custom" placeholder="%" min="0" max="100" style="width:50px;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px" onchange="setDiscount(parseInt(this.value)||0)">'+
+      (discount>0?'<select id="disc-reason" onchange="window._discountReason=this.value" style="padding:4px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px">'+
+        '<option value="Promotion"'+((window._discountReason||'Promotion')==='Promotion'?' selected':'')+'>Promotion</option>'+
+        '<option value="Einheimischer"'+(window._discountReason==='Einheimischer'?' selected':'')+'>Einheimischer</option>'+
+        '<option value="Mitarbeiter"'+(window._discountReason==='Mitarbeiter'?' selected':'')+'>Mitarbeiter</option>'+
+        '<option value="Stammkunde"'+(window._discountReason==='Stammkunde'?' selected':'')+'>Stammkunde</option>'+
+        '<option value="Sonstiges"'+(window._discountReason==='Sonstiges'?' selected':'')+'>Sonstiges</option>'+
+      '</select>':'')+
+    '</div>'+
+    (discount>0?'<div class="rtotal" style="color:#e67e22"><span>Rabatt ('+discount+'%)</span><span>-Rp '+discountAmt+'k</span></div>':'')+
+    '<div class="rtotal" style="font-size:18px;font-weight:800;border-top:2px solid #333;padding-top:8px;margin-top:6px"><span>Total</span><span>Rp '+finalTotal+'k</span></div>';
   document.body.className=lang;
+}
+
+window._discountPercent=0;
+function setDiscount(pct){
+  window._discountPercent=Math.max(0,Math.min(100,pct));
+  if(window._discountPercent>0 && !window._discountReason) window._discountReason='Promotion';
+  if(window._discountPercent===0) window._discountReason=null;
+  if(selBill) renderReceipt(selBill);
+}
+
+async function removeBillItem(billId,itemId){
+  if(!confirm(lang==='de'?'Position entfernen?':'Remove item?')) return;
+  try{
+    await sbPatch('order_items','id=eq.'+itemId,{status:'cancelled'});
+    var item=selBill.order_items.find(function(i){return i.id===itemId;});
+    if(item) item.status='cancelled';
+    var newTotal=selBill.order_items.filter(function(i){return i.status!=='cancelled';}).reduce(function(s,i){return s+(i.price_k*i.quantity);},0);
+    selBill.total_k=newTotal;
+    await sbPatch('orders','id=eq.'+billId,{total_k:newTotal});
+    renderReceipt(selBill);
+    renderBills();
+    notify('\u2713 '+(lang==='de'?'Position entfernt':'Item removed'));
+  }catch(e){notify('\u26a0 '+e.message);}
 }
 
 function selPM(pm,el){
@@ -313,7 +361,8 @@ function selPM(pm,el){
 document.getElementById('cash-given').addEventListener('input',function(){
   if(!selBill)return;
   var given=parseFloat(this.value)||0;
-  var change=given-selBill.total_k;
+  var finalTotal=selBill._displayTotal!==undefined?selBill._displayTotal:selBill.total_k;
+  var change=given-finalTotal;
   var el=document.getElementById('change-display');
   if(given>0){el.textContent=(change>=0?'Wechselgeld: Rp '+change.toFixed(0)+'k':'⚠ Zu wenig');el.style.color=change>=0?'var(--green)':'var(--red)';}
   else{el.textContent='';}
@@ -322,16 +371,19 @@ document.getElementById('cash-given').addEventListener('input',function(){
 
 async function confirmPay(){
   if(!selBill)return;
+  var discount=window._discountPercent||0;
+  var finalTotal=selBill._displayTotal!==undefined?selBill._displayTotal:selBill.total_k;
   if(payMethod==='cash'){
     var given=parseFloat(document.getElementById('cash-given').value)||0;
-    if(given<selBill.total_k){notify('⚠ Betrag zu niedrig');return;}
+    if(given<finalTotal){notify('⚠ Betrag zu niedrig');return;}
   }
   var bid=selBill.id;
-  var total=selBill.total_k;
+  var total=finalTotal;
   var table=selBill.table_number;
   try{
-    await sbPatch('orders','id=eq.'+bid,{status:'paid',payment_method:payMethod,paid_at:new Date().toISOString()});
-    try{await sbPost('sales',{order_id:bid,table_number:table,total_k:total,payment_method:payMethod});}catch(e){}
+    await sbPatch('orders','id=eq.'+bid,{status:'paid',payment_method:payMethod,paid_at:new Date().toISOString(),total_k:total});
+    try{await sbPost('sales',{order_id:bid,table_number:table,total_k:total,payment_method:payMethod,discount_percent:discount,discount_reason:discount>0?(window._discountReason||'Rabatt'):null});}catch(e){}
+    window._discountPercent=0;
     bills=bills.filter(function(b){return b.id!==bid;});
     selBill=null;
     renderBills();
