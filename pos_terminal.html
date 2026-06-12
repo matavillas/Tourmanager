@@ -92,6 +92,12 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .fab-badge{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;width:20px;height:20px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .order-head{padding:10px 14px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);flex-shrink:0}
 .order-list{flex:1;overflow-y:auto;padding:8px}
+.active-order-list{padding:10px 16px;max-height:200px;overflow-y:auto}
+.active-order-title{font-size:11px;font-weight:700;color:#e67e22;text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center}
+.active-order-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px;border-bottom:1px solid #f5f2ed}
+.active-order-item:last-child{border-bottom:none}
+.cancel-item-btn{background:none;border:none;color:#e74c3c;cursor:pointer;font-size:13px;padding:2px 6px}
+.cancel-order-btn{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid #e74c3c;background:#ffeaea;color:#c0392b;font-size:12px;font-weight:700;cursor:pointer}
 .order-empty{display:flex;align-items:center;justify-content:center;height:80px;color:var(--text3);font-size:13px}
 .oitem{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--border)}
 .oitem-name{flex:1;font-size:13px;font-weight:600}
@@ -160,6 +166,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
   <div class="order-side" id="order-side">
     <div class="drag-bar" onclick="toggleCart()"><div class="drag-bar-line"></div></div>
     <div class="order-head"><span class="l-de">Bestellung</span><span class="l-en">Order</span><span class="l-id">Pesanan</span></div>
+    <div id="active-order-section" style="display:none;border-bottom:1px solid var(--border)"></div>
     <div class="order-list" id="order-list"></div>
     <div class="note-wrap"><textarea id="order-note" placeholder="Notiz..."></textarea></div>
     <div class="order-total"><span>Total</span><span id="order-total">Rp 0k</span></div>
@@ -297,7 +304,69 @@ function renderTables(){
   document.body.className=lang;
 }
 
-function selectTable(num){selTable=num;renderTables();updateSendBtn();}
+function selectTable(num){
+  selTable=num;
+  renderTables();
+  updateSendBtn();
+  loadActiveOrder(num);
+}
+
+async function loadActiveOrder(num){
+  var sec=document.getElementById('active-order-section');
+  var t=tables.find(function(x){return x.num===num;});
+  if(!t||t.status!=='occupied'){
+    sec.style.display='none';
+    sec.innerHTML='';
+    return;
+  }
+  try{
+    var ords=await sbGet('orders','select=id,total_k,status,order_items(id,name,quantity,price_k,status)&table_number=eq.'+num+'&status=in.(new,cooking,making,served)&order=created_at.desc');
+    if(!ords.length){sec.style.display='none';sec.innerHTML='';return;}
+    var html='';
+    ords.forEach(function(o){
+      var items=(o.order_items||[]).filter(function(i){return i.status!=='cancelled';});
+      if(!items.length) return;
+      html+='<div class="active-order-list">';
+      html+='<div class="active-order-title"><span>'+(lang==='de'?'Aktuelle Bestellung':'Current order')+' #'+o.id+'</span>'+
+        '<button class="cancel-item-btn" onclick="cancelWholeOrder('+o.id+','+num+')" title="'+(lang==='de'?'Ganze Bestellung stornieren':'Cancel whole order')+'">&#128465;</button></div>';
+      items.forEach(function(i){
+        html+='<div class="active-order-item"><span>'+i.quantity+'x '+i.name+'</span>'+
+          '<span><span style="color:#888">Rp '+(i.price_k*i.quantity)+'k</span> '+
+          '<button class="cancel-item-btn" onclick="cancelOrderItem('+i.id+','+o.id+','+num+')" title="'+(lang==='de'?'Entfernen':'Remove')+'">&#10005;</button></span></div>';
+      });
+      html+='</div>';
+    });
+    sec.innerHTML=html;
+    sec.style.display=html?'block':'none';
+  }catch(e){console.warn('loadActiveOrder failed',e);}
+}
+
+async function cancelOrderItem(itemId,orderId,tableNum){
+  if(!confirm(lang==='de'?'Position stornieren?':'Cancel item?')) return;
+  try{
+    await sbPatch('order_items','id=eq.'+itemId,{status:'cancelled'});
+    var ord=await sbGet('orders?id=eq.'+orderId+'&select=order_items(price_k,quantity,status)');
+    var newTotal=(ord[0].order_items||[]).filter(function(i){return i.status!=='cancelled';}).reduce(function(s,i){return s+i.price_k*i.quantity;},0);
+    await sbPatch('orders','id=eq.'+orderId,{total_k:newTotal});
+    if(newTotal===0){
+      await sbPatch('orders','id=eq.'+orderId,{status:'cancelled'});
+    }
+    loadActiveOrder(tableNum);
+    loadTables();
+    notify('\u2713 '+(lang==='de'?'Storniert':'Cancelled'));
+  }catch(e){notify('\u26a0 '+e.message);}
+}
+
+async function cancelWholeOrder(orderId,tableNum){
+  if(!confirm(lang==='de'?'Ganze Bestellung stornieren?':'Cancel whole order?')) return;
+  try{
+    await sbPatch('orders','id=eq.'+orderId,{status:'cancelled'});
+    await sbPatch('order_items','order_id=eq.'+orderId,{status:'cancelled'});
+    loadActiveOrder(tableNum);
+    loadTables();
+    notify('\u2713 '+(lang==='de'?'Bestellung storniert':'Order cancelled'));
+  }catch(e){notify('\u26a0 '+e.message);}
+}
 
 function buildCatBar(){
   var cats=[''];

@@ -196,9 +196,9 @@ function onLangChange(){render();}
 async function load(){
   try{
     // Lade Orders wo kitchen_status NICHT served ist
-    var d=await sbGet('orders','select=id,table_number,kitchen_status,note,created_at,order_items(id,name,quantity,category)&kitchen_status=in.(new,cooking)&status=neq.paid&order=created_at.asc');
+    var d=await sbGet('orders','select=id,table_number,kitchen_status,note,created_at,order_items(id,name,quantity,category,status)&kitchen_status=in.(new,cooking)&status=not.in.(paid,cancelled)&order=created_at.asc');
     orders=d.map(function(o){
-      var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)<0;});
+      var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)<0 && i.status!=='cancelled';});
       if(!items.length) return null;
       return {id:o.id,table:o.table_number,status:o.kitchen_status,note:o.note||'',
                ts:new Date(o.created_at).getTime(),

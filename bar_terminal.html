@@ -258,10 +258,10 @@ function setFilter(f,el){
 async function loadOrders(){
   try{
     // FIX: use bar_status instead of status
-    var data=await sbGet('orders','select=id,table_number,bar_status,note,created_at,order_items(id,name,quantity,category)&bar_status=in.(new,making)&status=neq.paid&order=created_at');
+    var data=await sbGet('orders','select=id,table_number,bar_status,note,created_at,order_items(id,name,quantity,category,status)&bar_status=in.(new,making)&status=not.in.(paid,cancelled)&order=created_at');
     orders=[];
     data.forEach(function(o){
-      var drinkItems=(o.order_items||[]).filter(function(i){return BAR_CATS.indexOf(i.category)>=0;});
+      var drinkItems=(o.order_items||[]).filter(function(i){return BAR_CATS.indexOf(i.category)>=0 && i.status!=='cancelled';});
       if(drinkItems.length>0){
         orders.push({
           id:o.id,table_number:o.table_number,
