@@ -255,20 +255,72 @@ function setFilter(f,el){
   el.classList.add('on');render();
 }
 
+// Sound functions
+var audioCtx=null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq,duration,type){
+  try{
+    var ctx=getAudioCtx();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.value=freq;
+    osc.type=type||'sine';
+    gain.gain.setValueAtTime(0.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+duration);
+    osc.start();osc.stop(ctx.currentTime+duration);
+  }catch(e){}
+}
+function soundNewOrder(){
+  playTone(880,0.15);
+  setTimeout(function(){playTone(659,0.2);},150);
+}
+function soundCancelled(){
+  playTone(220,0.25,'square');
+  setTimeout(function(){playTone(220,0.25,'square');},300);
+  setTimeout(function(){playTone(220,0.35,'square');},600);
+}
+var knownOrderIds=new Set();
+var knownCancelledItemIds=new Set();
+var firstLoadBar=true;
+
 async function loadOrders(){
   try{
-    // FIX: use bar_status instead of status
     var data=await sbGet('orders','select=id,table_number,bar_status,note,created_at,order_items(id,name,quantity,category,status)&bar_status=in.(new,making)&status=not.in.(paid,cancelled)&order=created_at');
+
+    var currentIds=new Set(data.map(function(o){return o.id;}));
+    if(!firstLoadBar){
+      var hasNew=false;
+      currentIds.forEach(function(id){if(!knownOrderIds.has(id)) hasNew=true;});
+      if(hasNew) soundNewOrder();
+    }
+    knownOrderIds=currentIds;
+
+    var currentCancelled=new Set();
+    data.forEach(function(o){
+      (o.order_items||[]).forEach(function(i){
+        if(i.status==='cancelled'){
+          currentCancelled.add(i.id);
+          if(!firstLoadBar && !knownCancelledItemIds.has(i.id)) soundCancelled();
+        }
+      });
+    });
+    knownCancelledItemIds=currentCancelled;
+    firstLoadBar=false;
+
     orders=[];
     data.forEach(function(o){
-      var drinkItems=(o.order_items||[]).filter(function(i){return BAR_CATS.indexOf(i.category)>=0 && i.status!=='cancelled';});
+      var drinkItems=(o.order_items||[]).filter(function(i){return BAR_CATS.indexOf(i.category)>=0;});
       if(drinkItems.length>0){
         orders.push({
           id:o.id,table_number:o.table_number,
-          status:o.bar_status||'new', // FIX: map bar_status to status
+          status:o.bar_status||'new',
           note:o.note||'',
           ts:new Date(o.created_at).getTime(),
-          items:drinkItems.map(function(i){return {name:i.name,quantity:i.quantity,category:i.category};})
+          items:drinkItems.map(function(i){return {id:i.id,name:i.name,quantity:i.quantity,category:i.category,cancelled:i.status==='cancelled'};})
         });
       }
     });
@@ -295,6 +347,13 @@ function render(){
     var mins=Math.floor((Date.now()-o.ts)/60000);
     var tc=mins<8?'t-ok':mins<15?'t-warn':'t-late';
     var itemsHtml=o.items.map(function(it){
+      if(it.cancelled){
+        return '<div class="ticket-item" style="background:#fff0f0">'
+          +'<div class="item-qty" style="text-decoration:line-through;color:#e74c3c">'+it.quantity+'×</div>'
+          +'<span class="item-name" style="text-decoration:line-through;color:#e74c3c;font-weight:700">'+it.name+'</span>'
+          +'<span style="color:#e74c3c;font-size:11px;font-weight:700;margin-left:auto">STORNIERT</span>'
+          +'</div>';
+      }
       var hasRec=RECIPES&&RECIPES[it.name];
       return '<div class="ticket-item">'
         +'<div class="item-qty">'+it.quantity+'×</div>'

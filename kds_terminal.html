@@ -193,16 +193,74 @@ function tw(){return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';}
 function setF(f,btn){curF=f;document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');render();}
 function onLangChange(){render();}
 
+// Sound functions using Web Audio API
+var audioCtx=null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playTone(freq,duration,type){
+  try{
+    var ctx=getAudioCtx();
+    var osc=ctx.createOscillator();
+    var gain=ctx.createGain();
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.value=freq;
+    osc.type=type||'sine';
+    gain.gain.setValueAtTime(0.3,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+duration);
+    osc.start();osc.stop(ctx.currentTime+duration);
+  }catch(e){}
+}
+function soundNewOrder(){
+  // Kitchen: two ascending tones
+  playTone(523,0.15);
+  setTimeout(function(){playTone(659,0.2);},150);
+}
+function soundCancelled(){
+  // Warning: low buzzing tone repeated
+  playTone(220,0.25,'square');
+  setTimeout(function(){playTone(220,0.25,'square');},300);
+  setTimeout(function(){playTone(220,0.35,'square');},600);
+}
+
+var knownOrderIds=new Set();
+var knownCancelledItemIds=new Set();
+var firstLoad=true;
+
 async function load(){
   try{
     // Lade Orders wo kitchen_status NICHT served ist
     var d=await sbGet('orders','select=id,table_number,kitchen_status,note,created_at,order_items(id,name,quantity,category,status)&kitchen_status=in.(new,cooking)&status=not.in.(paid,cancelled)&order=created_at.asc');
+
+    // Detect new orders
+    var currentIds=new Set(d.map(function(o){return o.id;}));
+    if(!firstLoad){
+      var hasNew=false;
+      currentIds.forEach(function(id){if(!knownOrderIds.has(id)) hasNew=true;});
+      if(hasNew) soundNewOrder();
+    }
+    knownOrderIds=currentIds;
+
+    // Detect newly cancelled items
+    var currentCancelled=new Set();
+    d.forEach(function(o){
+      (o.order_items||[]).forEach(function(i){
+        if(i.status==='cancelled'){
+          currentCancelled.add(i.id);
+          if(!firstLoad && !knownCancelledItemIds.has(i.id)) soundCancelled();
+        }
+      });
+    });
+    knownCancelledItemIds=currentCancelled;
+    firstLoad=false;
+
     orders=d.map(function(o){
-      var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)<0 && i.status!=='cancelled';});
+      var items=(o.order_items||[]).filter(function(i){return BAR.indexOf(i.category)<0;});
       if(!items.length) return null;
       return {id:o.id,table:o.table_number,status:o.kitchen_status,note:o.note||'',
                ts:new Date(o.created_at).getTime(),
-               items:items.map(function(i){return {id:i.id,name:i.name,qty:i.quantity,cat:i.category||'',done:false};})
+               items:items.map(function(i){return {id:i.id,name:i.name,qty:i.quantity,cat:i.category||'',done:false,cancelled:i.status==='cancelled'};})
       };
     }).filter(Boolean);
     document.getElementById('live').className='live';
@@ -225,6 +283,13 @@ function render(){
     var mins=Math.round((Date.now()-o.ts)/60000);
     var tc=mins>20?'urgent':mins>10?'warn':'ok';
     var items=o.items.map(function(it,idx){
+      if(it.cancelled){
+        return '<div class="titem cancelled" style="background:#fff0f0">'+
+          '<div class="iqty" style="text-decoration:line-through;color:#e74c3c">'+it.qty+'x</div>'+
+          '<div style="flex:1"><div class="iname" style="text-decoration:line-through;color:#e74c3c;font-weight:700">'+it.name+'</div><div class="icat" style="color:#e74c3c">STORNIERT</div></div>'+
+          '<div style="color:#e74c3c;font-size:18px">&#9888;</div>'+
+          '</div>';
+      }
       return '<div class="titem'+(it.done?' done':'')+'">'+
         '<div class="iqty">'+it.qty+'x</div>'+
         '<div style="flex:1"><div class="iname">'+it.name+'</div><div class="icat">'+it.cat+'</div></div>'+
