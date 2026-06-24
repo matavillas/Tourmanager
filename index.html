@@ -1140,6 +1140,28 @@ function buildGmapsUrl(stops) {
 }
 
 // ── TOUR STATISTIKEN (km + Zeit) ─────────────────────────────────────────────
+async function calcStatsForTour(tourId) {
+  const tour = state.tours.find(t => t.id === tourId);
+  if (!tour) return;
+  const statsEl = document.getElementById('stats_' + tourId);
+  if (!statsEl) return;
+  const btn = statsEl.querySelector('button');
+  if (btn) btn.textContent = '⏳';
+
+  const stats = await calcTourStats(tour);
+  if (stats) {
+    statsEl.querySelector('.stat-km').textContent = stats.km;
+    statsEl.querySelector('.stat-time').textContent = stats.timeStr;
+    tour.stats = stats;
+  } else {
+    const hv = calcTourKmHaversine(tour.stops);
+    statsEl.querySelector('.stat-km').textContent = hv.km + ' km';
+    statsEl.querySelector('.stat-time').textContent = hv.timeStr;
+  }
+  if (btn) btn.textContent = '✓';
+  statsEl.style.color = 'var(--text)';
+}
+
 function calcTourKmHaversine(stops) {
   if (!stops.length) return { km: '0', timeStr: '0min' };
   const DEPOT = [51.1974335, 6.5433796];
@@ -1512,9 +1534,10 @@ function render(){
     const fahrerBadge = tour.fahrer ? `<span style="font-size:11px;background:rgba(37,211,102,0.15);color:#1a9c4a;border:1px solid rgba(37,211,102,0.3);padding:2px 8px;border-radius:10px;margin-left:8px;">🚗 ${tour.fahrer}</span>` : '';
     const statsId = 'stats_' + tour.id;
     card.innerHTML=`<div class="tour-card-header" style="border-left:4px solid ${tour.color}"><span class="tour-label" style="color:${tour.color}">${tour.label}</span>${fahrerBadge}<span class="tour-count">${tour.stops.length} Stopps</span></div>
-      <div id="${statsId}" style="display:flex;gap:16px;padding:6px 12px;font-size:12px;font-weight:600;border-bottom:1px solid var(--border);color:var(--muted);">
-        <span>📏 <span class="stat-km">wird berechnet…</span></span>
-        <span>⏱ <span class="stat-time"></span></span>
+      <div id="${statsId}" style="display:flex;gap:12px;align-items:center;padding:6px 12px;font-size:12px;font-weight:600;border-bottom:1px solid var(--border);color:var(--muted);">
+        <span>📏 <span class="stat-km">–</span> km</span>
+        <span>⏱ <span class="stat-time">–</span></span>
+        <button onclick="calcStatsForTour('${tour.id}')" style="margin-left:auto;background:rgba(26,95,160,0.3);border:1px solid rgba(26,95,160,0.5);color:#e6edf3;border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;">⟳ Fahrtzeit</button>
       </div>
       ${billingHtml}<a class="tour-gmaps" href="${gmapsUrl}" target="_blank" rel="noopener" >🗺 In Google Maps öffnen</a><button class="wa-btn" data-tour-id="${tour.id}">📱 An Fahrer senden</button><div class="stop-list">${stopsHtml}</div>`;
     container.appendChild(card);
@@ -1587,38 +1610,15 @@ function render(){
   const total=state.tours.reduce((s,t)=>s+t.stops.length,0);
   document.getElementById('infoStops').textContent=total+' Stopps gesamt';
 
-  // Stats async berechnen – warte bis SDK geladen
-  (async () => {
-    const key = getApiKey();
-    if (key) {
-      try { await loadGoogleMapsSDK(key); } catch(e) {}
-    }
-    for (const tour of state.tours) {
-      const statsEl = document.getElementById('stats_' + tour.id);
-      if (!statsEl) continue;
-      // Haversine Fallback wenn kein API Key
-      if (!key || !googleMapsLoaded) {
-        const hv = calcTourKmHaversine(tour.stops);
-        statsEl.querySelector('.stat-km').textContent = hv.km + ' (ca.)';
-        statsEl.querySelector('.stat-time').textContent = hv.timeStr + ' (ca.)';
-        statsEl.style.color = 'var(--text)';
-        continue;
-      }
-      const stats = await calcTourStats(tour);
-      if (stats) {
-        statsEl.querySelector('.stat-km').textContent = stats.km;
-        statsEl.querySelector('.stat-time').textContent = stats.timeStr;
-        statsEl.style.color = 'var(--text)';
-        tour.stats = stats;
-      } else {
-        // Fallback auf Haversine
-        const hv = calcTourKmHaversine(tour.stops);
-        statsEl.querySelector('.stat-km').textContent = hv.km + ' (ca.)';
-        statsEl.querySelector('.stat-time').textContent = hv.timeStr + ' (ca.)';
-        statsEl.style.color = 'var(--text)';
-      }
-    }
-  })();
+  // Stats: Haversine-Schätzung sofort anzeigen (kein API-Aufruf)
+  state.tours.forEach(tour => {
+    const statsEl = document.getElementById('stats_' + tour.id);
+    if (!statsEl) return;
+    const hv = calcTourKmHaversine(tour.stops);
+    statsEl.querySelector('.stat-km').textContent = hv.km + ' km';
+    statsEl.querySelector('.stat-time').textContent = hv.timeStr;
+    statsEl.style.color = 'var(--text)';
+  });
   // Update combined summary line
   if(state._summaryParts) {
     const p = state._summaryParts;
