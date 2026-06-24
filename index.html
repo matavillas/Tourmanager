@@ -1288,8 +1288,7 @@ function reoptimizeTour(tour) {
 // ── PDF PARSER: position-based using % of page width ──
 // ── TOUR FILE PARSER (.tour Format) ──────────────────────────────────────────
 function parseTourFile(text, filename) {
-  const lines = text.split(/?
-/).map(l => l.trim()).filter(Boolean);
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const stops = [];
   const seen = new Set();
 
