@@ -2082,13 +2082,10 @@ async function handleFile(file){
     showToast('Bitte eine PDF- oder .tour-Datei hochladen');return;
   }
 
-  // .tour Datei direkt parsen
+  // .tour Datei direkt parsen (immer iso-8859-1 – Windows-Format)
   if(file.name.endsWith('.tour')){
-    const text = await file.text().catch(async () => {
-      // Fallback für latin-1 encoding
-      const buf = await file.arrayBuffer();
-      return new TextDecoder('iso-8859-1').decode(buf);
-    });
+    const buf = await file.arrayBuffer();
+    const text = new TextDecoder('iso-8859-1').decode(buf);
     const {stops, pdfDate} = parseTourFile(text, file.name);
     if(!stops.length){showToast('Keine Stopps in .tour Datei gefunden');return;}
 
