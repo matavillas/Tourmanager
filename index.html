@@ -1508,32 +1508,22 @@ async function buildTours(stops, timeCode) {
 
   for(let i=0; i<tourNums.length; i++){
     const n=tourNums[i];
+    const allStops = tourMap[n];
 
-    // Für Tour 32: Dormagen wurde bereits rausgefiltert
-    // Für alle Touren: Dormagen ans Ende
-    const dormagenStops = tourMap[n].filter(s => isDormagen(s));
-    const regularStops  = tourMap[n].filter(s => !isDormagen(s));
-
-    // Reguläre Stopps: K-Means Clustering + Google Maps
-    let optimizedReg = regularStops;
-    if (regularStops.length > 1) {
-      // Erst k-means für saubere Cluster-Reihenfolge
-      optimizedReg = clusterRoute(regularStops, DEPOT);
-      // Dann Google Maps für ETAs (optimizeWaypoints:false – Reihenfolge beibehalten)
-      const gmOrderReg = await optimizeWithGoogleMaps(optimizedReg, DEPOT, new Date(startTimeB));
-      if (gmOrderReg && gmOrderReg.length === optimizedReg.length) {
-        optimizedReg = gmOrderReg.map(i => optimizedReg[i]);
+    // Alle Stopps der Tour als echte Rundtour optimieren:
+    // Depot → alle Stopps → Depot, Google Maps entscheidet die beste Reihenfolge global.
+    // Kein k-means / kein stadtweises Clustering – Maps berücksichtigt echte Fahrzeiten.
+    let optimized = allStops;
+    if (allStops.length > 1) {
+      const gmOrder = await optimizeWithGoogleMaps(allStops, DEPOT, new Date(startTimeB));
+      if (gmOrder && gmOrder.length === allStops.length) {
+        optimized = gmOrder.map(i => allStops[i]);
+      } else {
+        // Fallback: Distance Matrix + 2-opt/3-opt wenn Maps nicht verfügbar
+        optimized = await optimizeRoute(allStops, DEPOT);
       }
     }
 
-    // Dormagen separat optimieren (unter sich) – ans Ende
-    let optimizedDorm = dormagenStops;
-    if (dormagenStops.length > 1) {
-      optimizedDorm = await optimizeRoute(dormagenStops, DEPOT);
-    }
-
-    // Reguläre zuerst, Dormagen ans Ende
-    const optimized = [...optimizedReg, ...optimizedDorm];
     tours.push({id:`tour${n}`,label:`Tour ${n}`,stops:optimized,color:TOUR_COLORS[i]||TOUR_COLORS[0]});
   }
   if(extraStops.length>0){
