@@ -137,9 +137,9 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     <div class="upload-icon">📦</div>
     <div class="upload-title">Tour-PDF hochladen</div>
     <div class="upload-sub">Ziehe die Tages-PDF hier rein oder klicke zum Auswählen.<br>Stopps werden automatisch erkannt und den Touren zugeordnet.</div>
-    <div class="upload-hint">31_... = 7:00 Uhr &nbsp;·&nbsp; 32_... = 10:00 Uhr &nbsp;·&nbsp; 33_... = 13:00 Uhr</div>
+    <div class="upload-hint">PDF oder .tour Datei &nbsp;·&nbsp; 31_... = 7:00 Uhr &nbsp;·&nbsp; 32_... = 10:00 Uhr &nbsp;·&nbsp; 33_... = 13:00 Uhr</div>
   </div>
-  <input type="file" id="fileInput" accept=".pdf">
+  <input type="file" id="fileInput" accept=".pdf,.tour">
 </div>
 
 <div id="appZone">
@@ -1286,6 +1286,58 @@ function reoptimizeTour(tour) {
 }
 
 // ── PDF PARSER: position-based using % of page width ──
+// ── TOUR FILE PARSER (.tour Format) ──────────────────────────────────────────
+function parseTourFile(text, filename) {
+  const lines = text.split(/?
+/).map(l => l.trim()).filter(Boolean);
+  const stops = [];
+  const seen = new Set();
+
+  for (const line of lines) {
+    // Format: "Firmenname, Straße HNr, PLZ Ort"
+    const parts = line.split(',');
+    if (parts.length < 3) continue;
+
+    const name   = parts[0].trim();
+    const street = parts[1].trim();
+    const plzOrt = parts[2].trim();
+
+    // PLZ + Ort trennen
+    const plzMatch = plzOrt.match(/^(\d{5})\s+(.+)$/);
+    if (!plzMatch) continue;
+
+    const plz = plzMatch[1];
+    const ort = plzMatch[2].trim();
+    const addr = `${street}, ${plz} ${ort}`;
+
+    // Deduplizieren
+    const key = addr.toLowerCase().replace(/\s+/g,'');
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    // Tournummer aus Dateiname: Tour_2_37_... → tourNum=2
+    const tourMatch = filename.match(/Tour_(\d+)_/i);
+    const tourNum = tourMatch ? parseInt(tourMatch[1]) : 1;
+
+    stops.push({
+      id: Math.random().toString(36).slice(2),
+      name, addr, street, plz, ort,
+      tourNum,
+      note: ''
+    });
+  }
+
+  // Datum + Uhrzeit aus Dateiname: Tour_2_37_202606230953
+  // → 2026-06-23, 09:53
+  let pdfDate = '';
+  const dateMatch = filename.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/);
+  if (dateMatch) {
+    pdfDate = `${dateMatch[3]}.${dateMatch[2]}.${dateMatch[1]}`;
+  }
+
+  return { stops, pdfDate };
+}
+
 async function parsePDF(file) {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
@@ -2027,7 +2079,57 @@ function generateExportHTML(tours,title,filename){
 }
 
 async function handleFile(file){
-  if(!file?.name.endsWith('.pdf')){showToast('Bitte eine PDF-Datei hochladen');return;}
+  if(!file?.name.endsWith('.pdf') && !file?.name.endsWith('.tour')){
+    showToast('Bitte eine PDF- oder .tour-Datei hochladen');return;
+  }
+
+  // .tour Datei direkt parsen
+  if(file.name.endsWith('.tour')){
+    const text = await file.text().catch(async () => {
+      // Fallback für latin-1 encoding
+      const buf = await file.arrayBuffer();
+      return new TextDecoder('iso-8859-1').decode(buf);
+    });
+    const {stops, pdfDate} = parseTourFile(text, file.name);
+    if(!stops.length){showToast('Keine Stopps in .tour Datei gefunden');return;}
+
+    // Datum + Code aus Dateiname
+    const tourMatch = file.name.match(/Tour_(\d+)_(\d+)_(\d{8})(\d{4})/i);
+    const tourNum   = tourMatch ? tourMatch[1] : '?';
+    const timeStr   = tourMatch ? tourMatch[4].slice(0,2)+':'+tourMatch[4].slice(2) : '';
+
+    // Uhrzeit → Code bestimmen
+    const hour = tourMatch ? parseInt(tourMatch[4].slice(0,2)) : 12;
+    const min  = tourMatch ? parseInt(tourMatch[4].slice(2)) : 0;
+    const nowMin = hour*60+min;
+    let tourCode;
+    if      (nowMin >= 17*60)                      tourCode = '31';
+    else if (nowMin >= 9*60 && nowMin < 11*60)     tourCode = '32';
+    else if (nowMin >= 12*60+30 && nowMin < 14*60) tourCode = '33';
+    else                                            tourCode = '3'+tourNum;
+
+    const timeLabels={'31':'⏰ 7:00 Uhr','32':'⏰ 10:00 Uhr','33':'⏰ 13:00 Uhr'};
+    state.tourCode = tourCode;
+    state._currentTimeCode = tourCode;
+    state.tourDate = pdfDate;
+    state.filename = file.name;
+
+    document.getElementById('infoTime').textContent = timeStr ? `⏰ ${timeStr} Uhr` : '';
+    document.getElementById('infoCode').textContent = tourCode ? 'Tour '+tourCode : '';
+    document.getElementById('infoDate').textContent = pdfDate ? pdfDate : '';
+
+    document.getElementById('loading').classList.add('show');
+    showLoadingMsg(`${stops.length} Stopps werden optimiert…`);
+
+    await geocodeMissingStops(stops);
+    state.tours = await buildTours(stops, tourCode);
+    document.getElementById('uploadZone').style.display='none';
+    document.getElementById('appZone').style.display='block';
+    render();
+    showToast(`${stops.length} Stopps aus .tour Datei geladen`);
+    document.getElementById('loading').classList.remove('show');
+    return;
+  }
   state.filename=file.name;
   const timeLabels={'31':'⏰ 7:00 Uhr','32':'⏰ 10:00 Uhr','33':'⏰ 13:00 Uhr'};
   // Tournummer anhand Uhrzeit:
