@@ -499,6 +499,13 @@ function getMonthlyBillingHTML() {
   </table>`;
 }
 
+// Normalisiert Umlaute und ß für unscharfen Vergleich
+function normalizeAddr(s) {
+  return s.toLowerCase()
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/\s+/g,' ').trim();
+}
+
 function getCoord(addr) {
   if (!addr) return null;
   const addrClean = addr.trim();
@@ -508,6 +515,11 @@ function getCoord(addr) {
   const addrNorm = addrClean.toLowerCase().replace(/\s+/g,' ');
   for (const [k,v] of Object.entries(COORDS)) {
     if (k.toLowerCase().replace(/\s+/g,' ') === addrNorm) return v;
+  }
+  // Umlaut-normalisierter Vergleich (ä→ae, ö→oe, ü→ue, ß→ss)
+  const addrNormUml = normalizeAddr(addrClean);
+  for (const [k,v] of Object.entries(COORDS)) {
+    if (normalizeAddr(k) === addrNormUml) return v;
   }
   // PLZ + street number match
   const plzMatch = addrClean.match(/(\d{5})/);
@@ -1294,12 +1306,16 @@ function parseTourFile(text, filename) {
 
   for (const line of lines) {
     // Format: "Firmenname, Straße HNr, PLZ Ort"
+    // Von hinten parsen: letztes Segment = PLZ Ort, vorletztes = Straße, Rest = Name
     const parts = line.split(',');
     if (parts.length < 3) continue;
 
-    const name   = parts[0].trim();
-    const street = parts[1].trim();
-    const plzOrt = parts[2].trim();
+    // Letztes Segment = PLZ Ort (z.B. " 41464 Neuss")
+    const plzOrt = parts[parts.length - 1].trim();
+    // Vorletztes Segment = Straße (z.B. " Moselstraße 13")
+    const street = parts[parts.length - 2].trim();
+    // Alles davor = Firmenname (zusammengefügt falls Komma im Namen)
+    const name   = parts.slice(0, parts.length - 2).join(',').trim();
 
     // PLZ + Ort trennen
     const plzMatch = plzOrt.match(/^(\d{5})\s+(.+)$/);
