@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 15:03 -->
+<!-- Mata Villas v2026-08-12 15:36 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -123,7 +123,7 @@ tr:last-child td{border-bottom:none}
   <img class="topbar-logo" src="" alt="" style="height:30px;object-fit:contain">
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
   <span class="topbar-title" id="topbar-title">Manager</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 15:03</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 15:36</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -140,6 +140,7 @@ tr:last-child td{border-bottom:none}
     <div class="nav-sec" id="ns-mgmt"></div>
     <div class="nav-item" onclick="showPanel('personal',this)" id="ni-staff">👥 <span id="nl-staff"></span></div>
     <div class="nav-item" onclick="showPanel('speisekarte',this)" id="ni-menu">🍽️ <span id="nl-menu"></span></div>
+    <div class="nav-item" onclick="showPanel('protokoll',this)" id="ni-log">📋 <span id="nl-log"></span></div>
     <div class="nav-sec" id="ns-tools"></div>
     <a href="tischplan.html" target="_blank" class="nav-item" style="text-decoration:none">🗺️ <span id="nl-tischplan"></span></a>
     <a href="rezeptbuch.html" target="_blank" class="nav-item" style="text-decoration:none">📖 <span id="nl-kuechenrezepte"></span></a>
@@ -238,6 +239,29 @@ tr:last-child td{border-bottom:none}
         <tbody id="menu-tbody"></tbody></table>
       </div>
     </div>
+    <!-- PROTOKOLL -->
+    <div class="panel" id="panel-protokoll">
+      <div class="page-title" id="pt-log"></div>
+      <div class="date-row">
+        <input type="date" id="log-from"><span>–</span><input type="date" id="log-to">
+        <button onclick="loadAuditLog()" id="log-show-btn"></button>
+        <select id="log-terminal-filter" onchange="loadAuditLog()" style="padding:6px 10px;border-radius:7px;border:1.5px solid var(--border);font-family:var(--font);font-size:12px">
+          <option value="">Alle Terminals</option>
+          <option value="POS">POS</option>
+          <option value="Kasse">Kasse</option>
+          <option value="KDS">KDS</option>
+          <option value="Bar">Bar</option>
+          <option value="Manager">Manager</option>
+        </select>
+      </div>
+      <div class="twrap">
+        <div class="twrap-head" id="log-label">—</div>
+        <table><thead><tr>
+          <th id="lth-time"></th><th id="lth-staff"></th><th id="lth-terminal"></th><th id="lth-action"></th><th id="lth-details"></th>
+        </tr></thead>
+        <tbody id="log-tbody"></tbody></table>
+      </div>
+    </div>
   </div>
 </div>
 <div class="notif" id="notif"></div>
@@ -306,6 +330,11 @@ function tw(){return t('table')+' ';}
 var SB='https://pxzdkyvndosikdmstnpp.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 async function sbGet(table,q){var r=await fetch(SB+'/rest/v1/'+table+'?'+(q||''),{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
 async function sbPost(table,d){var r=await fetch(SB+'/rest/v1/'+table,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+
+var currentStaff=null;
+function logAction(action,details){
+  sbPost('audit_log',{staff_name:currentStaff?currentStaff.fname:null,staff_role:currentStaff?currentStaff.role:null,terminal:'Manager',action:action,details:details||null}).catch(function(){});
+}
 async function sbPatch(table,filter,d){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});}
 async function sbDel(table,filter){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});}
 
@@ -437,6 +466,17 @@ function setLabels(){
   document.getElementById('mth-cat').textContent=lang==='de'?'Kategorie':lang==='en'?'Category':'Kategori';
   document.getElementById('mth-price').textContent=lang==='de'?'Preis':lang==='en'?'Price':'Harga';
   document.getElementById('mth-avail').textContent=t('available');
+  // Protokoll
+  document.getElementById('nl-log').textContent=lang==='de'?'Protokoll':lang==='en'?'Log':'Log';
+  document.getElementById('pt-log').textContent=lang==='de'?'Protokoll':lang==='en'?'Activity log':'Log aktivitas';
+  document.getElementById('log-show-btn').textContent=lang==='de'?'Anzeigen':lang==='en'?'Show':'Tampilkan';
+  document.getElementById('lth-time').textContent=t('time');
+  document.getElementById('lth-staff').textContent=t('staff');
+  document.getElementById('lth-terminal').textContent='Terminal';
+  document.getElementById('lth-action').textContent=lang==='de'?'Aktion':lang==='en'?'Action':'Tindakan';
+  document.getElementById('lth-details').textContent=lang==='de'?'Details':lang==='en'?'Details':'Detail';
+  var logFilterAll=document.querySelector('#log-terminal-filter option[value=""]');
+  if(logFilterAll)logFilterAll.textContent=lang==='de'?'Alle Terminals':lang==='en'?'All terminals':'Semua terminal';
 }
 
 function onLangChange(){setLabels();}
@@ -451,14 +491,15 @@ function showPanel(id,el){
   else if(id==='berichte'){loadReports('today');loadChart('day');}
   else if(id==='personal')loadStaff();
   else if(id==='speisekarte')loadMenuAdmin();
+  else if(id==='protokoll')loadAuditLog('today');
 }
 
 async function loadDashboard(){
   try{
-    var today=new Date().toISOString().slice(0,10);
+    var today=localDateStr(new Date());
     var res=await Promise.all([
       sbGet('orders','select=id,table_number,status,total_k,created_at,order_items(name)&status=in.(new,cooking,making,ready)&order=created_at.asc'),
-      sbGet('sales','select=total_k&created_at=gte.'+today+'T00:00:00&created_at=lte.'+today+'T23:59:59')
+      sbGet('sales','select=total_k&created_at=gte.'+localDayStart(today)+'&created_at=lte.'+localDayEnd(today))
     ]);
     var orders=res[0],sales=res[1];
     var revenue=sales.reduce(function(s,x){return s+(x.total_k||0);},0);
@@ -480,14 +521,20 @@ async function loadDashboard(){
   }catch(e){notify('⚠ '+e.message);}
 }
 
+var saleItemsCache={};
+
+function localDateStr(d){var y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return y+'-'+m+'-'+day;}
+function localDayStart(dateStr){var p=dateStr.split('-');return new Date(+p[0],+p[1]-1,+p[2],0,0,0).toISOString();}
+function localDayEnd(dateStr){var p=dateStr.split('-');return new Date(+p[0],+p[1]-1,+p[2],23,59,59,999).toISOString();}
+
 async function loadReports(preset){
   var from=document.getElementById('rpt-from'),to=document.getElementById('rpt-to');
-  var today=new Date().toISOString().slice(0,10);
+  var today=localDateStr(new Date());
   if(preset==='today'){from.value=today;to.value=today;}
-  else if(preset==='week'){var d=new Date();d.setDate(d.getDate()-6);from.value=d.toISOString().slice(0,10);to.value=today;}
+  else if(preset==='week'){var d=new Date();d.setDate(d.getDate()-6);from.value=localDateStr(d);to.value=today;}
   var f=from.value||today,t2=to.value||today;
   try{
-    var sales=await sbGet('sales','select=*&created_at=gte.'+f+'T00:00:00&created_at=lte.'+t2+'T23:59:59&order=created_at.desc');
+    var sales=await sbGet('sales','select=*&created_at=gte.'+localDayStart(f)+'&created_at=lte.'+localDayEnd(t2)+'&order=created_at.desc');
     var total=sales.reduce(function(s,x){return s+(x.total_k||0);},0);
     var cash=sales.filter(function(x){return x.payment_method==='cash';}).reduce(function(s,x){return s+(x.total_k||0);},0);
     document.getElementById('r-total').textContent='Rp '+total+'k';
@@ -496,14 +543,42 @@ async function loadReports(preset){
     document.getElementById('r-card').textContent='Rp '+(total-cash)+'k';
     document.getElementById('r-label').textContent=sales.length+' '+(lang==='de'?'Einträge':lang==='en'?'entries':'entri');
     var pm={cash:'💵 '+t('cash'),card:'💳 '+t('card'),qr:'📱 QRIS'};
+    saleItemsCache={};
     document.getElementById('r-tbody').innerHTML=sales.length?sales.map(function(s){
       var dt=new Date(s.created_at).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-      return '<tr><td>#'+s.id+'</td><td>'+tw()+s.table_number+'</td><td>'+dt+'</td>'+
+      return '<tr class="sale-row" style="cursor:pointer" onclick="toggleSaleDetail('+s.id+','+(s.order_id||'null')+')">'+
+        '<td>#'+s.id+' <span style="color:var(--text3);font-size:10px">▶</span></td><td>'+tw()+s.table_number+'</td><td>'+dt+'</td>'+
         '<td>'+(pm[s.payment_method]||s.payment_method||'—')+'</td>'+
         '<td><b>Rp '+s.total_k+'k</b></td>'+
-        '<td><button class="storno-btn" onclick="storno('+s.id+','+(s.order_id||'null')+')">✕</button></td></tr>';
+        '<td><button class="storno-btn" onclick="event.stopPropagation();storno('+s.id+','+(s.order_id||'null')+')">✕</button></td></tr>'+
+        '<tr id="sale-detail-'+s.id+'" style="display:none"><td colspan="6" style="background:var(--bg);padding:10px 16px;font-size:12px"></td></tr>';
     }).join(''):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text3)">'+lang==='de'?'Keine Einträge':'No entries'+'</td></tr>';
   }catch(e){notify('⚠ '+e.message);}
+}
+
+async function toggleSaleDetail(sid,oid){
+  var row=document.getElementById('sale-detail-'+sid);
+  if(!row)return;
+  if(row.style.display==='table-row'){row.style.display='none';return;}
+  var cell=row.querySelector('td');
+  if(saleItemsCache[sid]){
+    cell.innerHTML=saleItemsCache[sid];
+  }else if(!oid||oid==='null'){
+    cell.innerHTML='<span style="color:var(--text3)">'+(lang==='de'?'Keine Einzelposten verknüpft':lang==='en'?'No line items linked':'Tidak ada item terkait')+'</span>';
+  }else{
+    cell.innerHTML='<span style="color:var(--text3)">'+(lang==='de'?'Lade…':lang==='en'?'Loading…':'Memuat…')+'</span>';
+    row.style.display='table-row';
+    try{
+      var items=await sbGet('order_items','select=name,quantity,price_k,category&order_id=eq.'+oid);
+      var html=items.length?items.map(function(i){
+        return '<div style="display:flex;justify-content:space-between;padding:2px 0"><span>'+i.quantity+'× '+i.name+'</span><span style="font-family:monospace">Rp '+(i.price_k*i.quantity)+'k</span></div>';
+      }).join(''):'<span style="color:var(--text3)">'+(lang==='de'?'Keine Einzelposten':'No line items')+'</span>';
+      saleItemsCache[sid]=html;
+      cell.innerHTML=html;
+    }catch(e){cell.innerHTML='<span style="color:var(--red)">⚠ '+e.message+'</span>';}
+    return;
+  }
+  row.style.display='table-row';
 }
 
 var BARCATS=['Cocktails','Spanish Drinks','Drinks'];
@@ -516,16 +591,16 @@ async function loadChart(view){
   var now=new Date(),buckets=[];
   if(chartView==='day'){
     for(var i=13;i>=0;i--){
-      var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);
-      var key=d.toISOString().slice(0,10);
-      buckets.push({from:key+'T00:00:00',to:key+'T23:59:59',label:d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})});
+      var dayStart=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i,0,0,0);
+      var dayEnd=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i,23,59,59,999);
+      buckets.push({from:dayStart.toISOString(),to:dayEnd.toISOString(),label:dayStart.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})});
     }
   }else{
     for(var i=11;i>=0;i--){
       var d=new Date(now.getFullYear(),now.getMonth()-i,1);
       var y=d.getFullYear(),m=d.getMonth();
-      var from=new Date(y,m,1).toISOString().slice(0,10)+'T00:00:00';
-      var to=new Date(y,m+1,0).toISOString().slice(0,10)+'T23:59:59';
+      var from=new Date(y,m,1,0,0,0).toISOString();
+      var to=new Date(y,m+1,0,23,59,59,999).toISOString();
       buckets.push({from:from,to:to,label:d.toLocaleDateString('de-DE',{month:'short',year:'2-digit'})});
     }
   }
@@ -587,10 +662,13 @@ async function storno(sid,oid){
   try{
     await sbDel('sales','id=eq.'+sid);
     if(oid&&oid!=='null')await sbPatch('orders','id=eq.'+oid,{status:'ready',payment_method:null});
+    logAction('Zahlung storniert','Verkauf #'+sid+(oid&&oid!=='null'?' · Bestellung #'+oid:''));
     notify('✓ '+(lang==='de'?'Storniert':'Cancelled'));
     loadReports();
   }catch(e){notify('⚠ '+e.message);}
 }
+
+var editingStaffId=null;
 
 async function loadStaff(){
   try{
@@ -598,14 +676,36 @@ async function loadStaff(){
     document.getElementById('staff-tbody').innerHTML=allStaff.map(function(s){
       return '<tr><td>'+s.fname+' '+(s.lname||'')+'</td><td><code>'+s.pin+'</code></td>'+
         '<td>'+s.role+'</td>'+
-        '<td><button class="del-btn" onclick="delStaff('+s.id+')">✕</button></td></tr>';
+        '<td style="white-space:nowrap"><button class="del-btn" style="border-color:var(--accent);background:var(--accent-bg);color:var(--accent);margin-right:4px" onclick="editStaff('+s.id+')">✏️</button>'+
+        '<button class="del-btn" onclick="delStaff('+s.id+')">✕</button></td></tr>';
     }).join('')||'<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--text3)">—</td></tr>';
   }catch(e){notify('⚠ '+e.message);}
 }
 
+function clearStaffForm(){
+  document.getElementById('sf-fname').value='';
+  document.getElementById('sf-lname').value='';
+  document.getElementById('sf-pin').value='';
+  document.getElementById('sf-role').value='service';
+}
+
 function toggleAddStaff(){
   var f=document.getElementById('add-staff-form');
-  f.style.display=f.style.display==='none'?'block':'none';
+  var willOpen=f.style.display==='none';
+  f.style.display=willOpen?'block':'none';
+  if(willOpen){editingStaffId=null;clearStaffForm();document.getElementById('save-staff-btn').textContent=t('save');}
+}
+
+function editStaff(id){
+  var s=allStaff.find(function(x){return x.id===id;});
+  if(!s)return;
+  editingStaffId=id;
+  document.getElementById('sf-fname').value=s.fname||'';
+  document.getElementById('sf-lname').value=s.lname||'';
+  document.getElementById('sf-pin').value=s.pin||'';
+  document.getElementById('sf-role').value=s.role||'service';
+  document.getElementById('add-staff-form').style.display='block';
+  document.getElementById('save-staff-btn').textContent=t('save')+' ✓';
 }
 
 async function saveStaff(){
@@ -615,7 +715,15 @@ async function saveStaff(){
   var role=document.getElementById('sf-role').value;
   if(!fname||pin.length!==4){notify('⚠ '+t('firstName')+' + PIN erforderlich');return;}
   try{
-    await sbPost('staff',{fname:fname,lname:lname,pin:pin,role:role,active:true});
+    if(editingStaffId){
+      await sbPatch('staff','id=eq.'+editingStaffId,{fname:fname,lname:lname,pin:pin,role:role});
+      logAction('Mitarbeiter bearbeitet',fname+' '+lname+' · '+role);
+    }else{
+      await sbPost('staff',{fname:fname,lname:lname,pin:pin,role:role,active:true});
+      logAction('Mitarbeiter angelegt',fname+' '+lname+' · '+role);
+    }
+    editingStaffId=null;
+    clearStaffForm();
     document.getElementById('add-staff-form').style.display='none';
     notify('✓ '+t('save'));loadStaff();
   }catch(e){notify('⚠ '+e.message);}
@@ -623,7 +731,12 @@ async function saveStaff(){
 
 async function delStaff(id){
   if(!confirm(lang==='de'?'Mitarbeiter löschen?':lang==='en'?'Delete staff?':'Hapus staf?'))return;
-  try{await sbDel('staff','id=eq.'+id);loadStaff();notify('✓ '+t('delete'));}catch(e){notify('⚠ '+e.message);}
+  var s=allStaff.find(function(x){return x.id===id;});
+  try{
+    await sbDel('staff','id=eq.'+id);
+    logAction('Mitarbeiter gelöscht',s?(s.fname+' '+(s.lname||'')):'#'+id);
+    loadStaff();notify('✓ '+t('delete'));
+  }catch(e){notify('⚠ '+e.message);}
 }
 
 async function loadMenuAdmin(){
@@ -637,10 +750,34 @@ async function loadMenuAdmin(){
 }
 
 async function toggleAvail(id,cur){
-  try{await sbPatch('menu_items','id=eq.'+id,{available:!cur});loadMenuAdmin();}catch(e){notify('⚠ '+e.message);}
+  var m=(await sbGet('menu_items','select=name&id=eq.'+id).catch(function(){return [];}))[0];
+  try{
+    await sbPatch('menu_items','id=eq.'+id,{available:!cur});
+    logAction('Verfügbarkeit geändert',(m?m.name:'#'+id)+' → '+(!cur?'verfügbar':'nicht verfügbar'));
+    loadMenuAdmin();
+  }catch(e){notify('⚠ '+e.message);}
 }
 
-function afterLogin(){setLabels();loadDashboard();timer=setInterval(loadDashboard,15000);}
+async function loadAuditLog(preset){
+  var from=document.getElementById('log-from'),to=document.getElementById('log-to');
+  var today=localDateStr(new Date());
+  if(preset==='today'&&!from.value){from.value=today;to.value=today;}
+  var f=from.value||today,t2=to.value||today;
+  var termFilter=document.getElementById('log-terminal-filter').value;
+  try{
+    var q='select=*&created_at=gte.'+localDayStart(f)+'&created_at=lte.'+localDayEnd(t2)+'&order=created_at.desc&limit=300';
+    if(termFilter)q+='&terminal=eq.'+encodeURIComponent(termFilter);
+    var rows=await sbGet('audit_log',q);
+    document.getElementById('log-label').textContent=rows.length+' '+(lang==='de'?'Einträge':lang==='en'?'entries':'entri');
+    document.getElementById('log-tbody').innerHTML=rows.length?rows.map(function(r){
+      var dt=new Date(r.created_at).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return '<tr><td style="white-space:nowrap">'+dt+'</td><td>'+(r.staff_name||'—')+(r.staff_role?' <span style="color:var(--text3);font-size:11px">('+r.staff_role+')</span>':'')+'</td>'+
+        '<td>'+r.terminal+'</td><td>'+r.action+'</td><td style="color:var(--text2);font-size:12px">'+(r.details||'')+'</td></tr>';
+    }).join(''):'<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text3)">'+(lang==='de'?'Keine Einträge':lang==='en'?'No entries':'Tidak ada entri')+'</td></tr>';
+  }catch(e){notify('⚠ '+e.message);}
+}
+
+function afterLogin(m){currentStaff=m;setLabels();loadDashboard();timer=setInterval(loadDashboard,15000);}
 function afterLogout(){if(timer)clearInterval(timer);}
 
 window.addEventListener('DOMContentLoaded',function(){loadLoginStaff();initPins();setLabels();});

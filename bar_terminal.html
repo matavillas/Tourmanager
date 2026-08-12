@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 14:54 -->
+<!-- Mata Villas v2026-08-12 15:36 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -124,7 +124,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
   <span class="topbar-title">Bar Terminal</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 14:54</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 15:36</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -212,6 +212,11 @@ function tw(){return t('table')+' ';}
 var SB='https://pxzdkyvndosikdmstnpp.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 async function sbGet(table,q){var r=await fetch(SB+'/rest/v1/'+table+'?'+(q||''),{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
 async function sbPost(table,d){var r=await fetch(SB+'/rest/v1/'+table,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+
+var currentStaff=null;
+function logAction(action,details){
+  sbPost('audit_log',{staff_name:currentStaff?currentStaff.fname:null,staff_role:currentStaff?currentStaff.role:null,terminal:'Bar',action:action,details:details||null}).catch(function(){});
+}
 async function sbPatch(table,filter,d){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});}
 async function sbDel(table,filter){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});}
 
@@ -446,6 +451,7 @@ async function upd(oid,ns){
   o.status=ns;
   if(ns==='served')orders=orders.filter(function(x){return x.id!==oid;});
   render();
+  logAction('Status geändert','Tisch '+o.table+' → '+ns);
   try{await sbPatch('orders','id=eq.'+oid,{status:ns});}catch(e){notify('⚠ '+e.message);}
 }
 
@@ -457,11 +463,12 @@ async function sendDirect(){
   try{
     var res=await sbPost('orders',{table_number:99,note:lang==='de'?'Direktbestellung Bar':lang==='en'?'Direct bar order':'Pesanan langsung bar',status:'new',total_k:item.price*qty});
     await sbPost('order_items',[{order_id:res[0].id,menu_item_id:item.id,name:item.name,price_k:item.price,quantity:qty,category:item.cat}]);
+    logAction('Direktbestellung','Bar · '+qty+'× '+item.name);
     notify('✓ '+t('sent'));load();
   }catch(e){notify('⚠ '+e.message);}
 }
 
-function afterLogin(){onLangChange();buildDirectMenu();load();timer=setInterval(load,10000);}
+function afterLogin(m){currentStaff=m;onLangChange();buildDirectMenu();load();timer=setInterval(load,10000);}
 function afterLogout(){if(timer)clearInterval(timer);orders=[];render();}
 
 window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();onLangChange();});
