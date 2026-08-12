@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 08:21:51 -->
+<!-- Mata Villas v2026-08-12 14:37 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -20,7 +20,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--text)}
 
-body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
 .login{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100}
 .login.hidden{display:none}
@@ -124,12 +124,13 @@ body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
   <span class="topbar-title">Bar Terminal</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 12:36</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 14:37</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
     <button class="lb" onclick="setLang('id')">ID</button>
     <span class="live" id="live"></span>
+    <a href="bar_rezepturen.html" target="_blank" class="logout-btn" title="Bar Rezepturen" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">📖</a>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="logout-btn" onclick="doLogout()">⏻</button>
   </div>
@@ -260,9 +261,9 @@ function initPins(){
 function clearPins(){document.querySelectorAll('.pin').forEach(function(el){el.value='';el.setAttribute('readonly','');});}
 
 function doLogin(){
-  var sid=parseInt(document.getElementById('login-role').value);
+  var sid=document.getElementById('login-role').value;
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
-  var m=staff.find(function(s){return s.id===sid;});
+  var m=staff.find(function(s){return String(s.id)===String(sid);});
   if(!m){document.getElementById('login-err').textContent=t('selectStaff');return;}
   if(!m.pin){document.getElementById('login-err').textContent=t('noPin')||'Kein PIN hinterlegt';clearPins();return;}
   if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}

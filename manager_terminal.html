@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 07:42:55 -->
+<!-- Mata Villas v2026-08-12 14:37 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -20,7 +20,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:var(--bg);color:var(--text)}
 
-body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
 .login{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100}
 .login.hidden{display:none}
@@ -123,7 +123,7 @@ tr:last-child td{border-bottom:none}
   <img class="topbar-logo" src="" alt="" style="height:30px;object-fit:contain">
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
   <span class="topbar-title" id="topbar-title">Manager</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 12:36</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 14:37</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -140,6 +140,10 @@ tr:last-child td{border-bottom:none}
     <div class="nav-sec" id="ns-mgmt"></div>
     <div class="nav-item" onclick="showPanel('personal',this)" id="ni-staff">👥 <span id="nl-staff"></span></div>
     <div class="nav-item" onclick="showPanel('speisekarte',this)" id="ni-menu">🍽️ <span id="nl-menu"></span></div>
+    <div class="nav-sec" id="ns-tools"></div>
+    <a href="tischplan.html" target="_blank" class="nav-item" style="text-decoration:none">🗺️ <span id="nl-tischplan"></span></a>
+    <a href="rezeptbuch.html" target="_blank" class="nav-item" style="text-decoration:none">📖 <span id="nl-kuechenrezepte"></span></a>
+    <a href="bar_rezepturen.html" target="_blank" class="nav-item" style="text-decoration:none">🍹 <span id="nl-barrezepte"></span></a>
   </div>
   <div class="panel-wrap">
     <!-- DASHBOARD -->
@@ -351,9 +355,9 @@ function initPins(){
 function clearPins(){document.querySelectorAll('.pin').forEach(function(el){el.value='';el.setAttribute('readonly','');});}
 
 function doLogin(){
-  var sid=parseInt(document.getElementById('login-role').value);
+  var sid=document.getElementById('login-role').value;
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
-  var m=staff.find(function(s){return s.id===sid;});
+  var m=staff.find(function(s){return String(s.id)===String(sid);});
   if(!m){document.getElementById('login-err').textContent=t('selectStaff');return;}
   if(!m.pin){document.getElementById('login-err').textContent=t('noPin')||'Kein PIN hinterlegt';clearPins();return;}
   if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
@@ -388,6 +392,10 @@ function setLabels(){
   document.getElementById('ns-mgmt').textContent=lang==='de'?'Verwaltung':lang==='en'?'Management':'Manajemen';
   document.getElementById('nl-staff').textContent=t('staff');
   document.getElementById('nl-menu').textContent=t('menu');
+  document.getElementById('ns-tools').textContent=lang==='de'?'Werkzeuge':lang==='en'?'Tools':'Alat';
+  document.getElementById('nl-tischplan').textContent=lang==='de'?'Tischplan':lang==='en'?'Table plan':'Denah meja';
+  document.getElementById('nl-kuechenrezepte').textContent=lang==='de'?'Küchen-Rezepte':lang==='en'?'Kitchen recipes':'Resep dapur';
+  document.getElementById('nl-barrezepte').textContent=lang==='de'?'Bar-Rezepte':lang==='en'?'Bar recipes':'Resep bar';
   // Dashboard
   document.getElementById('pt-dashboard').textContent=t('dashboard');
   document.getElementById('cl-revenue').textContent=t('revenue');

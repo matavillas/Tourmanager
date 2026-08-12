@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 12:55 UTC -->
+<!-- Mata Villas v2026-08-12 14:37 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -20,7 +20,7 @@
   --font:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 .login{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100}
 .login.hidden{display:none}
 .lcard{background:#fff;border-radius:16px;padding:32px 28px;width:320px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.2)}
@@ -112,11 +112,12 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 12:55</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 14:37</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
     <button class="lb" onclick="setLang('id')">ID</button>
+    <a href="tischplan.html" target="_blank" class="logout-btn" title="Tischplan" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">🗺️</a>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="logout-btn" onclick="doLogout()">⏻</button>
   </div>
@@ -205,9 +206,9 @@ function initPins(){
 function clearPins(){document.querySelectorAll('.pin').forEach(function(el){el.value='';el.setAttribute('readonly','');});}
 
 function doLogin(){
-  var sid=parseInt(document.getElementById('login-role').value);
+  var sid=document.getElementById('login-role').value;
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
-  var m=staff.find(function(s){return s.id===sid;});
+  var m=staff.find(function(s){return String(s.id)===String(sid);});
   if(!m){document.getElementById('login-err').textContent='Bitte Mitarbeiter wählen';return;}
   if(!m.pin){document.getElementById('login-err').textContent='Kein PIN hinterlegt — bitte Manager kontaktieren';clearPins();return;}
   if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin')[0].focus();return;}
@@ -235,9 +236,8 @@ function onLangChange(){renderBills();if(selBill)renderReceipt(selBill);}
 
 async function loadBills(){
   try{
-    // Zeige Bestellungen die von Küche ODER Bar bereits served wurden (status=served)
-    // Auch new/making anzeigen falls Tisch manuell abrechnen will
-    var d=await sbGet('orders','select=id,table_number,total_k,status,kitchen_status,bar_status,created_at,order_items(name,quantity,price_k,category)&status=neq.paid&or=(kitchen_status.eq.served,bar_status.eq.served)&order=created_at.asc');
+    // Zeige alle noch nicht bezahlten Bestellungen — Warnung falls Küche/Bar noch nicht serviert hat
+    var d=await sbGet('orders','select=id,table_number,total_k,status,kitchen_status,bar_status,created_at,order_items(name,quantity,price_k,category)&status=neq.paid&order=created_at.asc');
     bills=d;
     renderBills();
     if(selBill&&!bills.find(function(b){return b.id===selBill.id;})){
