@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas Rezeptbuch Küche v2026-06-08 -->
+<!-- Mata Villas Rezeptbuch Küche v2026-08-12 13:10 UTC -->
 <html>
 <head>
 <meta charset="UTF-8">
@@ -66,6 +66,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;background:#f
     <button class="lb" onclick="setLang('id')">ID</button>
   </div>
 </div>
+<div style="text-align:right;padding:2px 10px 0;font-size:9px;color:#aaa;font-family:monospace">v2026-08-12 13:10</div>
 <div class="catbar" id="catbar"></div>
 <div class="content" id="content"></div>
 <div class="notif" id="notif"></div>
@@ -87,6 +88,12 @@ var head={
   de:{i:'Zutaten',s:'Zubereitung'},
   en:{i:'Ingredients',s:'Preparation'},
   id:{i:'Bahan-bahan',s:'Cara Membuat'}
+};
+
+var EDITL={
+  de:{edit:'✏️ Bearbeiten',save:'Speichern',cancel:'Abbrechen'},
+  en:{edit:'✏️ Edit',save:'Save',cancel:'Cancel'},
+  id:{edit:'✏️ Ubah',save:'Simpan',cancel:'Batal'}
 };
 
 var R=[
@@ -361,7 +368,7 @@ function renderRecipes(){
       +'<div><div class="rh">'+head[lang].i+'</div><table class="it">'+ings+'</table></div>'
       +'<div><div class="rh">'+head[lang].s+'</div>'+steps+'</div>'
       +'</div>'+note
-      +'<button class="edbtn" onclick="editRecipe('+r.id+',event)">✏️ Bearbeiten</button>'
+      +'<button class="edbtn" onclick="editRecipe('+r.id+',event)">'+EDITL[lang].edit+'</button>'
       +'<div class="editform" id="ef-'+r.id+'"></div>'
       +'</div></div>';
   }).join('');
@@ -403,8 +410,8 @@ function editRecipe(id, e){
     +'<textarea id="es-id-'+id+'" rows="5">'+r.s.id.join('\n')+'</textarea>'
     +'<label>Notiz</label><input id="enote-'+id+'" value="'+(r.note||'')+'">'
     +'<div id="trans-status-'+id+'" class="translating"></div>'
-    +'<button class="savebtn" onclick="saveEdit('+id+')">Speichern</button>'
-    +'<button class="cancelbtn" onclick="closeEdit('+id+')" >Abbrechen</button>';
+    +'<button class="savebtn" onclick="saveEdit('+id+')">'+EDITL[lang].save+'</button>'
+    +'<button class="cancelbtn" onclick="closeEdit('+id+')" >'+EDITL[lang].cancel+'</button>';
   ef.classList.add('open');
 }
 

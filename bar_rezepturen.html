@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas Bar Rezepturen v2026-06-10 -->
+<!-- Mata Villas Bar Rezepturen v2026-08-12 13:10 UTC -->
 <html>
 <head>
 <meta charset="UTF-8">
@@ -49,13 +49,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,Arial,sans-serif;background:#f
 <body>
 <div class="topbar">
   <img id="logo" src="" alt="Mata Villas">
-  <div style="font-size:14px;font-weight:700;flex:1">Bar Rezepturen</div>
+  <div style="font-size:14px;font-weight:700;flex:1" id="page-title"></div>
   <div class="lbs">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
     <button class="lb" onclick="setLang('id')">ID</button>
   </div>
 </div>
+<div style="text-align:right;padding:2px 10px 0;font-size:9px;color:#aaa;font-family:monospace">v2026-08-12 13:10</div>
 <div class="catbar" id="catbar"></div>
 <div class="content" id="content"></div>
 
@@ -162,9 +163,11 @@ var R=[
    note:'Leicht fermentiertes mexikanisches Ananasgetränk.'},
 ];
 
+var TITLE={de:'Bar Rezepturen',en:'Bar Recipes',id:'Resep Bar'};
 function setLang(l){
   lang=l;
   document.querySelectorAll('.lb').forEach(function(b,i){b.classList.toggle('on',['de','en','id'][i]===l);});
+  document.getElementById('page-title').textContent=TITLE[lang];
   renderCatBar();
   renderRecipes();
 }
@@ -205,6 +208,7 @@ function renderRecipes(){
 }
 
 window.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('page-title').textContent=TITLE[lang];
   renderCatBar();
   renderRecipes();
 });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 07:40:26 -->
+<!-- Mata Villas v2026-08-12 12:33 UTC -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -133,14 +133,15 @@ body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
       <input class="pin" type="tel" maxlength="1" inputmode="numeric" autocomplete="off" readonly>
       <input class="pin" type="tel" maxlength="1" inputmode="numeric" autocomplete="off" readonly>
     </div>
-    <button class="lbtn" onclick="doLogin()">Anmelden / Sign in</button>
+    <button class="lbtn" id="login-btn" onclick="doLogin()"></button>
     <div class="lerr" id="login-err"></div>
   </div>
 </div>
 
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
-  <span class="topbar-title">POS Terminal</span>
+  <span class="topbar-title" id="topbar-title"></span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace" id="ver-tag"></span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -171,7 +172,7 @@ body{height:100vh;display:flex;flex-direction:column;overflow:hidden}
     </div>
     <div class="olist" id="olist"></div>
     <div class="note-area"><textarea id="onote" id="onote"></textarea></div>
-    <div class="total-row"><span id="total-label">Total</span><span id="ototal">Rp 0k</span></div>
+    <div class="total-row"><span id="total-label"></span><span id="ototal">Rp 0k</span></div>
     <div class="actions">
       <button class="abtn clr" id="clr-btn" onclick="clearOrder()"></button>
       <button class="abtn snd" id="snd-btn" onclick="sendOrder()"></button>
@@ -206,7 +207,8 @@ var T={
       orders:'Bestellungen',tables:'Tische belegt',noActive:'Keine aktiven Bestellungen',
       save:'Speichern',cancel:'Abbrechen',delete:'Löschen',
       available:'Verfügbar',role:'Rolle',pin:'PIN',
-      firstName:'Vorname',lastName:'Nachname',add:'Hinzufügen'},
+      firstName:'Vorname',lastName:'Nachname',add:'Hinzufügen',
+      noTableSel:'Bitte zuerst Tisch wählen',cartEmpty:'Warenkorb ist leer',noPin:'Kein PIN hinterlegt'},
   en:{selectTable:'Select table',order:'Order',empty:'Empty',note:'Note...',
       total:'Total',clear:'Clear',send:'Send',sent:'Order sent!',
       free:'free',busy:'busy',allCats:'All',openOrder:'Open order',
@@ -222,7 +224,8 @@ var T={
       orders:'Orders',tables:'Tables busy',noActive:'No active orders',
       save:'Save',cancel:'Cancel',delete:'Delete',
       available:'Available',role:'Role',pin:'PIN',
-      firstName:'First name',lastName:'Last name',add:'Add'},
+      firstName:'First name',lastName:'Last name',add:'Add',
+      noTableSel:'Please select a table first',cartEmpty:'Cart is empty',noPin:'No PIN set'},
   id:{selectTable:'Pilih meja',order:'Pesanan',empty:'Kosong',note:'Catatan...',
       total:'Total',clear:'Hapus',send:'Kirim',sent:'Pesanan dikirim!',
       free:'bebas',busy:'terisi',allCats:'Semua',openOrder:'Pesanan terbuka',
@@ -238,7 +241,8 @@ var T={
       orders:'Pesanan',tables:'Meja terisi',noActive:'Tidak ada pesanan aktif',
       save:'Simpan',cancel:'Batal',delete:'Hapus',
       available:'Tersedia',role:'Peran',pin:'PIN',
-      firstName:'Nama depan',lastName:'Nama belakang',add:'Tambah'}
+      firstName:'Nama depan',lastName:'Nama belakang',add:'Tambah',
+      noTableSel:'Pilih meja dulu',cartEmpty:'Keranjang kosong',noPin:'PIN belum diatur'}
 };
 function t(k){return(T[lang]&&T[lang][k])||(T.de&&T.de[k])||k;}
 function tw(){return t('table')+' ';}
@@ -260,15 +264,13 @@ function setLang(l){
 }
 
 
-var staff=[
-  {id:1, fname:'Marco', lname:'Rossi',   role:'kitchen', from:'12:00', to:'22:00', pin:'1234', active:true},
-  {id:2, fname:'Lena',  lname:'Bauer',   role:'service',  from:'16:00', to:'24:00', pin:'2345', active:true},
-  {id:3, fname:'Thomas',lname:'Müller',  role:'service',  from:'16:00', to:'24:00', pin:'3456', active:true},
-  {id:4, fname:'Anna',  lname:'Koch',    role:'kitchen', from:'12:00', to:'22:00', pin:'4567', active:true},
-  {id:5, fname:'Felix', lname:'Wagner',  role:'bar',      from:'18:00', to:'02:00', pin:'5678', active:true},
-  {id:6, fname:'Sophie',lname:'Huber',   role:'kasse',    from:'14:00', to:'23:00', pin:'6789', active:false},
-  {id:7, fname:'Admin', lname:'Manager', role:'manager',  from:'00:00', to:'23:59', pin:'0000', active:true},
-];
+var staff=[];
+async function loadStaff(){
+  try{
+    staff=await sbGet('staff','active=eq.true&order=fname');
+    buildSelect();
+  }catch(e){console.warn('Staff load failed:',e);buildSelect();}
+}
 var LOGO='data:image/jpeg;base64,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';
 document.querySelectorAll('.login-logo,.topbar-logo').forEach(function(el){el.src=LOGO;});
 
@@ -302,7 +304,8 @@ function doLogin(){
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
   var m=staff.find(function(s){return s.id===sid;});
   if(!m){document.getElementById('login-err').textContent=t('selectStaff');return;}
-  if(m.pin!==pin&&pin!=='0000'){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
+  if(!m.pin){document.getElementById('login-err').textContent=t('noPin');clearPins();return;}
+  if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
   var un=document.getElementById('topbar-user');if(un)un.textContent=m.fname;
   if(typeof afterLogin==='function')afterLogin(m);
@@ -401,6 +404,10 @@ function renderAll(){
   document.getElementById('panel-title').textContent=t('order');
   document.getElementById('clr-btn').textContent=t('clear');
   document.getElementById('snd-btn').textContent=t('send');
+  document.getElementById('login-btn').textContent=t('signIn');
+  document.getElementById('total-label').textContent=t('total');
+  document.getElementById('topbar-title').textContent='POS Terminal';
+  document.getElementById('ver-tag').textContent='v2026-08-12 12:33';
   document.querySelector('.note-area textarea').placeholder=t('note');
   buildCats();buildMenu();renderTables();renderOrder();
 }
@@ -522,8 +529,8 @@ function closeCart(){
 }
 
 async function sendOrder(){
-  if(!selTable){notify('⚠ '+(lang==='de'?'Bitte zuerst Tisch wählen':lang==='en'?'Please select a table first':'Pilih meja dulu'));return;}
-  if(!order.length){notify('⚠ '+(lang==='de'?'Warenkorb ist leer':lang==='en'?'Cart is empty':'Keranjang kosong'));return;}
+  if(!selTable){notify('⚠ '+t('noTableSel'));return;}
+  if(!order.length){notify('⚠ '+t('cartEmpty'));return;}
   var note=document.getElementById('onote').value;
   var total=order.reduce(function(s,o){return s+o.price*o.qty;},0);
   try{
@@ -559,7 +566,7 @@ function afterLogin(){renderAll();loadTables();setInterval(loadTables,30000);}
 function afterLogout(){order=[];selTable=null;clearOrder();}
 
 window.addEventListener('DOMContentLoaded',function(){
-  buildSelect();initPins();
+  loadStaff();initPins();
   renderAll();
 });
 </script>

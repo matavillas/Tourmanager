@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-06-08 -->
+<!-- Mata Villas v2026-08-12 12:55 UTC -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -45,16 +45,21 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .notif{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a202c;color:#fff;border-radius:8px;padding:10px 20px;font-size:13px;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
 .notif.show{opacity:1}
 .layout{flex:1;display:flex;overflow:hidden;min-height:0}
-.bills-side{width:280px;flex-shrink:0;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column}
-.bills-head{padding:12px 14px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg)}
+.bills-side{width:104px;flex-shrink:0;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column}
+.bills-head{padding:8px 6px;font-size:10px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);text-align:center;line-height:1.2}
 .bills-list{flex:1;overflow-y:auto}
-.bill-card{padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer}
+.bill-card{padding:10px 6px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px}
 .bill-card:hover{background:var(--bg)}
 .bill-card.sel{background:var(--accent-bg);border-left:3px solid var(--accent)}
-.bill-table{font-size:14px;font-weight:700}
-.bill-total{font-size:13px;color:var(--accent);font-weight:600}
+.bill-table{font-size:16px;font-weight:800}
+.bill-total{font-size:12px;color:var(--accent);font-weight:700}
 .bill-time{font-size:11px;color:var(--text3)}
 .bill-warn{font-size:11px;color:var(--orange);font-weight:600;margin-top:2px}
+@media (max-width:480px){
+  .bills-side{width:88px}
+  .bill-table{font-size:15px}
+  .bill-total{font-size:11px}
+}
 .pay-side{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .receipt{flex:1;overflow-y:auto;background:#fff}
 .receipt-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text3);font-size:15px}
@@ -107,6 +112,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 12:55</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -203,7 +209,8 @@ function doLogin(){
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
   var m=staff.find(function(s){return s.id===sid;});
   if(!m){document.getElementById('login-err').textContent='Bitte Mitarbeiter wählen';return;}
-  if(m.pin!==pin&&!(pin==='0000'&&m.role==='manager')){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin')[0].focus();return;}
+  if(!m.pin){document.getElementById('login-err').textContent='Kein PIN hinterlegt — bitte Manager kontaktieren';clearPins();return;}
+  if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
   var un=document.getElementById('topbar-user');if(un)un.textContent=m.fname;
   if(typeof afterLogin==='function')afterLogin(m);
@@ -259,15 +266,11 @@ function renderBills(){
   }
   list.innerHTML=bills.map(function(b){
     var sel=selBill&&selBill.id===b.id;
-    var t=new Date(b.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
     var warn=getPendingWarn(b);
-    return '<div class="bill-card'+(sel?' sel':'')+'" onclick="selectBill('+b.id+')">'+
+    return '<div class="bill-card'+(sel?' sel':'')+'" onclick="selectBill('+b.id+')" title="'+(warn?warn.replace(/"/g,'&quot;'):'')+'">'+
       '<div class="bill-table">'+tw()+b.table_number+'</div>'+
-      '<div style="display:flex;justify-content:space-between;margin-top:3px">'+
-        '<span class="bill-time">'+t+'</span>'+
-        '<span class="bill-total">Rp '+b.total_k+'k</span>'+
-      '</div>'+
-      (warn?'<div class="bill-warn">'+warn+'</div>':'')+
+      '<div class="bill-total">Rp '+b.total_k+'k</div>'+
+      (warn?'<div style="width:6px;height:6px;border-radius:50%;background:var(--orange)"></div>':'')+
       '</div>';
   }).join('');
   document.body.className=lang;
