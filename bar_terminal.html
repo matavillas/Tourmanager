@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 14:37 -->
+<!-- Mata Villas v2026-08-12 14:54 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -124,7 +124,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
   <span class="topbar-title">Bar Terminal</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 14:37</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 14:54</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -265,8 +265,8 @@ function doLogin(){
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
   var m=staff.find(function(s){return String(s.id)===String(sid);});
   if(!m){document.getElementById('login-err').textContent=t('selectStaff');return;}
-  if(!m.pin){document.getElementById('login-err').textContent=t('noPin')||'Kein PIN hinterlegt';clearPins();return;}
-  if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
+  if(m.pin===null||m.pin===undefined||m.pin===''){document.getElementById('login-err').textContent=t('noPin')||'Kein PIN hinterlegt';clearPins();return;}
+  if(pin.length<4||String(m.pin).padStart(4,'0')!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
   var un=document.getElementById('topbar-user');if(un)un.textContent=m.fname;
   if(typeof afterLogin==='function')afterLogin(m);

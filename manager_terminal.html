@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 14:37 -->
+<!-- Mata Villas v2026-08-12 15:03 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -123,7 +123,7 @@ tr:last-child td{border-bottom:none}
   <img class="topbar-logo" src="" alt="" style="height:30px;object-fit:contain">
   <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
   <span class="topbar-title" id="topbar-title">Manager</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 14:37</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 15:03</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -359,8 +359,8 @@ function doLogin(){
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
   var m=staff.find(function(s){return String(s.id)===String(sid);});
   if(!m){document.getElementById('login-err').textContent=t('selectStaff');return;}
-  if(!m.pin){document.getElementById('login-err').textContent=t('noPin')||'Kein PIN hinterlegt';clearPins();return;}
-  if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
+  if(m.pin===null||m.pin===undefined||m.pin===''){document.getElementById('login-err').textContent=t('noPin')||'Kein PIN hinterlegt';clearPins();return;}
+  if(pin.length<4||String(m.pin).padStart(4,'0')!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
   var un=document.getElementById('topbar-user');if(un)un.textContent=m.fname;
   if(typeof afterLogin==='function')afterLogin(m);
@@ -594,10 +594,10 @@ async function storno(sid,oid){
 
 async function loadStaff(){
   try{
-    allStaff=await sbGet('employees','select=*&order=fname');
+    allStaff=await sbGet('staff','select=*&order=fname');
     document.getElementById('staff-tbody').innerHTML=allStaff.map(function(s){
       return '<tr><td>'+s.fname+' '+(s.lname||'')+'</td><td><code>'+s.pin+'</code></td>'+
-        '<td>'+s.role_id+'</td>'+
+        '<td>'+s.role+'</td>'+
         '<td><button class="del-btn" onclick="delStaff('+s.id+')">✕</button></td></tr>';
     }).join('')||'<tr><td colspan="4" style="text-align:center;padding:14px;color:var(--text3)">—</td></tr>';
   }catch(e){notify('⚠ '+e.message);}
@@ -615,7 +615,7 @@ async function saveStaff(){
   var role=document.getElementById('sf-role').value;
   if(!fname||pin.length!==4){notify('⚠ '+t('firstName')+' + PIN erforderlich');return;}
   try{
-    await sbPost('employees',{fname:fname,lname:lname,pin:pin,role_id:role,active:true});
+    await sbPost('staff',{fname:fname,lname:lname,pin:pin,role:role,active:true});
     document.getElementById('add-staff-form').style.display='none';
     notify('✓ '+t('save'));loadStaff();
   }catch(e){notify('⚠ '+e.message);}
@@ -623,7 +623,7 @@ async function saveStaff(){
 
 async function delStaff(id){
   if(!confirm(lang==='de'?'Mitarbeiter löschen?':lang==='en'?'Delete staff?':'Hapus staf?'))return;
-  try{await sbDel('employees','id=eq.'+id);loadStaff();notify('✓ '+t('delete'));}catch(e){notify('⚠ '+e.message);}
+  try{await sbDel('staff','id=eq.'+id);loadStaff();notify('✓ '+t('delete'));}catch(e){notify('⚠ '+e.message);}
 }
 
 async function loadMenuAdmin(){

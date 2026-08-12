@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 14:37 -->
+<!-- Mata Villas v2026-08-12 14:54 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -305,8 +305,8 @@ function doLogin(){
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
   var m=staff.find(function(s){return String(s.id)===String(sid);});
   if(!m){document.getElementById('login-err').textContent=t('selectStaff');return;}
-  if(!m.pin){document.getElementById('login-err').textContent=t('noPin');clearPins();return;}
-  if(pin.length<4||m.pin!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
+  if(m.pin===null||m.pin===undefined||m.pin===''){document.getElementById('login-err').textContent=t('noPin');clearPins();return;}
+  if(pin.length<4||String(m.pin).padStart(4,'0')!==pin){document.getElementById('login-err').textContent=t('wrongPin');clearPins();document.querySelectorAll('.pin')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
   var un=document.getElementById('topbar-user');if(un)un.textContent=m.fname;
   if(typeof afterLogin==='function')afterLogin(m);
@@ -408,7 +408,7 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-12 14:37';
+  document.getElementById('ver-tag').textContent='v2026-08-12 14:54';
   document.querySelector('.note-area textarea').placeholder=t('note');
   buildCats();buildMenu();renderTables();renderOrder();
 }
