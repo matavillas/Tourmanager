@@ -1,12 +1,12 @@
 {
   "name": "Mata Villas POS",
   "short_name": "POS",
-  "start_url": "pos_terminal.html",
+  "start_url": "/Tourmanager/pos_terminal.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1CA9DB",
   "icons": [
-    {"src": "icons/pos_icon_192.png", "sizes": "192x192", "type": "image/png"},
-    {"src": "icons/pos_icon_512.png", "sizes": "512x512", "type": "image/png"}
+    {"src": "pos_icon_192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "pos_icon_512.png", "sizes": "512x512", "type": "image/png"}
   ]
 }
