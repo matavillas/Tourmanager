@@ -1,6 +1,8 @@
 {
   "name": "Mata Villas Bar",
   "short_name": "Bar",
+  "id": "/Tourmanager/bar_terminal.html",
+  "scope": "/Tourmanager/bar_terminal.html",
   "start_url": "/Tourmanager/bar_terminal.html",
   "display": "standalone",
   "background_color": "#ffffff",

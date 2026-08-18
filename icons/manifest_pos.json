@@ -1,6 +1,8 @@
 {
   "name": "Mata Villas POS",
   "short_name": "POS",
+  "id": "/Tourmanager/pos_terminal.html",
+  "scope": "/Tourmanager/pos_terminal.html",
   "start_url": "/Tourmanager/pos_terminal.html",
   "display": "standalone",
   "background_color": "#ffffff",

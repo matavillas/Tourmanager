@@ -1,6 +1,8 @@
 {
   "name": "Mata Villas Kitchen",
   "short_name": "Kitchen",
+  "id": "/Tourmanager/kds_terminal.html",
+  "scope": "/Tourmanager/kds_terminal.html",
   "start_url": "/Tourmanager/kds_terminal.html",
   "display": "standalone",
   "background_color": "#ffffff",
