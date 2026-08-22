@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 21:00 -->
+<!-- Mata Villas v2026-08-23 00:15 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -67,6 +67,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 .rb-rooms{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 .rb-room-btn{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
 .rb-room-btn.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.rb-release{margin-top:6px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--orange-bd);background:var(--orange-bg);color:var(--orange);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:block}
 .table-label{font-size:12px;font-weight:600;white-space:nowrap;color:var(--text2)}
 .tgrid{display:flex;gap:5px;overflow-x:auto;flex:1;scrollbar-width:none;padding:2px 0}
 .tgrid::-webkit-scrollbar{display:none}
@@ -114,6 +115,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 .oitem-price{font-size:11px;color:var(--text3)}
 .qctrl{display:flex;align-items:center;gap:3px;flex-shrink:0}
 .qbtn{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--border);background:var(--bg);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--font)}
+.qbtn-del{margin-left:4px;color:var(--red);border-color:var(--red-bd);background:var(--red-bg);font-size:11px}
 .qn{font-size:12px;font-weight:700;min-width:18px;text-align:center}
 .note-area{padding:6px 8px;flex-shrink:0;border-top:1px solid var(--border)}
 .note-area textarea{width:100%;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);resize:none;outline:none;height:38px}
@@ -189,6 +191,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
     <div class="room-bill-bar" id="room-bill-bar" style="display:none">
       <button class="rb-toggle" id="rb-toggle" onclick="toggleRoomBill()"></button>
       <div class="rb-rooms" id="rb-rooms" style="display:none"></div>
+      <button class="rb-release" id="release-table-btn" onclick="releaseTable()" style="display:none"></button>
     </div>
     <div class="cat-bar" id="catbar"></div>
     <div class="mgrid" id="mgrid"></div>
@@ -222,8 +225,16 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
     </div>
     <label class="manual-label" id="manual-name-label"></label>
     <input type="text" id="manual-name" class="manual-input">
-    <label class="manual-label" id="manual-price-label"></label>
-    <input type="number" id="manual-price" class="manual-input" placeholder="0">
+    <div style="display:flex;gap:10px">
+      <div style="flex:2">
+        <label class="manual-label" id="manual-price-label"></label>
+        <input type="number" id="manual-price" class="manual-input" placeholder="0">
+      </div>
+      <div style="flex:1">
+        <label class="manual-label" id="manual-qty-label"></label>
+        <input type="number" id="manual-qty" class="manual-input" value="1" min="1">
+      </div>
+    </div>
     <div id="manual-cat-wrap" style="margin-bottom:6px">
       <label class="manual-label" id="manual-cat-label"></label>
       <div style="display:flex;gap:8px">
@@ -268,7 +279,11 @@ var T={
       manualAdd:'➕ Manuell hinzufügen',manualTitle:'Manuelle Position',manualName:'Bezeichnung',
       manualPrice:'Preis (Rp, in k)',manualCat:'Bereich',manualKitchen:'Küche',manualBar:'Bar',
       manualAddBtn:'Hinzufügen',manualFillAll:'Bitte Bezeichnung und Preis eingeben',
-      billToRoom:'🏨 Auf Zimmerrechnung buchen',billToRoomOn:'✓ Zimmerrechnung: '},
+      billToRoom:'🏨 Auf Zimmerrechnung buchen',billToRoomOn:'✓ Zimmerrechnung: ',manualQty:'Menge',
+      releaseTable:'✅ Tisch freigeben (Gast gegangen)',
+      releaseConfirm:'Tisch {t} freigeben? Die Rechnung läuft für Zimmer {r} bis zur Abreise weiter.',
+      tableReleased:'Tisch freigegeben',
+      priceWarn:'⚠ Rp {p}k ist ungewöhnlich hoch — meinst du vielleicht Rp {s}k? OK = trotzdem Rp {p}k verwenden, Abbrechen = Preis korrigieren.'},
   en:{selectTable:'Select table',order:'Order',empty:'Empty',note:'Note...',
       total:'Total',clear:'Clear',send:'Send',sent:'Order sent!',
       free:'free',busy:'busy',allCats:'All',openOrder:'Open order',
@@ -291,7 +306,11 @@ var T={
       manualAdd:'➕ Add manually',manualTitle:'Manual item',manualName:'Name',
       manualPrice:'Price (Rp, in k)',manualCat:'Section',manualKitchen:'Kitchen',manualBar:'Bar',
       manualAddBtn:'Add',manualFillAll:'Please enter name and price',
-      billToRoom:'🏨 Bill to room',billToRoomOn:'✓ Room bill: '},
+      billToRoom:'🏨 Bill to room',billToRoomOn:'✓ Room bill: ',manualQty:'Qty',
+      releaseTable:'✅ Release table (guest left)',
+      releaseConfirm:'Release table {t}? The bill continues for room {r} until check-out.',
+      tableReleased:'Table released',
+      priceWarn:'⚠ Rp {p}k is unusually high — did you mean Rp {s}k? OK = keep Rp {p}k anyway, Cancel = fix the price.'},
   id:{selectTable:'Pilih meja',order:'Pesanan',empty:'Kosong',note:'Catatan...',
       total:'Total',clear:'Hapus',send:'Kirim',sent:'Pesanan dikirim!',
       free:'bebas',busy:'terisi',allCats:'Semua',openOrder:'Pesanan terbuka',
@@ -314,7 +333,11 @@ var T={
       manualAdd:'➕ Tambah manual',manualTitle:'Item manual',manualName:'Nama',
       manualPrice:'Harga (Rp, ribuan)',manualCat:'Bagian',manualKitchen:'Dapur',manualBar:'Bar',
       manualAddBtn:'Tambah',manualFillAll:'Isi nama dan harga',
-      billToRoom:'🏨 Tagih ke kamar',billToRoomOn:'✓ Tagihan kamar: '}
+      billToRoom:'🏨 Tagih ke kamar',billToRoomOn:'✓ Tagihan kamar: ',manualQty:'Jml',
+      releaseTable:'✅ Bebaskan meja (tamu pergi)',
+      releaseConfirm:'Bebaskan meja {t}? Tagihan berlanjut untuk kamar {r} sampai check-out.',
+      tableReleased:'Meja dibebaskan',
+      priceWarn:'⚠ Rp {p}k terlihat sangat tinggi — maksud Anda Rp {s}k? OK = tetap gunakan Rp {p}k, Batal = perbaiki harga.'}
 };
 function t(k){return(T[lang]&&T[lang][k])||(T.de&&T.de[k])||k;}
 function tw(){return t('table')+' ';}
@@ -328,8 +351,8 @@ var currentStaff=null;
 function logAction(action,details){
   sbPost('audit_log',{staff_name:currentStaff?currentStaff.fname:null,staff_role:currentStaff?currentStaff.role:null,terminal:'POS',action:action,details:details||null}).catch(function(){});
 }
-async function sbPatch(table,filter,d){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});}
-async function sbDel(table,filter){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});}
+async function sbPatch(table,filter,d){var r=await fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});if(!r.ok){var t='';try{t=await r.text();}catch(e){}throw new Error('DB-Fehler ('+r.status+'): '+t);}return r;}
+async function sbDel(table,filter){var r=await fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok){var t='';try{t=await r.text();}catch(e){}throw new Error('DB-Fehler ('+r.status+'): '+t);}return r;}
 
 
 var lang='de';
@@ -496,18 +519,20 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-22 21:00';
+  document.getElementById('ver-tag').textContent='v2026-08-23 00:15';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
   document.getElementById('manual-btn').textContent=t('manualAdd');
   document.getElementById('manual-title').textContent=t('manualTitle');
   document.getElementById('manual-name-label').textContent=t('manualName');
   document.getElementById('manual-price-label').textContent=t('manualPrice');
+  document.getElementById('manual-qty-label').textContent=t('manualQty');
   document.getElementById('manual-cat-label').textContent=t('manualCat');
   document.getElementById('manual-cat-kitchen').textContent=t('manualKitchen');
   document.getElementById('manual-cat-bar').textContent=t('manualBar');
   document.getElementById('manual-add-btn').textContent=t('manualAddBtn');
   document.getElementById('manual-cat-wrap').style.display=mode==='minibar'?'none':'block';
+  document.getElementById('release-table-btn').textContent=t('releaseTable');
   updateRbToggle();
   document.querySelector('.note-area textarea').placeholder=t('note');
   buildCats();buildMenu();
@@ -555,6 +580,7 @@ function selectTable(n){
   document.getElementById('room-bill-bar').style.display='block';
   document.getElementById('rb-rooms').style.display='none';
   updateRbToggle();
+  updateReleaseBtn();
 }
 
 function selectRoom(id){
@@ -563,6 +589,40 @@ function selectRoom(id){
   updateBtn();
   document.getElementById('tbl-label').textContent=selRoom?selRoom.name:t('selectRoom');
   loadExistingOrders(null,id);
+}
+
+async function assignExistingOrdersToRoom(){
+  if(!billRoom||!selTable)return;
+  try{
+    await sbPatch('orders','table_number=eq.'+selTable+'&order_type=eq.restaurant&status=in.(new,cooking,making,ready)',{room_id:billRoom.id});
+    logAction('Zimmerrechnung zugeordnet','Tisch '+selTable+' → '+billRoom.name);
+    notify('✓ '+t('billToRoomOn')+billRoom.name);
+    loadExistingOrders(selTable);
+  }catch(e){notify('⚠ '+e.message);}
+  updateReleaseBtn();
+}
+
+function updateReleaseBtn(){
+  var el=document.getElementById('release-table-btn');
+  if(!el)return;
+  el.style.display=billRoom?'block':'none';
+}
+
+async function releaseTable(){
+  if(!billRoom||!selTable)return;
+  var confirmMsg=t('releaseConfirm').replace('{t}',selTable).replace('{r}',billRoom.name);
+  if(!confirm(confirmMsg))return;
+  try{
+    await sbPatch('orders','table_number=eq.'+selTable+'&order_type=eq.restaurant&room_id=eq.'+billRoom.id+'&status=in.(new,cooking,making,ready)',{table_number:null});
+    logAction('Tisch freigegeben (Zimmerrechnung läuft weiter)','Tisch '+selTable+' → '+billRoom.name);
+    notify('✓ '+t('tableReleased'));
+    selTable=null;billRoom=null;
+    document.getElementById('room-bill-bar').style.display='none';
+    document.getElementById('tbl-label').textContent=t('selectTable');
+    document.getElementById('existing-orders').style.display='none';
+    loadTables();
+    renderTables();
+  }catch(e){notify('⚠ '+e.message);}
 }
 
 function updateRbToggle(){
@@ -598,6 +658,7 @@ document.addEventListener('click',function(e){
     billRoom=rooms.find(function(r){return r.id===+b.dataset.id;});
     updateRbToggle();
     document.getElementById('rb-rooms').style.display='none';
+    assignExistingOrdersToRoom();
   }
 });
 
@@ -660,6 +721,7 @@ var manualCat='Tapas';
 function openManualAdd(){
   document.getElementById('manual-name').value='';
   document.getElementById('manual-price').value='';
+  document.getElementById('manual-qty').value='1';
   manualCat='Tapas';
   document.getElementById('manual-cat-kitchen').classList.add('on');
   document.getElementById('manual-cat-bar').classList.remove('on');
@@ -677,23 +739,33 @@ document.addEventListener('click',function(e){
 function addManualItem(){
   var name=document.getElementById('manual-name').value.trim();
   var price=parseFloat(document.getElementById('manual-price').value)||0;
+  var qty=parseInt(document.getElementById('manual-qty').value)||1;
+  if(qty<1)qty=1;
   if(!name||price<=0){notify('⚠ '+t('manualFillAll'));return;}
+  if(price>=1000){
+    var suggested=Math.round(price/1000);
+    var msg=t('priceWarn').replace('{p}',price).replace('{s}',suggested);
+    if(!confirm(msg))return;
+  }
   var cat=mode==='minibar'?'Minibar':manualCat;
   var id='manual_'+Date.now();
-  order.push({id:id,name:name,price:price,cat:cat,qty:1});
+  order.push({id:id,name:name,price:price,cat:cat,qty:qty});
   closeManualAdd();
   renderOrder();buildMenu();updateFab();
-  if(window.matchMedia('(max-width:660px)').matches){
-    document.getElementById('order-panel').classList.add('open');
-    document.getElementById('backdrop').classList.add('show');
-  }
 }
 
 function changeQty(id,d){
-  var i=order.findIndex(function(o){return o.id===id;});
+  var i=order.findIndex(function(o){return String(o.id)===String(id);});
   if(i<0)return;
   order[i].qty+=d;
   if(order[i].qty<=0)order.splice(i,1);
+  renderOrder();buildMenu();updateFab();
+}
+
+function removeOrderItem(id){
+  var i=order.findIndex(function(o){return String(o.id)===String(id);});
+  if(i<0)return;
+  order.splice(i,1);
   renderOrder();buildMenu();updateFab();
 }
 
@@ -709,17 +781,28 @@ function renderOrder(){
   }
   var total=order.reduce(function(s,o){return s+o.price*o.qty;},0);
   list.innerHTML=order.map(function(o){
-    return '<div class="oitem">'+
+    return '<div class="oitem" data-id="'+o.id+'">'+
       '<div class="oitem-info"><div class="oitem-name">'+o.name+'</div><div class="oitem-price">Rp '+o.price+'k</div></div>'+
       '<div class="qctrl">'+
-        '<div class="qbtn" onclick="changeQty('+o.id+',-1)">−</div>'+
+        '<div class="qbtn" data-act="dec">−</div>'+
         '<span class="qn">'+o.qty+'</span>'+
-        '<div class="qbtn" onclick="changeQty('+o.id+',1)">+</div>'+
+        '<div class="qbtn" data-act="inc">+</div>'+
+        '<div class="qbtn qbtn-del" data-act="del" title="Entfernen">✕</div>'+
       '</div></div>';
   }).join('');
   document.getElementById('ototal').textContent='Rp '+total+'k';
   updateBtn();
 }
+document.getElementById('olist').addEventListener('click',function(e){
+  var btn=e.target.closest('.qbtn');
+  if(!btn)return;
+  var row=e.target.closest('.oitem');
+  if(!row)return;
+  var id=row.dataset.id;
+  if(btn.dataset.act==='dec')changeQty(id,-1);
+  else if(btn.dataset.act==='inc')changeQty(id,1);
+  else if(btn.dataset.act==='del')removeOrderItem(id);
+});
 
 function updateBtn(){document.getElementById('snd-btn').classList.toggle('off',!(order.length&&(mode==='minibar'?selRoom:selTable)));}
 function updateFab(){

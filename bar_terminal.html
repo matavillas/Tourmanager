@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 15:36 -->
+<!-- Mata Villas v2026-08-23 00:15 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -131,7 +131,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
   <span class="topbar-title">Bar Terminal</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 15:36</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 00:15</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -224,8 +224,8 @@ var currentStaff=null;
 function logAction(action,details){
   sbPost('audit_log',{staff_name:currentStaff?currentStaff.fname:null,staff_role:currentStaff?currentStaff.role:null,terminal:'Bar',action:action,details:details||null}).catch(function(){});
 }
-async function sbPatch(table,filter,d){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});}
-async function sbDel(table,filter){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});}
+async function sbPatch(table,filter,d){var r=await fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});if(!r.ok){var t='';try{t=await r.text();}catch(e){}throw new Error('DB-Fehler ('+r.status+'): '+t);}return r;}
+async function sbDel(table,filter){var r=await fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok){var t='';try{t=await r.text();}catch(e){}throw new Error('DB-Fehler ('+r.status+'): '+t);}return r;}
 
 
 var lang='de';
