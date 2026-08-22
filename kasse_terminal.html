@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 00:15 -->
+<!-- Mata Villas v2026-08-23 08:45 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -127,7 +127,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 00:15</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 08:45</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -990,16 +990,27 @@ async function selCheckoutRoom(id,el){
   body.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Lädt…</div>';
   try{
     var orders=await sbGet('orders','select=id,table_number,order_type,total_k,created_at,order_items(id,name,quantity,price_k,status)&room_id=eq.'+id+'&order_type=in.(minibar,restaurant)&status=in.(new,cooking,making,ready)&order=created_at.asc');
-    orders.forEach(function(o){o._checked=true;});
     checkoutOrders=orders;
     renderCheckoutBody();
   }catch(e){body.innerHTML='<div style="padding:20px;text-align:center;color:var(--red);font-size:13px">⚠ Fehler beim Laden</div>';}
 }
 
-function toggleCheckoutGroup(orderId){
+async function removeCheckoutItem(orderId,itemId){
+  var confirmMsg=lang==='de'?'Diese Position wirklich entfernen? Das kann nicht rückgängig gemacht werden.':lang==='en'?'Really remove this item? This cannot be undone.':'Hapus item ini? Tidak bisa dibatalkan.';
+  if(!confirm(confirmMsg))return;
   var o=checkoutOrders.find(function(x){return x.id===orderId;});
-  if(o)o._checked=!o._checked;
-  renderCheckoutBody();
+  if(!o)return;
+  var item=(o.order_items||[]).find(function(i){return i.id===itemId;});
+  try{
+    await sbPatch('order_items','id=eq.'+itemId,{status:'cancelled'});
+    if(item)item.status='cancelled';
+    var remaining=(o.order_items||[]).filter(function(i){return i.status!=='cancelled';});
+    var newOrderTotal=remaining.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
+    await sbPatch('orders','id=eq.'+orderId,{total_k:newOrderTotal});
+    logAction('Position entfernt (Abreise)',(checkoutRoom?checkoutRoom.name:'')+' · '+(item?item.name:'#'+itemId));
+    notify('✓ '+(lang==='de'?'Position entfernt':'Item removed'));
+    renderCheckoutBody();
+  }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
 function renderCheckoutBody(){
@@ -1008,13 +1019,11 @@ function renderCheckoutBody(){
     body.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px"><span class="l-de">Keine offenen Posten für dieses Zimmer</span><span class="l-en">No open items for this room</span><span class="l-id">Tidak ada item terbuka</span></div>';
     return;
   }
-  var checkedOrders=checkoutOrders.filter(function(o){return o._checked;});
   var allItems=[];
-  checkedOrders.forEach(function(o){(o.order_items||[]).forEach(function(i){if(i.status!=='cancelled')allItems.push(i);});});
+  checkoutOrders.forEach(function(o){(o.order_items||[]).forEach(function(i){if(i.status!=='cancelled')allItems.push(i);});});
   var subtotal=allItems.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
   var discountAmt=Math.round(subtotal*checkoutDiscount/100);
   var finalTotal=subtotal-discountAmt;
-  var hint=lang==='de'?'Zusammen oder getrennt abrechnen — antippen zum Ab-/Anwählen':lang==='en'?'Bill together or separately — tap to select/deselect':'Tagih bersama atau terpisah — ketuk untuk pilih';
   var groupsHtml=checkoutOrders.map(function(o){
     var items=(o.order_items||[]).filter(function(i){return i.status!=='cancelled';});
     if(!items.length)return '';
@@ -1023,15 +1032,12 @@ function renderCheckoutBody(){
     var icon=o.order_type==='minibar'?'🏠':'🍽️';
     var label=o.order_type==='minibar'?(lang==='de'?'Minibar':'Minibar'):((lang==='de'?'Tisch':'Table')+' '+o.table_number);
     var itemRows=items.map(function(i){
-      return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span></div>';
+      return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span>'+
+        '<button onclick="removeCheckoutItem('+o.id+','+i.id+')" title="Entfernen" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:14px;margin-left:8px">&#10005;</button></div>';
     }).join('');
-    return '<div style="opacity:'+(o._checked?'1':'.45')+'">'+
-      '<div class="sec-label" style="display:flex;align-items:center;gap:8px;cursor:pointer" onclick="toggleCheckoutGroup('+o.id+')">'+
-      '<input type="checkbox" '+(o._checked?'checked':'')+' style="margin:0" onclick="event.stopPropagation();toggleCheckoutGroup('+o.id+')">'+
-      '<span style="flex:1">'+icon+' '+label+' · 📅 '+dateStr+'</span><span>Rp '+groupTotal+'k</span></div>'+itemRows+'</div>';
+    return '<div class="sec-label" style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--text2)"><span>'+icon+' '+label+' · 📅 '+dateStr+'</span><span>Rp '+groupTotal+'k</span></div>'+itemRows;
   }).join('');
   body.innerHTML=
-    '<div style="font-size:11px;color:var(--text3);margin-bottom:8px">'+hint+'</div>'+
     '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px">'+groupsHtml+
     '<div class="rtotal" style="border-top:1px solid var(--border)"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'+
     '</div>'+
@@ -1062,13 +1068,12 @@ function selCheckoutPM(pm){
 }
 function updateCheckoutBtn(){
   var btn=document.getElementById('checkout-confirm-btn');
-  var anyChecked=checkoutOrders.some(function(o){return o._checked;});
-  if(btn)btn.disabled=!checkoutPM||!anyChecked;
+  if(btn)btn.disabled=!checkoutPM||!checkoutOrders.length;
 }
 
 async function confirmCheckout(){
   if(!checkoutRoom||!checkoutPM)return;
-  var checkedOrders=checkoutOrders.filter(function(o){return o._checked;});
+  var checkedOrders=checkoutOrders;
   if(!checkedOrders.length)return;
   var minibarOrders=checkedOrders.filter(function(o){return o.order_type==='minibar';});
   var restaurantOrders=checkedOrders.filter(function(o){return o.order_type==='restaurant';});
