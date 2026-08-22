@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 15:36 -->
+<!-- Mata Villas v2026-08-22 14:30 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -57,6 +57,9 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 .pos{flex:1;display:flex;overflow:hidden;min-height:0}
 /* Menu side */
 .menu-side{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.mode-bar{display:flex;gap:0;background:#fff;border-bottom:1px solid var(--border);flex-shrink:0}
+.mbtn{flex:1;padding:9px;border:none;background:var(--bg);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);border-bottom:3px solid transparent}
+.mbtn.on{background:#fff;color:var(--accent);border-bottom-color:var(--accent)}
 .table-bar{padding:8px 10px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;min-height:52px}
 .table-label{font-size:12px;font-weight:600;white-space:nowrap;color:var(--text2)}
 .tgrid{display:flex;gap:5px;overflow-x:auto;flex:1;scrollbar-width:none;padding:2px 0}
@@ -161,6 +164,10 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 </div>
 <div class="pos">
   <div class="menu-side">
+    <div class="mode-bar" id="mode-bar">
+      <button class="mbtn on" data-m="restaurant" id="mode-restaurant"></button>
+      <button class="mbtn" data-m="minibar" id="mode-minibar"></button>
+    </div>
     <div class="table-bar">
       <span class="table-label" id="tbl-label"></span>
       <div class="tgrid" id="tgrid"></div>
@@ -216,7 +223,9 @@ var T={
       save:'Speichern',cancel:'Abbrechen',delete:'Löschen',
       available:'Verfügbar',role:'Rolle',pin:'PIN',
       firstName:'Vorname',lastName:'Nachname',add:'Hinzufügen',
-      noTableSel:'Bitte zuerst Tisch wählen',cartEmpty:'Warenkorb ist leer',noPin:'Kein PIN hinterlegt'},
+      noTableSel:'Bitte zuerst Tisch wählen',cartEmpty:'Warenkorb ist leer',noPin:'Kein PIN hinterlegt',
+      restaurant:'Restaurant',minibar:'Minibar',selectRoom:'Zimmer wählen',room:'Zimmer',
+      noRoomSel:'Bitte zuerst Zimmer wählen'},
   en:{selectTable:'Select table',order:'Order',empty:'Empty',note:'Note...',
       total:'Total',clear:'Clear',send:'Send',sent:'Order sent!',
       free:'free',busy:'busy',allCats:'All',openOrder:'Open order',
@@ -233,7 +242,9 @@ var T={
       save:'Save',cancel:'Cancel',delete:'Delete',
       available:'Available',role:'Role',pin:'PIN',
       firstName:'First name',lastName:'Last name',add:'Add',
-      noTableSel:'Please select a table first',cartEmpty:'Cart is empty',noPin:'No PIN set'},
+      noTableSel:'Please select a table first',cartEmpty:'Cart is empty',noPin:'No PIN set',
+      restaurant:'Restaurant',minibar:'Minibar',selectRoom:'Select room',room:'Room',
+      noRoomSel:'Please select a room first'},
   id:{selectTable:'Pilih meja',order:'Pesanan',empty:'Kosong',note:'Catatan...',
       total:'Total',clear:'Hapus',send:'Kirim',sent:'Pesanan dikirim!',
       free:'bebas',busy:'terisi',allCats:'Semua',openOrder:'Pesanan terbuka',
@@ -250,7 +261,9 @@ var T={
       save:'Simpan',cancel:'Batal',delete:'Hapus',
       available:'Tersedia',role:'Peran',pin:'PIN',
       firstName:'Nama depan',lastName:'Nama belakang',add:'Tambah',
-      noTableSel:'Pilih meja dulu',cartEmpty:'Keranjang kosong',noPin:'PIN belum diatur'}
+      noTableSel:'Pilih meja dulu',cartEmpty:'Keranjang kosong',noPin:'PIN belum diatur',
+      restaurant:'Restoran',minibar:'Minibar',selectRoom:'Pilih kamar',room:'Kamar',
+      noRoomSel:'Pilih kamar dulu'}
 };
 function t(k){return(T[lang]&&T[lang][k])||(T.de&&T.de[k])||k;}
 function tw(){return t('table')+' ';}
@@ -405,24 +418,49 @@ var menu=[
   {id:718,name:"Coca-Cola",cat:"Drinks",price:25,avail:true},
   {id:719,name:"Coca-Cola Zero",cat:"Drinks",price:25,avail:true},
   {id:720,name:"Sprite",cat:"Drinks",price:25,avail:true},
+  // Minibar
+  {id:901,name:"Polaris Sodawater",cat:"Minibar",price:25,avail:true},
+  {id:902,name:"Coca Cola",cat:"Minibar",price:25,avail:true},
+  {id:903,name:"Coke Zero",cat:"Minibar",price:25,avail:true},
+  {id:904,name:"Sprite",cat:"Minibar",price:25,avail:true},
+  {id:905,name:"Small Bintang",cat:"Minibar",price:45,avail:true},
+  {id:906,name:"Cerveza Negra",cat:"Minibar",price:60,avail:true},
+  {id:907,name:"San Miguel",cat:"Minibar",price:55,avail:true},
+  {id:908,name:"Mineral Water",cat:"Minibar",price:0,avail:true},
 ];
 var tables=Array.from({length:15},function(_,i){return {num:i+1,status:'free'};});
+var rooms=[],selRoom=null;
+var mode='restaurant';
 var order=[],selTable=null,curCat='',existingOrders=[];
 
 function onLangChange(){renderAll();}
 
 function renderAll(){
   // Labels
-  document.getElementById('tbl-label').textContent=selTable?tw()+selTable:t('selectTable');
+  document.getElementById('tbl-label').textContent=mode==='minibar'?(selRoom?selRoom.name:t('selectRoom')):(selTable?tw()+selTable:t('selectTable'));
   document.getElementById('panel-title').textContent=t('order');
   document.getElementById('clr-btn').textContent=t('clear');
   document.getElementById('snd-btn').textContent=t('send');
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-12 15:36';
+  document.getElementById('ver-tag').textContent='v2026-08-22 14:30';
+  document.getElementById('mode-restaurant').textContent=t('restaurant');
+  document.getElementById('mode-minibar').textContent=t('minibar');
   document.querySelector('.note-area textarea').placeholder=t('note');
-  buildCats();buildMenu();renderTables();renderOrder();
+  buildCats();buildMenu();
+  if(mode==='minibar'){renderRooms();}else{renderTables();}
+  renderOrder();
+}
+
+function setMode(m){
+  if(mode===m)return;
+  mode=m;
+  order=[];curCat='';
+  document.getElementById('mode-restaurant').classList.toggle('on',m==='restaurant');
+  document.getElementById('mode-minibar').classList.toggle('on',m==='minibar');
+  renderAll();
+  if(m==='minibar'){loadRooms();}else{loadTables();}
 }
 
 function renderTables(){
@@ -434,6 +472,15 @@ function renderTables(){
   g.onclick=function(e){var el=e.target.closest('.ttile');if(el)selectTable(+el.dataset.n);};
 }
 
+function renderRooms(){
+  var g=document.getElementById('tgrid');
+  g.innerHTML=rooms.map(function(rm){
+    var cls='ttile'+(rm.status==='occupied'?' occ':'')+(selRoom&&selRoom.id===rm.id?' sel':'');
+    return '<div class="'+cls+'" data-id="'+rm.id+'" style="min-width:64px"><div class="ttile-n" style="font-size:11px">'+rm.name+'</div><div class="ttile-s">'+t(rm.status==='occupied'?'busy':'free')+'</div></div>';
+  }).join('');
+  g.onclick=function(e){var el=e.target.closest('.ttile');if(el)selectRoom(+el.dataset.id);};
+}
+
 function selectTable(n){
   selTable=n;
   renderTables();
@@ -442,9 +489,20 @@ function selectTable(n){
   loadExistingOrders(n);
 }
 
-async function loadExistingOrders(n){
+function selectRoom(id){
+  selRoom=rooms.find(function(r){return r.id===id;});
+  renderRooms();
+  updateBtn();
+  document.getElementById('tbl-label').textContent=selRoom?selRoom.name:t('selectRoom');
+  loadExistingOrders(null,id);
+}
+
+async function loadExistingOrders(n,roomId){
   try{
-    var d=await sbGet('orders','select=id,status,total_k,created_at,order_items(name,quantity,category)&table_number=eq.'+n+'&status=in.(new,cooking,making,ready)&order=created_at.desc&limit=5');
+    var q=roomId
+      ?'select=id,status,total_k,created_at,order_items(name,quantity,category)&room_id=eq.'+roomId+'&order_type=eq.minibar&status=in.(new,cooking,making,ready)&order=created_at.desc&limit=10'
+      :'select=id,status,total_k,created_at,order_items(name,quantity,category)&table_number=eq.'+n+'&status=in.(new,cooking,making,ready)&order=created_at.desc&limit=5';
+    var d=await sbGet('orders',q);
     existingOrders=d;
     var box=document.getElementById('existing-orders');
     if(!d.length){box.style.display='none';return;}
@@ -460,9 +518,10 @@ async function loadExistingOrders(n){
 }
 
 function buildCats(){
-  var cats=[''];
-  menu.forEach(function(m){if(cats.indexOf(m.cat)<0)cats.push(m.cat);});
   var bar=document.getElementById('catbar');
+  if(mode==='minibar'){bar.innerHTML='';bar.onclick=null;return;}
+  var cats=[''];
+  menu.forEach(function(m){if(m.cat!=='Minibar'&&cats.indexOf(m.cat)<0)cats.push(m.cat);});
   bar.innerHTML=cats.map(function(c){
     return '<button class="cbtn'+(curCat===c?' on':'')+'" data-c="'+c+'">'+(c||t('allCats'))+'</button>';
   }).join('');
@@ -470,7 +529,8 @@ function buildCats(){
 }
 
 function buildMenu(){
-  var filtered=curCat?menu.filter(function(m){return m.cat===curCat;}):menu;
+  var base=mode==='minibar'?menu.filter(function(m){return m.cat==='Minibar';}):menu.filter(function(m){return m.cat!=='Minibar';});
+  var filtered=curCat?base.filter(function(m){return m.cat===curCat;}):base;
   var g=document.getElementById('mgrid');
   g.innerHTML=filtered.map(function(m){
     var inO=order.find(function(o){return o.id===m.id;});
@@ -524,7 +584,7 @@ function renderOrder(){
   updateBtn();
 }
 
-function updateBtn(){document.getElementById('snd-btn').classList.toggle('off',!(order.length&&selTable));}
+function updateBtn(){document.getElementById('snd-btn').classList.toggle('off',!(order.length&&(mode==='minibar'?selRoom:selTable)));}
 function updateFab(){
   var n=order.reduce(function(s,o){return s+o.qty;},0);
   var fab=document.getElementById('fab');
@@ -543,46 +603,79 @@ function closeCart(){
 }
 
 async function sendOrder(){
-  if(!selTable){notify('⚠ '+t('noTableSel'));return;}
+  if(mode==='minibar'){
+    if(!selRoom){notify('⚠ '+t('noRoomSel'));return;}
+  }else{
+    if(!selTable){notify('⚠ '+t('noTableSel'));return;}
+  }
   if(!order.length){notify('⚠ '+t('cartEmpty'));return;}
   var note=document.getElementById('onote').value;
   var total=order.reduce(function(s,o){return s+o.price*o.qty;},0);
   try{
-    var res=await sbPost('orders',{table_number:selTable,note:note,status:'new',total_k:total});
+    var payload=mode==='minibar'
+      ?{room_id:selRoom.id,order_type:'minibar',note:note,status:'new',total_k:total}
+      :{table_number:selTable,order_type:'restaurant',note:note,status:'new',total_k:total};
+    var res=await sbPost('orders',payload);
     var oid=res[0].id;
     await sbPost('order_items',order.map(function(o){
       return {order_id:oid,menu_item_id:o.id,name:o.name,price_k:o.price,quantity:o.qty,category:o.cat};
     }));
-    var tb=tables.find(function(x){return x.num===selTable;});if(tb)tb.status='occupied';
-    logAction('Bestellung aufgegeben','Tisch '+selTable+' · '+order.length+' Position(en) · Rp '+total+'k');
+    var subLabel;
+    if(mode==='minibar'){
+      selRoom.status='occupied';
+      logAction('Minibar erfasst',selRoom.name+' · '+order.length+' Position(en) · Rp '+total+'k');
+      subLabel=selRoom.name+' · Rp '+total+'k';
+    }else{
+      var tb=tables.find(function(x){return x.num===selTable;});if(tb)tb.status='occupied';
+      logAction('Bestellung aufgegeben','Tisch '+selTable+' · '+order.length+' Position(en) · Rp '+total+'k');
+      subLabel=tw()+selTable+' · Rp '+total+'k';
+    }
     var ov=document.getElementById('sent-ov');
     document.getElementById('sent-msg').textContent=t('sent');
-    document.getElementById('sent-sub').textContent=tw()+selTable+' · Rp '+total+'k';
+    document.getElementById('sent-sub').textContent=subLabel;
     ov.classList.add('show');
     setTimeout(function(){
       ov.classList.remove('show');
       order=[];document.getElementById('onote').value='';
       renderOrder();buildMenu();updateFab();closeCart();
-      renderTables();loadExistingOrders(selTable);
+      if(mode==='minibar'){renderRooms();loadExistingOrders(null,selRoom.id);}
+      else{renderTables();loadExistingOrders(selTable);}
     },2000);
   }catch(e){notify('⚠ '+e.message);}
 }
 
 async function loadTables(){
   try{
-    var d=await sbGet('orders','select=table_number&status=in.(new,cooking,making,ready)');
+    var d=await sbGet('orders','select=table_number&status=in.(new,cooking,making,ready)&order_type=eq.restaurant');
     var busy=d.map(function(o){return o.table_number;});
     tables.forEach(function(tb){tb.status=busy.indexOf(tb.num)>=0?'occupied':'free';});
-    renderTables();
+    if(mode==='restaurant')renderTables();
   }catch(e){}
 }
 
-function afterLogin(m){currentStaff=m;renderAll();loadTables();setInterval(loadTables,30000);}
-function afterLogout(){order=[];selTable=null;clearOrder();}
+async function loadRooms(){
+  try{
+    if(!rooms.length){
+      rooms=await sbGet('rooms','active=eq.true&order=sort_order&select=id,name');
+      rooms.forEach(function(r){r.status='free';});
+    }
+    var d=await sbGet('orders','select=room_id&status=in.(new,cooking,making,ready)&order_type=eq.minibar');
+    var busy=d.map(function(o){return o.room_id;});
+    rooms.forEach(function(r){r.status=busy.indexOf(r.id)>=0?'occupied':'free';});
+    if(mode==='minibar')renderRooms();
+  }catch(e){}
+}
+
+function afterLogin(m){
+  currentStaff=m;renderAll();loadTables();loadRooms();
+  setInterval(function(){if(mode==='minibar')loadRooms();else loadTables();},30000);
+}
+function afterLogout(){order=[];selTable=null;selRoom=null;mode='restaurant';clearOrder();}
 
 window.addEventListener('DOMContentLoaded',function(){
   loadStaff();initPins();
   renderAll();
+  document.getElementById('mode-bar').onclick=function(e){var b=e.target.closest('.mbtn');if(b)setMode(b.dataset.m);};
 });
 </script>
 </body>

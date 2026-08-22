@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-12 15:36 -->
+<!-- Mata Villas v2026-08-22 14:30 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -8,13 +8,6 @@
   <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Kassen-Terminal — Mata Villas</title>
-<link rel="manifest" href="icons/manifest_cashier.json">
-<link rel="apple-touch-icon" href="icons/cashier_icon_180.png">
-<link rel="icon" href="icons/cashier_icon_192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Cashier">
-<meta name="theme-color" content="#28A564">
 <style>
 :root{
   --bg:#f0f4f8;--bg2:#fff;--border:#e2e8f0;
@@ -119,12 +112,13 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-12 15:36</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-22 14:30</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
     <button class="lb" onclick="setLang('id')">ID</button>
     <a href="tischplan.html" target="_blank" class="logout-btn" title="Tischplan" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">🗺️</a>
+    <button class="logout-btn" onclick="openCheckin()" title="Anreise">🏨</button>
     <button class="logout-btn" onclick="openClosing()" title="Tagesabschluss">📋</button>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="logout-btn" onclick="doLogout()">⏻</button>
@@ -188,6 +182,35 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
       <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px" id="closing-history-label">Letzte Abschlüsse</div>
       <div id="closing-history"></div>
     </div>
+  </div>
+</div>
+<div class="paid-overlay" id="checkin-overlay" style="background:rgba(26,32,44,.88)">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:400px;max-height:85vh;overflow-y:auto;color:var(--text);text-align:left">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:17px;font-weight:800"><span class="l-de">Anreise</span><span class="l-en">Check-in</span><span class="l-id">Check-in</span></div>
+      <button onclick="closeCheckin()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+    </div>
+    <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Zimmer</span><span class="l-en">Room</span><span class="l-id">Kamar</span></label>
+    <div id="checkin-rooms" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px"></div>
+    <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Gast (optional)</span><span class="l-en">Guest (optional)</span><span class="l-id">Tamu (opsional)</span></label>
+    <input type="text" id="checkin-guest" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;margin-bottom:14px">
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <div style="flex:1">
+        <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Nächte</span><span class="l-en">Nights</span><span class="l-id">Malam</span></label>
+        <input type="number" id="checkin-nights" placeholder="1" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px">
+      </div>
+      <div style="flex:1">
+        <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Betrag (Rp, in k)</span><span class="l-en">Amount (Rp, in k)</span><span class="l-id">Jumlah (Rp, k)</span></label>
+        <input type="number" id="checkin-amount" placeholder="0" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px">
+      </div>
+    </div>
+    <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Zahlungsart</span><span class="l-en">Payment method</span><span class="l-id">Metode pembayaran</span></label>
+    <div class="pay-methods" style="margin-bottom:14px">
+      <div class="pm" id="checkin-pm-cash" onclick="selCheckinPM('cash')"><div class="pm-icon">💵</div><div class="pm-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div></div>
+      <div class="pm" id="checkin-pm-card" onclick="selCheckinPM('card')"><div class="pm-icon">💳</div><div class="pm-label"><span class="l-de">Karte</span><span class="l-en">Card</span><span class="l-id">Kartu</span></div></div>
+      <div class="pm" id="checkin-pm-qr" onclick="selCheckinPM('qr')"><div class="pm-icon">📱</div><div class="pm-label">QRIS</div></div>
+    </div>
+    <button class="confirm-btn" id="checkin-confirm-btn" onclick="confirmCheckin()" disabled><span class="l-de">Jetzt kassieren</span><span class="l-en">Charge now</span><span class="l-id">Bayar sekarang</span></button>
   </div>
 </div>
 <div class="notif" id="notif"></div>
@@ -395,9 +418,24 @@ var BAR_CATS=['Cocktails','Spanish Drinks','Drinks'];
 var KITCHEN_CATS=['Breakfast','Tapas','Larger Plates','Dessert'];
 
 var bills=[],selBill=null,payMethod='cash',timer=null,billsMode='open';
+var checkinRoom=null,checkinPM=null,roomsList=[];
 
 function tw(){return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';}
+function billLabel(b){return b.order_type==='minibar'?(b.room_name||'Zimmer'):(tw()+b.table_number);}
 function onLangChange(){renderBills();if(selBill)renderReceipt(selBill);}
+
+function shareButtonsHtml(b){
+  var receiptUrl='https://matavillas.github.io/Tourmanager/receipt.html?id='+b.id;
+  var qrImg='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(receiptUrl);
+  var items=(b.order_items||[]).filter(function(i){return i.status!=='cancelled';});
+  var lines=items.map(function(i){return i.quantity+'x '+i.name+' - Rp '+(i.price_k*i.quantity)+'k';}).join('\n');
+  var waText='Mata Tapas Bar - Gili Trawangan\n'+billLabel(b)+'\n\n'+(lines||'')+'\n\nTotal: Rp '+b.total_k+'k\n\n'+receiptUrl;
+  var waLink='https://wa.me/?text='+encodeURIComponent(waText);
+  return '<div style="display:flex;gap:10px;align-items:center;padding:14px 16px;border-top:1.5px solid var(--border);flex-wrap:wrap">'+
+    '<a href="'+waLink+'" target="_blank" style="flex:1;min-width:140px;text-decoration:none;background:#25D366;color:#fff;padding:10px;border-radius:8px;text-align:center;font-size:13px;font-weight:700">📱 WhatsApp</a>'+
+    '<div style="text-align:center"><img src="'+qrImg+'" style="width:70px;height:70px;border-radius:6px;border:1px solid var(--border)"><div style="font-size:9px;color:var(--text3);margin-top:2px">QR-Code</div></div>'+
+    '</div>';
+}
 
 function setBillsMode(m){
   billsMode=m;
@@ -414,7 +452,7 @@ function setBillsMode(m){
 async function loadBills(){
   if(billsMode==='history'){
     try{
-      var sales=await sbGet('sales','select=id,table_number,total_k,payment_method,created_at,order_id&order=created_at.desc&limit=50');
+      var sales=await sbGet('sales','select=id,table_number,room_id,revenue_category,total_k,payment_method,created_at,order_id,rooms(name)&order=created_at.desc&limit=50');
       var oids=sales.map(function(s){return s.order_id;}).filter(function(x){return x!==null&&x!==undefined;});
       var itemsByOrder={};
       if(oids.length){
@@ -422,7 +460,9 @@ async function loadBills(){
         items.forEach(function(i){(itemsByOrder[i.order_id]=itemsByOrder[i.order_id]||[]).push(i);});
       }
       bills=sales.map(function(s){
-        return {id:s.id,table_number:s.table_number,total_k:s.total_k,created_at:s.created_at,payment_method:s.payment_method,_paid:true,order_items:itemsByOrder[s.order_id]||[]};
+        return {id:s.id,table_number:s.table_number,room_id:s.room_id,room_name:s.rooms?s.rooms.name:null,
+          order_type:s.revenue_category==='minibar'?'minibar':(s.revenue_category==='hotel'?'hotel':'restaurant'),
+          total_k:s.total_k,created_at:s.created_at,payment_method:s.payment_method,_paid:true,order_items:itemsByOrder[s.order_id]||[]};
       });
       renderBills();
     }catch(e){notify('⚠ Verbindungsfehler');}
@@ -430,8 +470,8 @@ async function loadBills(){
   }
   try{
     // Zeige alle noch nicht bezahlten Bestellungen — Warnung falls Küche/Bar noch nicht serviert hat
-    var d=await sbGet('orders','select=id,table_number,total_k,status,kitchen_status,bar_status,created_at,order_items(name,quantity,price_k,category)&status=neq.paid&order=created_at.asc');
-    bills=d;
+    var d=await sbGet('orders','select=id,table_number,room_id,order_type,total_k,status,kitchen_status,bar_status,created_at,order_items(name,quantity,price_k,category),rooms(name)&status=neq.paid&order=created_at.asc');
+    bills=d.map(function(b){b.room_name=b.rooms?b.rooms.name:null;return b;});
     renderBills();
     if(selBill&&!bills.find(function(b){return b.id===selBill.id;})){
       selBill=null;
@@ -442,6 +482,7 @@ async function loadBills(){
 }
 
 function getPendingWarn(b){
+  if(b.order_type==='minibar'||b.order_type==='hotel')return '';
   var items=b.order_items||[];
   var hasBar=items.some(function(i){return BAR_CATS.indexOf(i.category)>=0;});
   var hasKitchen=items.some(function(i){return KITCHEN_CATS.indexOf(i.category)>=0;});
@@ -463,7 +504,7 @@ function renderBills(){
     var sel=selBill&&selBill.id===b.id;
     var warn=billsMode==='history'?'':getPendingWarn(b);
     return '<div class="bill-card'+(sel?' sel':'')+'" onclick="selectBill('+b.id+')" title="'+(warn?warn.replace(/"/g,'&quot;'):'')+'">'+
-      '<div class="bill-table">'+tw()+b.table_number+'</div>'+
+      '<div class="bill-table">'+(b.order_type==='minibar'?'🏠 ':'')+billLabel(b)+'</div>'+
       '<div class="bill-total">Rp '+b.total_k+'k</div>'+
       (warn?'<div style="width:6px;height:6px;border-radius:50%;background:var(--orange)"></div>':'')+
       '</div>';
@@ -503,10 +544,11 @@ function renderReceipt(b){
   if(isHist){
     var pmLabel={cash:'💵 '+(lang==='de'?'Bar':lang==='en'?'Cash':'Tunai'),card:'💳 '+(lang==='de'?'Karte':lang==='en'?'Card':'Kartu'),qr:'📱 QRIS'};
     document.getElementById('receipt').innerHTML=
-      '<div class="receipt-head"><div class="receipt-logo">Mata Tapas Bar</div><div class="receipt-sub">Gili Trawangan · '+t+'</div><div class="receipt-sub">'+tw()+b.table_number+'</div></div>'+
+      '<div class="receipt-head"><div class="receipt-logo">Mata Tapas Bar</div><div class="receipt-sub">Gili Trawangan · '+t+'</div><div class="receipt-sub">'+billLabel(b)+'</div></div>'+
       '<div style="background:var(--green-bg);color:var(--green);padding:8px 16px;font-size:12px;font-weight:600">✓ '+(lang==='de'?'Bezahlt':lang==='en'?'Paid':'Dibayar')+' · '+(pmLabel[b.payment_method]||b.payment_method||'—')+'</div>'+
       rows+
-      '<div class="rtotal" style="font-size:18px;font-weight:800;border-top:2px solid #333;padding-top:8px;margin-top:6px"><span>Total</span><span>Rp '+(b.total_k||subtotal)+'k</span></div>';
+      '<div class="rtotal" style="font-size:18px;font-weight:800;border-top:2px solid #333;padding-top:8px;margin-top:6px"><span>Total</span><span>Rp '+(b.total_k||subtotal)+'k</span></div>'+
+      shareButtonsHtml(b);
     document.body.className=lang;
     return;
   }
@@ -515,7 +557,7 @@ function renderReceipt(b){
   var finalTotal=subtotal-discountAmt;
   b._displayTotal=finalTotal;
   document.getElementById('receipt').innerHTML=
-    '<div class="receipt-head"><div class="receipt-logo">Mata Tapas Bar</div><div class="receipt-sub">Gili Trawangan · '+t+'</div><div class="receipt-sub">'+tw()+b.table_number+'</div></div>'+
+    '<div class="receipt-head"><div class="receipt-logo">Mata Tapas Bar</div><div class="receipt-sub">Gili Trawangan · '+t+'</div><div class="receipt-sub">'+billLabel(b)+'</div></div>'+
     (warn?'<div class="receipt-warn">'+warn+'</div>':'')+
     rows+
     '<div class="rtotal" style="border-top:1px solid #eee;padding-top:6px;margin-top:6px"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'+
@@ -555,7 +597,7 @@ async function removeBillItem(billId,itemId){
     var newTotal=selBill.order_items.filter(function(i){return i.status!=='cancelled';}).reduce(function(s,i){return s+(i.price_k*i.quantity);},0);
     selBill.total_k=newTotal;
     await sbPatch('orders','id=eq.'+billId,{total_k:newTotal});
-    logAction('Artikel entfernt','Tisch '+selBill.table_number+' · '+(item?item.name:'#'+itemId));
+    logAction('Artikel entfernt',billLabel(selBill)+' · '+(item?item.name:'#'+itemId));
     renderReceipt(selBill);
     renderBills();
     notify('\u2713 '+(lang==='de'?'Position entfernt':'Item removed'));
@@ -593,11 +635,15 @@ async function confirmPay(){
   }
   var bid=selBill.id;
   var total=finalTotal;
-  var table=selBill.table_number;
+  var isMinibar=selBill.order_type==='minibar';
+  var label=billLabel(selBill);
   try{
     await sbPatch('orders','id=eq.'+bid,{status:'paid',payment_method:payMethod,paid_at:new Date().toISOString(),total_k:total});
-    try{await sbPost('sales',{order_id:bid,table_number:table,total_k:total,payment_method:payMethod,discount_percent:discount,discount_reason:discount>0?(window._discountReason||'Rabatt'):null});}catch(e){}
-    logAction('Zahlung bestätigt','Tisch '+table+' · '+payMethod+' · Rp '+total+'k'+(discount>0?' · Rabatt '+discount+'%':''));
+    var salePayload=isMinibar
+      ?{order_id:bid,room_id:selBill.room_id,total_k:total,payment_method:payMethod,revenue_category:'minibar',discount_percent:discount,discount_reason:discount>0?(window._discountReason||'Rabatt'):null}
+      :{order_id:bid,table_number:selBill.table_number,total_k:total,payment_method:payMethod,revenue_category:'restaurant',discount_percent:discount,discount_reason:discount>0?(window._discountReason||'Rabatt'):null};
+    try{await sbPost('sales',salePayload);}catch(e){}
+    logAction('Zahlung bestätigt',label+' · '+payMethod+' · Rp '+total+'k'+(discount>0?' · Rabatt '+discount+'%':''));
     window._discountPercent=0;
     bills=bills.filter(function(b){return b.id!==bid;});
     selBill=null;
@@ -607,7 +653,7 @@ async function confirmPay(){
     var ol=document.getElementById('paid-overlay');
     var msgs={de:'Bezahlt!',en:'Paid!',id:'Dibayar!'};
     document.getElementById('paid-msg').textContent=msgs[lang]||'Bezahlt!';
-    document.getElementById('paid-sub').textContent=tw()+table+' · Rp '+total+'k';
+    document.getElementById('paid-sub').textContent=label+' · Rp '+total+'k';
     ol.classList.add('show');
     setTimeout(function(){ol.classList.remove('show');},2500);
   }catch(e){notify('⚠ Fehler: '+e.message);}
@@ -615,6 +661,55 @@ async function confirmPay(){
 
 function afterLogin(m){currentStaff=m;loadBills();timer=setInterval(loadBills,8000);}
 function afterLogout(){if(timer)clearInterval(timer);bills=[];selBill=null;}
+
+async function openCheckin(){
+  document.getElementById('checkin-overlay').classList.add('show');
+  checkinRoom=null;checkinPM=null;
+  document.getElementById('checkin-guest').value='';
+  document.getElementById('checkin-nights').value='';
+  document.getElementById('checkin-amount').value='';
+  document.querySelectorAll('#checkin-overlay .pm').forEach(function(el){el.classList.remove('sel');});
+  document.getElementById('checkin-confirm-btn').disabled=true;
+  if(!roomsList.length){
+    try{roomsList=await sbGet('rooms','active=eq.true&order=sort_order&select=id,name');}catch(e){roomsList=[];}
+  }
+  document.getElementById('checkin-rooms').innerHTML=roomsList.map(function(r){
+    return '<div class="pm" style="padding:9px 4px" onclick="selCheckinRoom('+r.id+',this)"><div class="pm-label" style="font-size:11px">'+r.name+'</div></div>';
+  }).join('');
+}
+function closeCheckin(){document.getElementById('checkin-overlay').classList.remove('show');}
+function selCheckinRoom(id,el){
+  checkinRoom=roomsList.find(function(r){return r.id===id;});
+  document.querySelectorAll('#checkin-rooms .pm').forEach(function(b){b.classList.remove('sel');});
+  el.classList.add('sel');
+  updateCheckinBtn();
+}
+function selCheckinPM(pm){
+  checkinPM=pm;
+  document.querySelectorAll('#checkin-overlay .pay-methods .pm').forEach(function(b){b.classList.remove('sel');});
+  document.getElementById('checkin-pm-'+pm).classList.add('sel');
+  updateCheckinBtn();
+}
+function updateCheckinBtn(){
+  var amt=parseFloat(document.getElementById('checkin-amount').value)||0;
+  document.getElementById('checkin-confirm-btn').disabled=!(checkinRoom&&checkinPM&&amt>0);
+}
+document.getElementById('checkin-amount').addEventListener('input',updateCheckinBtn);
+
+async function confirmCheckin(){
+  var amt=parseFloat(document.getElementById('checkin-amount').value)||0;
+  var nights=parseInt(document.getElementById('checkin-nights').value)||null;
+  var guest=document.getElementById('checkin-guest').value||null;
+  if(!checkinRoom||!checkinPM||amt<=0)return;
+  try{
+    var res=await sbPost('hotel_charges',{room_id:checkinRoom.id,guest_name:guest,nights:nights,amount_k:amt,payment_method:checkinPM,employee_id:currentStaff?currentStaff.id:null});
+    var hcId=res[0].id;
+    try{await sbPost('sales',{room_id:checkinRoom.id,total_k:amt,payment_method:checkinPM,revenue_category:'hotel'});}catch(e){}
+    logAction('Anreise kassiert',checkinRoom.name+(guest?' · '+guest:'')+' · Rp '+amt+'k · '+checkinPM);
+    closeCheckin();
+    notify('✓ '+checkinRoom.name+' · Rp '+amt+'k');
+  }catch(e){notify('⚠ Fehler: '+e.message);}
+}
 
 window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();});
 </script>
