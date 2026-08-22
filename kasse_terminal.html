@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 14:30 -->
+<!-- Mata Villas v2026-08-22 16:45 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -35,30 +35,40 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
 .topbar{background:#fff;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
 .topbar img{height:32px;object-fit:contain}
 .topbar-title{font-size:15px;font-weight:700}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;position:relative}
 .lb{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;border:1.5px solid var(--border);background:var(--bg);color:var(--text2);cursor:pointer;font-family:var(--font)}
 .lb.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.topbar-user{font-size:13px;color:var(--text2)}
+.topbar-user{font-size:13px;color:var(--text2);white-space:nowrap}
 .logout-btn{padding:6px 10px;border-radius:6px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-size:14px;font-family:var(--font)}
+.more-menu{position:relative}
+.more-panel{display:none;position:absolute;top:calc(100% + 6px);right:0;background:#fff;border:1.5px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:180px;z-index:60;overflow:hidden}
+.more-panel.show{display:block}
+.more-item{display:flex;align-items:center;gap:9px;padding:11px 14px;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;text-decoration:none;border-bottom:1px solid var(--border)}
+.more-item:last-child{border-bottom:none}
+.more-item:active{background:var(--bg)}
+.more-item .ic{font-size:16px}
 .l-de,.l-en,.l-id{display:none}
 body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .notif{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a202c;color:#fff;border-radius:8px;padding:10px 20px;font-size:13px;z-index:200;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap}
 .notif.show{opacity:1}
 .layout{flex:1;display:flex;overflow:hidden;min-height:0}
-.bills-side{width:104px;flex-shrink:0;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column}
+.bills-side{width:112px;flex-shrink:0;background:#fff;border-right:1.5px solid var(--border);display:flex;flex-direction:column}
 .bills-head{padding:8px 6px;font-size:10px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);text-align:center;line-height:1.2}
 .bills-list{flex:1;overflow-y:auto}
 .bill-card{padding:10px 6px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px}
 .bill-card:hover{background:var(--bg)}
 .bill-card.sel{background:var(--accent-bg);border-left:3px solid var(--accent)}
-.bill-table{font-size:16px;font-weight:800}
+.bill-table{font-size:15px;font-weight:800}
 .bill-total{font-size:12px;color:var(--accent);font-weight:700}
 .bill-time{font-size:11px;color:var(--text3)}
 .bill-warn{font-size:11px;color:var(--orange);font-weight:600;margin-top:2px}
+.bmode-btn{display:flex!important;flex-direction:column;align-items:center;gap:1px;padding:7px 2px!important;font-size:9px!important}
+.bmode-btn .bm-ic{font-size:14px}
 @media (max-width:480px){
-  .bills-side{width:88px}
-  .bill-table{font-size:15px}
+  .bills-side{width:96px}
+  .bill-table{font-size:14px}
   .bill-total{font-size:11px}
+  .topbar-title{display:none}
 }
 .pay-side{flex:1;display:flex;flex-direction:column;overflow:hidden}
 .receipt{flex:1;overflow-y:auto;background:#fff}
@@ -112,14 +122,20 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-22 14:30</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-22 16:45</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
     <button class="lb" onclick="setLang('id')">ID</button>
-    <a href="tischplan.html" target="_blank" class="logout-btn" title="Tischplan" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center">🗺️</a>
-    <button class="logout-btn" onclick="openCheckin()" title="Anreise">🏨</button>
-    <button class="logout-btn" onclick="openClosing()" title="Tagesabschluss">📋</button>
+    <div class="more-menu">
+      <button class="logout-btn" onclick="toggleMoreMenu()" title="Mehr">⋮</button>
+      <div class="more-panel" id="more-panel">
+        <a href="tischplan.html" target="_blank" class="more-item"><span class="ic">🗺️</span><span class="l-de">Tischplan</span><span class="l-en">Table plan</span><span class="l-id">Denah meja</span></a>
+        <div class="more-item" onclick="closeMoreMenu();openCheckin()"><span class="ic">🏨</span><span class="l-de">Anreise (Hotel)</span><span class="l-en">Check-in (Hotel)</span><span class="l-id">Check-in (Hotel)</span></div>
+        <div class="more-item" onclick="closeMoreMenu();openCheckout()"><span class="ic">🚪</span><span class="l-de">Abreise (Minibar)</span><span class="l-en">Check-out (Minibar)</span><span class="l-id">Check-out (Minibar)</span></div>
+        <div class="more-item" onclick="closeMoreMenu();openClosing()"><span class="ic">📋</span><span class="l-de">Tagesabschluss</span><span class="l-en">Daily closing</span><span class="l-id">Penutupan harian</span></div>
+      </div>
+    </div>
     <span class="topbar-user" id="topbar-user"></span>
     <button class="logout-btn" onclick="doLogout()">⏻</button>
   </div>
@@ -128,8 +144,8 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
   <div class="bills-side">
     <div class="bills-head" style="display:flex;flex-direction:column;gap:5px;padding:6px">
       <div style="display:flex;gap:3px">
-        <button class="bmode-btn on" id="bmode-open" onclick="setBillsMode('open')" style="flex:1;padding:5px 2px;border-radius:6px;border:1.5px solid var(--border);background:var(--accent);color:#fff;font-size:9px;font-weight:700;cursor:pointer;font-family:var(--font)">🧾</button>
-        <button class="bmode-btn" id="bmode-history" onclick="setBillsMode('history')" style="flex:1;padding:5px 2px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-size:9px;font-weight:700;cursor:pointer;font-family:var(--font)">🕘</button>
+        <button class="bmode-btn on" id="bmode-open" onclick="setBillsMode('open')" style="flex:1;border-radius:6px;border:1.5px solid var(--border);background:var(--accent);color:#fff;cursor:pointer;font-family:var(--font)"><span class="bm-ic">🧾</span><span class="l-de">Offen</span><span class="l-en">Open</span><span class="l-id">Terbuka</span></button>
+        <button class="bmode-btn" id="bmode-history" onclick="setBillsMode('history')" style="flex:1;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;font-family:var(--font)"><span class="bm-ic">🕘</span><span class="l-de">Verlauf</span><span class="l-en">History</span><span class="l-id">Riwayat</span></button>
       </div>
     </div>
     <div class="bills-list" id="bills-list"></div>
@@ -211,6 +227,17 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
       <div class="pm" id="checkin-pm-qr" onclick="selCheckinPM('qr')"><div class="pm-icon">📱</div><div class="pm-label">QRIS</div></div>
     </div>
     <button class="confirm-btn" id="checkin-confirm-btn" onclick="confirmCheckin()" disabled><span class="l-de">Jetzt kassieren</span><span class="l-en">Charge now</span><span class="l-id">Bayar sekarang</span></button>
+  </div>
+</div>
+<div class="paid-overlay" id="checkout-overlay" style="background:rgba(26,32,44,.88)">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:400px;max-height:85vh;overflow-y:auto;color:var(--text);text-align:left">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:17px;font-weight:800"><span class="l-de">Abreise</span><span class="l-en">Check-out</span><span class="l-id">Check-out</span></div>
+      <button onclick="closeCheckout()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+    </div>
+    <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Zimmer</span><span class="l-en">Room</span><span class="l-id">Kamar</span></label>
+    <div id="checkout-rooms" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px"></div>
+    <div id="checkout-body"></div>
   </div>
 </div>
 <div class="notif" id="notif"></div>
@@ -311,7 +338,12 @@ function closingL(){
     diffOver:lang==='de'?'Überschuss':lang==='en'?'Surplus':'Lebih',
     diffUnder:lang==='de'?'Fehlbetrag':lang==='en'?'Shortfall':'Kurang',
     diffOk:lang==='de'?'Stimmt genau':lang==='en'?'Matches exactly':'Sesuai persis',
-    noHistory:lang==='de'?'Noch keine Abschlüsse':lang==='en'?'No closings yet':'Belum ada penutupan'
+    noHistory:lang==='de'?'Noch keine Abschlüsse':lang==='en'?'No closings yet':'Belum ada penutupan',
+    restaurant:lang==='de'?'Restaurant':lang==='en'?'Restaurant':'Restoran',
+    minibar:'Minibar',
+    hotel:lang==='de'?'Hotel (Anreise)':lang==='en'?'Hotel (check-in)':'Hotel (check-in)',
+    byCategory:lang==='de'?'Nach Bereich':lang==='en'?'By category':'Menurut kategori',
+    byMethod:lang==='de'?'Nach Zahlungsart':lang==='en'?'By payment method':'Menurut metode pembayaran'
   };
 }
 
@@ -337,17 +369,24 @@ async function loadClosingData(){
   var date=document.getElementById('closing-date').value;
   if(!date)return;
   try{
-    var sales=await sbGet('sales','select=total_k,payment_method&created_at=gte.'+localDayStart(date)+'&created_at=lte.'+localDayEnd(date));
+    var sales=await sbGet('sales','select=total_k,payment_method,revenue_category&created_at=gte.'+localDayStart(date)+'&created_at=lte.'+localDayEnd(date));
     var cash=sales.filter(function(s){return s.payment_method==='cash';}).reduce(function(a,s){return a+(s.total_k||0);},0);
     var card=sales.filter(function(s){return s.payment_method==='card';}).reduce(function(a,s){return a+(s.total_k||0);},0);
     var qr=sales.filter(function(s){return s.payment_method==='qr';}).reduce(function(a,s){return a+(s.total_k||0);},0);
     var total=cash+card+qr;
+    var catOf=function(s){return s.revenue_category||'restaurant';};
+    var restTotal=sales.filter(function(s){return catOf(s)==='restaurant';}).reduce(function(a,s){return a+(s.total_k||0);},0);
+    var miniTotal=sales.filter(function(s){return catOf(s)==='minibar';}).reduce(function(a,s){return a+(s.total_k||0);},0);
+    var hotelTotal=sales.filter(function(s){return catOf(s)==='hotel';}).reduce(function(a,s){return a+(s.total_k||0);},0);
     _closingCalc={cash:cash,card:card,qr:qr,total:total,count:sales.length};
+    function row(label,val){return '<div style="display:flex;justify-content:space-between;font-size:13px"><span>'+label+'</span><span style="font-family:monospace">Rp '+val+'k</span></div>';}
     document.getElementById('closing-summary').innerHTML=
+      '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:2px">'+L.byCategory+'</div>'+
+      row('🍽️ '+L.restaurant,restTotal)+row('🏠 '+L.minibar,miniTotal)+row('🏨 '+L.hotel,hotelTotal)+
+      '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">'+L.byMethod+'</div>'+
       row(L.cash,cash)+row(L.card,card)+row(L.qr,qr)+
       '<div style="display:flex;justify-content:space-between;border-top:1.5px solid var(--border);padding-top:6px;margin-top:2px;font-weight:800;font-size:15px"><span>'+L.total+'</span><span>Rp '+total+'k</span></div>'+
       '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3)"><span>'+L.count+'</span><span>'+sales.length+'</span></div>';
-    function row(label,val){return '<div style="display:flex;justify-content:space-between;font-size:13px"><span>'+label+'</span><span style="font-family:monospace">Rp '+val+'k</span></div>';}
     var existing=await sbGet('cash_closings','select=*&closing_date=eq.'+date+'&order=created_at.desc&limit=1');
     var box=document.getElementById('closing-already');
     if(existing.length){
@@ -421,7 +460,15 @@ var bills=[],selBill=null,payMethod='cash',timer=null,billsMode='open';
 var checkinRoom=null,checkinPM=null,roomsList=[];
 
 function tw(){return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';}
-function billLabel(b){return b.order_type==='minibar'?(b.room_name||'Zimmer'):(tw()+b.table_number);}
+function toggleMoreMenu(){document.getElementById('more-panel').classList.toggle('show');}
+function closeMoreMenu(){document.getElementById('more-panel').classList.remove('show');}
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.more-menu'))closeMoreMenu();
+});
+function billLabel(b){
+  if(b.order_type==='minibar'||b.order_type==='hotel')return b.room_name||'Zimmer';
+  return tw()+b.table_number;
+}
 function onLangChange(){renderBills();if(selBill)renderReceipt(selBill);}
 
 function shareButtonsHtml(b){
@@ -469,8 +516,8 @@ async function loadBills(){
     return;
   }
   try{
-    // Zeige alle noch nicht bezahlten Bestellungen — Warnung falls Küche/Bar noch nicht serviert hat
-    var d=await sbGet('orders','select=id,table_number,room_id,order_type,total_k,status,kitchen_status,bar_status,created_at,order_items(name,quantity,price_k,category),rooms(name)&status=neq.paid&order=created_at.asc');
+    // Zeige alle noch nicht bezahlten RESTAURANT-Bestellungen — Minibar läuft separat über "Abreise"
+    var d=await sbGet('orders','select=id,table_number,room_id,order_type,total_k,status,kitchen_status,bar_status,created_at,order_items(name,quantity,price_k,category),rooms(name)&status=neq.paid&order_type=eq.restaurant&order=created_at.asc');
     bills=d.map(function(b){b.room_name=b.rooms?b.rooms.name:null;return b;});
     renderBills();
     if(selBill&&!bills.find(function(b){return b.id===selBill.id;})){
@@ -504,7 +551,7 @@ function renderBills(){
     var sel=selBill&&selBill.id===b.id;
     var warn=billsMode==='history'?'':getPendingWarn(b);
     return '<div class="bill-card'+(sel?' sel':'')+'" onclick="selectBill('+b.id+')" title="'+(warn?warn.replace(/"/g,'&quot;'):'')+'">'+
-      '<div class="bill-table">'+(b.order_type==='minibar'?'🏠 ':'')+billLabel(b)+'</div>'+
+      '<div class="bill-table">'+(b.order_type==='minibar'?'🏠 ':b.order_type==='hotel'?'🏨 ':'')+billLabel(b)+'</div>'+
       '<div class="bill-total">Rp '+b.total_k+'k</div>'+
       (warn?'<div style="width:6px;height:6px;border-radius:50%;background:var(--orange)"></div>':'')+
       '</div>';
@@ -708,6 +755,99 @@ async function confirmCheckin(){
     logAction('Anreise kassiert',checkinRoom.name+(guest?' · '+guest:'')+' · Rp '+amt+'k · '+checkinPM);
     closeCheckin();
     notify('✓ '+checkinRoom.name+' · Rp '+amt+'k');
+  }catch(e){notify('⚠ Fehler: '+e.message);}
+}
+
+var checkoutRoom=null,checkoutOrders=[],checkoutPM=null,checkoutDiscount=0,checkoutReason=null;
+
+async function openCheckout(){
+  document.getElementById('checkout-overlay').classList.add('show');
+  checkoutRoom=null;checkoutOrders=[];checkoutPM=null;checkoutDiscount=0;checkoutReason=null;
+  document.getElementById('checkout-body').innerHTML='';
+  if(!roomsList.length){
+    try{roomsList=await sbGet('rooms','active=eq.true&order=sort_order&select=id,name');}catch(e){roomsList=[];}
+  }
+  document.getElementById('checkout-rooms').innerHTML=roomsList.map(function(r){
+    return '<div class="pm" style="padding:9px 4px" onclick="selCheckoutRoom('+r.id+',this)"><div class="pm-label" style="font-size:11px">'+r.name+'</div></div>';
+  }).join('');
+}
+function closeCheckout(){document.getElementById('checkout-overlay').classList.remove('show');}
+
+async function selCheckoutRoom(id,el){
+  checkoutRoom=roomsList.find(function(r){return r.id===id;});
+  document.querySelectorAll('#checkout-rooms .pm').forEach(function(b){b.classList.remove('sel');});
+  el.classList.add('sel');
+  checkoutPM=null;checkoutDiscount=0;checkoutReason=null;
+  var body=document.getElementById('checkout-body');
+  body.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Lädt…</div>';
+  try{
+    var orders=await sbGet('orders','select=id,total_k,created_at,order_items(id,name,quantity,price_k,status)&room_id=eq.'+id+'&order_type=eq.minibar&status=neq.paid&order=created_at.asc');
+    checkoutOrders=orders;
+    renderCheckoutBody();
+  }catch(e){body.innerHTML='<div style="padding:20px;text-align:center;color:var(--red);font-size:13px">⚠ Fehler beim Laden</div>';}
+}
+
+function renderCheckoutBody(){
+  var body=document.getElementById('checkout-body');
+  if(!checkoutOrders.length){
+    body.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px"><span class="l-de">Keine offenen Minibar-Posten für dieses Zimmer</span><span class="l-en">No open minibar items for this room</span><span class="l-id">Tidak ada item minibar terbuka</span></div>';
+    return;
+  }
+  var allItems=[];
+  checkoutOrders.forEach(function(o){(o.order_items||[]).forEach(function(i){if(i.status!=='cancelled')allItems.push(i);});});
+  var subtotal=allItems.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
+  var discountAmt=Math.round(subtotal*checkoutDiscount/100);
+  var finalTotal=subtotal-discountAmt;
+  var rows=allItems.map(function(i){
+    return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span></div>';
+  }).join('');
+  body.innerHTML=
+    '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px">'+rows+
+    '<div class="rtotal" style="border-top:1px solid var(--border)"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
+      '<span style="font-size:13px;color:var(--text3)">Rabatt:</span>'+
+      [0,10,20].map(function(p){return '<button onclick="setCheckoutDiscount('+p+')" style="padding:4px 10px;border-radius:6px;border:1px solid '+(checkoutDiscount===p?'var(--accent)':'var(--border)')+';background:'+(checkoutDiscount===p?'var(--accent-bg)':'#fff')+';font-size:12px;cursor:pointer">'+p+'%</button>';}).join('')+
+    '</div>'+
+    (checkoutDiscount>0?'<div class="rtotal" style="color:#e67e22"><span>Rabatt ('+checkoutDiscount+'%)</span><span>-Rp '+discountAmt+'k</span></div>':'')+
+    '<div class="rtotal" style="font-size:18px;font-weight:800;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:14px"><span>Total</span><span>Rp '+finalTotal+'k</span></div>'+
+    '<div class="pay-label"><span class="l-de">Zahlungsart</span><span class="l-en">Payment method</span><span class="l-id">Metode pembayaran</span></div>'+
+    '<div class="pay-methods" style="margin-bottom:14px">'+
+      '<div class="pm" id="checkout-pm-cash" onclick="selCheckoutPM(\'cash\')"><div class="pm-icon">💵</div><div class="pm-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div></div>'+
+      '<div class="pm" id="checkout-pm-card" onclick="selCheckoutPM(\'card\')"><div class="pm-icon">💳</div><div class="pm-label"><span class="l-de">Karte</span><span class="l-en">Card</span><span class="l-id">Kartu</span></div></div>'+
+      '<div class="pm" id="checkout-pm-qr" onclick="selCheckoutPM(\'qr\')"><div class="pm-icon">📱</div><div class="pm-label">QRIS</div></div>'+
+    '</div>'+
+    '<button class="confirm-btn" id="checkout-confirm-btn" onclick="confirmCheckout()" disabled><span class="l-de">Zahlung bestätigen</span><span class="l-en">Confirm payment</span><span class="l-id">Konfirmasi pembayaran</span></button>';
+  document.body.className=lang;
+}
+
+function setCheckoutDiscount(p){checkoutDiscount=p;renderCheckoutBody();if(checkoutPM)document.getElementById('checkout-pm-'+checkoutPM).classList.add('sel');updateCheckoutBtn();}
+function selCheckoutPM(pm){
+  checkoutPM=pm;
+  document.querySelectorAll('#checkout-body .pm').forEach(function(b){b.classList.remove('sel');});
+  var el=document.getElementById('checkout-pm-'+pm);if(el)el.classList.add('sel');
+  updateCheckoutBtn();
+}
+function updateCheckoutBtn(){
+  var btn=document.getElementById('checkout-confirm-btn');
+  if(btn)btn.disabled=!checkoutPM;
+}
+
+async function confirmCheckout(){
+  if(!checkoutRoom||!checkoutPM||!checkoutOrders.length)return;
+  var allItems=[];
+  checkoutOrders.forEach(function(o){(o.order_items||[]).forEach(function(i){if(i.status!=='cancelled')allItems.push(i);});});
+  var subtotal=allItems.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
+  var finalTotal=subtotal-Math.round(subtotal*checkoutDiscount/100);
+  try{
+    for(var i=0;i<checkoutOrders.length;i++){
+      await sbPatch('orders','id=eq.'+checkoutOrders[i].id,{status:'paid',payment_method:checkoutPM,paid_at:new Date().toISOString()});
+    }
+    var lastOrderId=checkoutOrders[checkoutOrders.length-1].id;
+    try{await sbPost('sales',{order_id:checkoutOrders.length===1?lastOrderId:null,room_id:checkoutRoom.id,total_k:finalTotal,payment_method:checkoutPM,revenue_category:'minibar',discount_percent:checkoutDiscount,discount_reason:checkoutDiscount>0?'Rabatt':null});}catch(e){}
+    logAction('Abreise kassiert (Minibar)',checkoutRoom.name+' · '+checkoutPM+' · Rp '+finalTotal+'k'+(checkoutDiscount>0?' · Rabatt '+checkoutDiscount+'%':''));
+    closeCheckout();
+    notify('✓ '+checkoutRoom.name+' · Rp '+finalTotal+'k');
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 

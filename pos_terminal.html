@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 14:30 -->
+<!-- Mata Villas v2026-08-22 16:45 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -444,7 +444,7 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-22 14:30';
+  document.getElementById('ver-tag').textContent='v2026-08-22 16:45';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
   document.querySelector('.note-area textarea').placeholder=t('note');
@@ -667,7 +667,7 @@ async function loadRooms(){
 }
 
 function afterLogin(m){
-  currentStaff=m;renderAll();loadTables();loadRooms();
+  currentStaff=m;renderAll();loadTables();
   setInterval(function(){if(mode==='minibar')loadRooms();else loadTables();},30000);
 }
 function afterLogout(){order=[];selTable=null;selRoom=null;mode='restaurant';clearOrder();}
