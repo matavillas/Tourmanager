@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 20:00 -->
+<!-- Mata Villas v2026-08-22 21:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -61,6 +61,12 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 .mbtn{flex:1;padding:9px;border:none;background:var(--bg);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);border-bottom:3px solid transparent}
 .mbtn.on{background:#fff;color:var(--accent);border-bottom-color:var(--accent)}
 .table-bar{padding:8px 10px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;min-height:52px}
+.room-bill-bar{padding:6px 10px;background:var(--accent-bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.rb-toggle{padding:6px 12px;border-radius:8px;border:1.5px solid var(--accent);background:#fff;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.rb-toggle.on{background:var(--accent);color:#fff}
+.rb-rooms{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.rb-room-btn{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.rb-room-btn.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
 .table-label{font-size:12px;font-weight:600;white-space:nowrap;color:var(--text2)}
 .tgrid{display:flex;gap:5px;overflow-x:auto;flex:1;scrollbar-width:none;padding:2px 0}
 .tgrid::-webkit-scrollbar{display:none}
@@ -180,6 +186,10 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
       <span class="table-label" id="tbl-label"></span>
       <div class="tgrid" id="tgrid"></div>
     </div>
+    <div class="room-bill-bar" id="room-bill-bar" style="display:none">
+      <button class="rb-toggle" id="rb-toggle" onclick="toggleRoomBill()"></button>
+      <div class="rb-rooms" id="rb-rooms" style="display:none"></div>
+    </div>
     <div class="cat-bar" id="catbar"></div>
     <div class="mgrid" id="mgrid"></div>
   </div>
@@ -257,7 +267,8 @@ var T={
       noRoomSel:'Bitte zuerst Zimmer wählen',
       manualAdd:'➕ Manuell hinzufügen',manualTitle:'Manuelle Position',manualName:'Bezeichnung',
       manualPrice:'Preis (Rp, in k)',manualCat:'Bereich',manualKitchen:'Küche',manualBar:'Bar',
-      manualAddBtn:'Hinzufügen',manualFillAll:'Bitte Bezeichnung und Preis eingeben'},
+      manualAddBtn:'Hinzufügen',manualFillAll:'Bitte Bezeichnung und Preis eingeben',
+      billToRoom:'🏨 Auf Zimmerrechnung buchen',billToRoomOn:'✓ Zimmerrechnung: '},
   en:{selectTable:'Select table',order:'Order',empty:'Empty',note:'Note...',
       total:'Total',clear:'Clear',send:'Send',sent:'Order sent!',
       free:'free',busy:'busy',allCats:'All',openOrder:'Open order',
@@ -279,7 +290,8 @@ var T={
       noRoomSel:'Please select a room first',
       manualAdd:'➕ Add manually',manualTitle:'Manual item',manualName:'Name',
       manualPrice:'Price (Rp, in k)',manualCat:'Section',manualKitchen:'Kitchen',manualBar:'Bar',
-      manualAddBtn:'Add',manualFillAll:'Please enter name and price'},
+      manualAddBtn:'Add',manualFillAll:'Please enter name and price',
+      billToRoom:'🏨 Bill to room',billToRoomOn:'✓ Room bill: '},
   id:{selectTable:'Pilih meja',order:'Pesanan',empty:'Kosong',note:'Catatan...',
       total:'Total',clear:'Hapus',send:'Kirim',sent:'Pesanan dikirim!',
       free:'bebas',busy:'terisi',allCats:'Semua',openOrder:'Pesanan terbuka',
@@ -301,7 +313,8 @@ var T={
       noRoomSel:'Pilih kamar dulu',
       manualAdd:'➕ Tambah manual',manualTitle:'Item manual',manualName:'Nama',
       manualPrice:'Harga (Rp, ribuan)',manualCat:'Bagian',manualKitchen:'Dapur',manualBar:'Bar',
-      manualAddBtn:'Tambah',manualFillAll:'Isi nama dan harga'}
+      manualAddBtn:'Tambah',manualFillAll:'Isi nama dan harga',
+      billToRoom:'🏨 Tagih ke kamar',billToRoomOn:'✓ Tagihan kamar: '}
 };
 function t(k){return(T[lang]&&T[lang][k])||(T.de&&T.de[k])||k;}
 function tw(){return t('table')+' ';}
@@ -469,6 +482,7 @@ var menu=[
 var tables=Array.from({length:15},function(_,i){return {num:i+1,status:'free'};});
 var rooms=[],selRoom=null;
 var mode='restaurant';
+var billRoom=null;
 var order=[],selTable=null,curCat='',existingOrders=[];
 
 function onLangChange(){renderAll();}
@@ -482,7 +496,7 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-22 20:00';
+  document.getElementById('ver-tag').textContent='v2026-08-22 21:00';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
   document.getElementById('manual-btn').textContent=t('manualAdd');
@@ -494,6 +508,7 @@ function renderAll(){
   document.getElementById('manual-cat-bar').textContent=t('manualBar');
   document.getElementById('manual-add-btn').textContent=t('manualAddBtn');
   document.getElementById('manual-cat-wrap').style.display=mode==='minibar'?'none':'block';
+  updateRbToggle();
   document.querySelector('.note-area textarea').placeholder=t('note');
   buildCats();buildMenu();
   if(mode==='minibar'){renderRooms();}else{renderTables();}
@@ -503,9 +518,11 @@ function renderAll(){
 function setMode(m){
   if(mode===m)return;
   mode=m;
-  order=[];curCat='';
+  order=[];curCat='';selTable=null;billRoom=null;
   document.getElementById('mode-restaurant').classList.toggle('on',m==='restaurant');
   document.getElementById('mode-minibar').classList.toggle('on',m==='minibar');
+  document.getElementById('room-bill-bar').style.display='none';
+  document.getElementById('rb-rooms').style.display='none';
   renderAll();
   if(m==='minibar'){loadRooms();}else{loadTables();}
 }
@@ -534,6 +551,10 @@ function selectTable(n){
   updateBtn();
   document.getElementById('tbl-label').textContent=tw()+n;
   loadExistingOrders(n);
+  billRoom=null;
+  document.getElementById('room-bill-bar').style.display='block';
+  document.getElementById('rb-rooms').style.display='none';
+  updateRbToggle();
 }
 
 function selectRoom(id){
@@ -543,6 +564,42 @@ function selectRoom(id){
   document.getElementById('tbl-label').textContent=selRoom?selRoom.name:t('selectRoom');
   loadExistingOrders(null,id);
 }
+
+function updateRbToggle(){
+  var btn=document.getElementById('rb-toggle');
+  if(billRoom){
+    btn.textContent=t('billToRoomOn')+billRoom.name;
+    btn.classList.add('on');
+  }else{
+    btn.textContent=t('billToRoom');
+    btn.classList.remove('on');
+  }
+}
+
+async function toggleRoomBill(){
+  var wrap=document.getElementById('rb-rooms');
+  if(billRoom){
+    billRoom=null;
+    updateRbToggle();
+    wrap.style.display='none';
+    return;
+  }
+  if(!rooms.length){
+    try{rooms=await sbGet('rooms','active=eq.true&order=sort_order&select=id,name');rooms.forEach(function(r){r.status='free';});}catch(e){rooms=[];}
+  }
+  wrap.innerHTML=rooms.map(function(r){
+    return '<button class="rb-room-btn" data-id="'+r.id+'">'+r.name+'</button>';
+  }).join('');
+  wrap.style.display='flex';
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('.rb-room-btn');
+  if(b){
+    billRoom=rooms.find(function(r){return r.id===+b.dataset.id;});
+    updateRbToggle();
+    document.getElementById('rb-rooms').style.display='none';
+  }
+});
 
 async function loadExistingOrders(n,roomId){
   try{
@@ -694,7 +751,7 @@ async function sendOrder(){
   try{
     var payload=mode==='minibar'
       ?{room_id:selRoom.id,order_type:'minibar',note:note,status:'new',total_k:total}
-      :{table_number:selTable,order_type:'restaurant',note:note,status:'new',total_k:total};
+      :{table_number:selTable,order_type:'restaurant',room_id:billRoom?billRoom.id:null,note:note,status:'new',total_k:total};
     var res=await sbPost('orders',payload);
     var oid=res[0].id;
     await sbPost('order_items',order.map(function(o){
@@ -707,8 +764,8 @@ async function sendOrder(){
       subLabel=selRoom.name+' · Rp '+total+'k';
     }else{
       var tb=tables.find(function(x){return x.num===selTable;});if(tb)tb.status='occupied';
-      logAction('Bestellung aufgegeben','Tisch '+selTable+' · '+order.length+' Position(en) · Rp '+total+'k');
-      subLabel=tw()+selTable+' · Rp '+total+'k';
+      logAction('Bestellung aufgegeben','Tisch '+selTable+(billRoom?' · Zimmerrechnung '+billRoom.name:'')+' · '+order.length+' Position(en) · Rp '+total+'k');
+      subLabel=tw()+selTable+(billRoom?' · 🏨 '+billRoom.name:'')+' · Rp '+total+'k';
     }
     var ov=document.getElementById('sent-ov');
     document.getElementById('sent-msg').textContent=t('sent');
@@ -717,6 +774,7 @@ async function sendOrder(){
     setTimeout(function(){
       ov.classList.remove('show');
       order=[];document.getElementById('onote').value='';
+      billRoom=null;updateRbToggle();
       renderOrder();buildMenu();updateFab();closeCart();
       if(mode==='minibar'){renderRooms();loadExistingOrders(null,selRoom.id);}
       else{renderTables();loadExistingOrders(selTable);}
