@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 18:35 -->
+<!-- Mata Villas v2026-08-22 19:15 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -127,7 +127,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-22 18:35</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-22 19:15</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -136,7 +136,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
       <button class="logout-btn" onclick="toggleMoreMenu()" title="Mehr">⋮</button>
       <div class="more-panel" id="more-panel">
         <a href="tischplan.html" target="_blank" class="more-item"><span class="ic">🗺️</span><span class="l-de">Tischplan</span><span class="l-en">Table plan</span><span class="l-id">Denah meja</span></a>
-        <div class="more-item" onclick="closeMoreMenu();openCheckin()"><span class="ic">🏨</span><span class="l-de">Anreise (Hotel)</span><span class="l-en">Check-in (Hotel)</span><span class="l-id">Check-in (Hotel)</span></div>
+        <div class="more-item" onclick="closeMoreMenu();openCheckin()"><span class="ic">🏨</span><span class="l-de">Hotel</span><span class="l-en">Hotel</span><span class="l-id">Hotel</span></div>
         <div class="more-item" onclick="closeMoreMenu();openCheckout()"><span class="ic">🚪</span><span class="l-de">Abreise (Minibar)</span><span class="l-en">Check-out (Minibar)</span><span class="l-id">Check-out (Minibar)</span></div>
         <div class="more-item" onclick="closeMoreMenu();openClosing()"><span class="ic">📋</span><span class="l-de">Tagesabschluss</span><span class="l-en">Daily closing</span><span class="l-id">Penutupan harian</span></div>
       </div>
@@ -206,37 +206,43 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
   </div>
 </div>
 <div class="paid-overlay" id="checkin-overlay" style="background:rgba(26,32,44,.88)">
-  <div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:400px;max-height:85vh;overflow-y:auto;color:var(--text);text-align:left">
+  <div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:420px;max-height:85vh;overflow-y:auto;color:var(--text);text-align:left">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:17px;font-weight:800"><span class="l-de">Anreise</span><span class="l-en">Check-in</span><span class="l-id">Check-in</span></div>
+      <div style="font-size:17px;font-weight:800"><span class="l-de">Hotel</span><span class="l-en">Hotel</span><span class="l-id">Hotel</span></div>
       <button onclick="closeCheckin()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
     </div>
-    <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Zimmer</span><span class="l-en">Room</span><span class="l-id">Kamar</span></label>
-    <div id="checkin-rooms" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px"></div>
-    <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Gast (optional)</span><span class="l-en">Guest (optional)</span><span class="l-id">Tamu (opsional)</span></label>
-    <input type="text" id="checkin-guest" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;margin-bottom:14px">
-    <div style="display:flex;gap:10px;margin-bottom:14px">
-      <div style="flex:1">
-        <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Von</span><span class="l-en">From</span><span class="l-id">Dari</span></label>
-        <input type="date" id="checkin-from" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px">
+    <div style="display:flex;gap:3px;margin-bottom:16px">
+      <button class="bmode-btn on" id="hmode-new" onclick="setHotelTab('new')" style="flex:1;border-radius:6px;border:1.5px solid var(--border);background:var(--accent);color:#fff;cursor:pointer;font-family:var(--font)"><span class="bm-ic">📝</span><span class="l-de">Neue Rechnung</span><span class="l-en">New invoice</span><span class="l-id">Faktur baru</span></button>
+      <button class="bmode-btn" id="hmode-open" onclick="setHotelTab('open')" style="flex:1;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--text2);cursor:pointer;font-family:var(--font)"><span class="bm-ic">🧾</span><span class="l-de">Offene Rechnungen</span><span class="l-en">Open invoices</span><span class="l-id">Faktur terbuka</span></button>
+    </div>
+
+    <div id="hotel-tab-new">
+      <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Zimmer</span><span class="l-en">Room</span><span class="l-id">Kamar</span></label>
+      <div id="checkin-rooms" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px"></div>
+      <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Gast (optional)</span><span class="l-en">Guest (optional)</span><span class="l-id">Tamu (opsional)</span></label>
+      <input type="text" id="checkin-guest" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;margin-bottom:14px">
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <div style="flex:1">
+          <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Von</span><span class="l-en">From</span><span class="l-id">Dari</span></label>
+          <input type="date" id="checkin-from" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px">
+        </div>
+        <div style="flex:1">
+          <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Bis</span><span class="l-en">To</span><span class="l-id">Sampai</span></label>
+          <input type="date" id="checkin-to" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px">
+        </div>
       </div>
-      <div style="flex:1">
-        <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Bis</span><span class="l-en">To</span><span class="l-id">Sampai</span></label>
-        <input type="date" id="checkin-to" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:13px">
+      <div id="checkin-nights-display" style="font-size:12px;color:var(--text3);margin-bottom:14px;margin-top:-8px"></div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Betrag (Rp, in k)</span><span class="l-en">Amount (Rp, in k)</span><span class="l-id">Jumlah (Rp, k)</span></label>
+        <input type="number" id="checkin-amount" placeholder="0" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px">
       </div>
+      <button class="confirm-btn" id="checkin-save-btn" onclick="saveHotelDraft()" disabled><span class="l-de">Rechnung speichern</span><span class="l-en">Save invoice</span><span class="l-id">Simpan faktur</span></button>
     </div>
-    <div id="checkin-nights-display" style="font-size:12px;color:var(--text3);margin-bottom:14px;margin-top:-8px"></div>
-    <div style="margin-bottom:14px">
-      <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Betrag (Rp, in k)</span><span class="l-en">Amount (Rp, in k)</span><span class="l-id">Jumlah (Rp, k)</span></label>
-      <input type="number" id="checkin-amount" placeholder="0" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px">
+
+    <div id="hotel-tab-open" style="display:none">
+      <div id="hotel-open-list"></div>
+      <div id="hotel-open-detail"></div>
     </div>
-    <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Zahlungsart</span><span class="l-en">Payment method</span><span class="l-id">Metode pembayaran</span></label>
-    <div class="pay-methods" style="margin-bottom:14px">
-      <div class="pm" id="checkin-pm-cash" onclick="selCheckinPM('cash')"><div class="pm-icon">💵</div><div class="pm-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div></div>
-      <div class="pm" id="checkin-pm-card" onclick="selCheckinPM('card')"><div class="pm-icon">💳</div><div class="pm-label"><span class="l-de">Karte</span><span class="l-en">Card</span><span class="l-id">Kartu</span></div></div>
-      <div class="pm" id="checkin-pm-qr" onclick="selCheckinPM('qr')"><div class="pm-icon">📱</div><div class="pm-label">QRIS</div></div>
-    </div>
-    <button class="confirm-btn" id="checkin-confirm-btn" onclick="confirmCheckin()" disabled><span class="l-de">Jetzt kassieren</span><span class="l-en">Charge now</span><span class="l-id">Bayar sekarang</span></button>
   </div>
 </div>
 <div class="paid-overlay" id="checkout-overlay" style="background:rgba(26,32,44,.88)">
@@ -467,7 +473,7 @@ var BAR_CATS=['Cocktails','Spanish Drinks','Drinks'];
 var KITCHEN_CATS=['Breakfast','Tapas','Larger Plates','Dessert'];
 
 var bills=[],selBill=null,payMethod='cash',timer=null,billsMode='open';
-var checkinRoom=null,checkinPM=null,roomsList=[];
+var checkinRoom=null,roomsList=[];
 
 function tw(){return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';}
 function toggleMoreMenu(){document.getElementById('more-panel').classList.toggle('show');}
@@ -780,14 +786,8 @@ function afterLogout(){if(timer)clearInterval(timer);bills=[];selBill=null;}
 
 async function openCheckin(){
   document.getElementById('checkin-overlay').classList.add('show');
-  checkinRoom=null;checkinPM=null;
-  document.getElementById('checkin-guest').value='';
-  document.getElementById('checkin-from').value=localDateStr(new Date());
-  document.getElementById('checkin-to').value='';
-  document.getElementById('checkin-amount').value='';
-  document.getElementById('checkin-nights-display').textContent='';
-  document.querySelectorAll('#checkin-overlay .pm').forEach(function(el){el.classList.remove('sel');});
-  document.getElementById('checkin-confirm-btn').disabled=true;
+  setHotelTab('new');
+  resetHotelDraftForm();
   if(!roomsList.length){
     try{roomsList=await sbGet('rooms','active=eq.true&order=sort_order&select=id,name');}catch(e){roomsList=[];}
   }
@@ -796,17 +796,33 @@ async function openCheckin(){
   }).join('');
 }
 function closeCheckin(){document.getElementById('checkin-overlay').classList.remove('show');}
+
+function resetHotelDraftForm(){
+  checkinRoom=null;
+  document.getElementById('checkin-guest').value='';
+  document.getElementById('checkin-from').value=localDateStr(new Date());
+  document.getElementById('checkin-to').value='';
+  document.getElementById('checkin-amount').value='';
+  document.getElementById('checkin-nights-display').textContent='';
+  document.querySelectorAll('#checkin-rooms .pm').forEach(function(el){el.classList.remove('sel');});
+  document.getElementById('checkin-save-btn').disabled=true;
+}
+
+function setHotelTab(tab){
+  document.getElementById('hotel-tab-new').style.display=tab==='new'?'block':'none';
+  document.getElementById('hotel-tab-open').style.display=tab==='open'?'block':'none';
+  document.getElementById('hmode-new').style.background=tab==='new'?'var(--accent)':'#fff';
+  document.getElementById('hmode-new').style.color=tab==='new'?'#fff':'var(--text2)';
+  document.getElementById('hmode-open').style.background=tab==='open'?'var(--accent)':'#fff';
+  document.getElementById('hmode-open').style.color=tab==='open'?'#fff':'var(--text2)';
+  if(tab==='open')loadOpenHotelInvoices();
+}
+
 function selCheckinRoom(id,el){
   checkinRoom=roomsList.find(function(r){return r.id===id;});
   document.querySelectorAll('#checkin-rooms .pm').forEach(function(b){b.classList.remove('sel');});
   el.classList.add('sel');
-  updateCheckinBtn();
-}
-function selCheckinPM(pm){
-  checkinPM=pm;
-  document.querySelectorAll('#checkin-overlay .pay-methods .pm').forEach(function(b){b.classList.remove('sel');});
-  document.getElementById('checkin-pm-'+pm).classList.add('sel');
-  updateCheckinBtn();
+  updateHotelDraftBtn();
 }
 function calcCheckinNights(){
   var from=document.getElementById('checkin-from').value;
@@ -820,29 +836,105 @@ function calcCheckinNights(){
   disp.textContent=nights+' '+(lang==='de'?'Nacht/Nächte':lang==='en'?'night(s)':'malam');
   return nights;
 }
-document.getElementById('checkin-from').addEventListener('change',function(){calcCheckinNights();updateCheckinBtn();});
-document.getElementById('checkin-to').addEventListener('change',function(){calcCheckinNights();updateCheckinBtn();});
-function updateCheckinBtn(){
+document.getElementById('checkin-from').addEventListener('change',function(){calcCheckinNights();updateHotelDraftBtn();});
+document.getElementById('checkin-to').addEventListener('change',function(){calcCheckinNights();updateHotelDraftBtn();});
+function updateHotelDraftBtn(){
   var amt=parseFloat(document.getElementById('checkin-amount').value)||0;
-  document.getElementById('checkin-confirm-btn').disabled=!(checkinRoom&&checkinPM&&amt>0);
+  document.getElementById('checkin-save-btn').disabled=!(checkinRoom&&amt>0);
 }
-document.getElementById('checkin-amount').addEventListener('input',updateCheckinBtn);
+document.getElementById('checkin-amount').addEventListener('input',updateHotelDraftBtn);
 
-async function confirmCheckin(){
+async function saveHotelDraft(){
   var amt=parseFloat(document.getElementById('checkin-amount').value)||0;
   var from=document.getElementById('checkin-from').value||null;
   var to=document.getElementById('checkin-to').value||null;
   var nights=calcCheckinNights();
   var guest=document.getElementById('checkin-guest').value||null;
-  if(!checkinRoom||!checkinPM||amt<=0)return;
+  if(!checkinRoom||amt<=0)return;
   try{
-    var res=await sbPost('hotel_charges',{room_id:checkinRoom.id,guest_name:guest,checkin_date:from,checkout_date:to,nights:nights,amount_k:amt,payment_method:checkinPM,employee_id:currentStaff?currentStaff.id:null});
-    var hcId=res[0].id;
+    await sbPost('hotel_charges',{room_id:checkinRoom.id,guest_name:guest,checkin_date:from,checkout_date:to,nights:nights,amount_k:amt,status:'open',employee_id:currentStaff?currentStaff.id:null});
+    logAction('Hotelrechnung vorbereitet',checkinRoom.name+(guest?' · '+guest:'')+(from&&to?' · '+from+' bis '+to:'')+' · Rp '+amt+'k');
+    notify('✓ '+(lang==='de'?'Rechnung gespeichert':'Invoice saved')+' · '+checkinRoom.name);
+    resetHotelDraftForm();
+    setHotelTab('open');
+  }catch(e){notify('⚠ Fehler: '+e.message);}
+}
+
+var hotelInvoices=[],selHotelInvoice=null,hotelInvoicePM=null;
+
+async function loadOpenHotelInvoices(){
+  var list=document.getElementById('hotel-open-list');
+  document.getElementById('hotel-open-detail').innerHTML='';
+  selHotelInvoice=null;hotelInvoicePM=null;
+  list.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Lädt…</div>';
+  try{
+    hotelInvoices=await sbGet('hotel_charges','select=*,rooms(name)&status=eq.open&order=created_at.desc');
+    if(!hotelInvoices.length){
+      list.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px"><span class="l-de">Keine offenen Hotelrechnungen</span><span class="l-en">No open hotel invoices</span><span class="l-id">Tidak ada faktur terbuka</span></div>';
+      document.body.className=lang;
+      return;
+    }
+    list.innerHTML=hotelInvoices.map(function(h){
+      var room=h.rooms?h.rooms.name:'—';
+      var period=(h.checkin_date&&h.checkout_date)?(h.checkin_date+' → '+h.checkout_date):'';
+      return '<div class="bill-card" style="flex-direction:row;justify-content:space-between;align-items:center;text-align:left;cursor:pointer" onclick="selectHotelInvoice('+h.id+')">'+
+        '<div><div style="font-weight:700;font-size:13px">🏨 '+room+(h.guest_name?' · '+h.guest_name:'')+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">'+period+'</div></div>'+
+        '<div style="font-weight:700;color:var(--accent);white-space:nowrap;margin-left:8px">Rp '+h.amount_k+'k</div>'+
+        '</div>';
+    }).join('');
+    document.body.className=lang;
+  }catch(e){list.innerHTML='<div style="padding:16px;text-align:center;color:var(--red);font-size:13px">⚠ Fehler</div>';}
+}
+
+function selectHotelInvoice(id){
+  selHotelInvoice=hotelInvoices.find(function(h){return h.id===id;});
+  hotelInvoicePM=null;
+  if(!selHotelInvoice)return;
+  var room=selHotelInvoice.rooms?selHotelInvoice.rooms.name:'—';
+  var detail=document.getElementById('hotel-open-detail');
+  detail.innerHTML=
+    '<div style="border-top:1.5px solid var(--border);margin-top:12px;padding-top:14px">'+
+    '<table class="drow-table" style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
+      (selHotelInvoice.guest_name?('<tr><td>'+(lang==='de'?'Gast':'Guest')+'</td><td>'+selHotelInvoice.guest_name+'</td></tr>'):'')+
+      '<tr><td>'+(lang==='de'?'Zimmer':'Room')+'</td><td>'+room+'</td></tr>'+
+      (selHotelInvoice.checkin_date?('<tr><td>'+(lang==='de'?'Von':'From')+'</td><td>'+selHotelInvoice.checkin_date+'</td></tr>'):'')+
+      (selHotelInvoice.checkout_date?('<tr><td>'+(lang==='de'?'Bis':'To')+'</td><td>'+selHotelInvoice.checkout_date+'</td></tr>'):'')+
+      (selHotelInvoice.nights?('<tr><td>'+(lang==='de'?'Nächte':'Nights')+'</td><td>'+selHotelInvoice.nights+'</td></tr>'):'')+
+      '<tr><td>'+(lang==='de'?'Betrag':'Amount')+'</td><td>Rp '+selHotelInvoice.amount_k+'k</td></tr>'+
+    '</table>'+
+    '<div class="pay-label"><span class="l-de">Zahlungsart</span><span class="l-en">Payment method</span><span class="l-id">Metode pembayaran</span></div>'+
+    '<div class="pay-methods" style="margin-bottom:14px">'+
+      '<div class="pm" id="hinv-pm-cash" onclick="selHotelInvoicePM(\'cash\')"><div class="pm-icon">💵</div><div class="pm-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div></div>'+
+      '<div class="pm" id="hinv-pm-card" onclick="selHotelInvoicePM(\'card\')"><div class="pm-icon">💳</div><div class="pm-label"><span class="l-de">Karte</span><span class="l-en">Card</span><span class="l-id">Kartu</span></div></div>'+
+      '<div class="pm" id="hinv-pm-qr" onclick="selHotelInvoicePM(\'qr\')"><div class="pm-icon">📱</div><div class="pm-label">QRIS</div></div>'+
+    '</div>'+
+    '<button class="confirm-btn" id="hinv-confirm-btn" onclick="confirmHotelInvoicePayment()" disabled><span class="l-de">Jetzt kassieren</span><span class="l-en">Charge now</span><span class="l-id">Bayar sekarang</span></button>'+
+    '</div>';
+  document.body.className=lang;
+}
+
+function selHotelInvoicePM(pm){
+  hotelInvoicePM=pm;
+  document.querySelectorAll('#hotel-open-detail .pm').forEach(function(b){b.classList.remove('sel');});
+  document.getElementById('hinv-pm-'+pm).classList.add('sel');
+  document.getElementById('hinv-confirm-btn').disabled=false;
+}
+
+async function confirmHotelInvoicePayment(){
+  if(!selHotelInvoice||!hotelInvoicePM)return;
+  var h=selHotelInvoice;
+  try{
+    await sbPatch('hotel_charges','id=eq.'+h.id,{status:'paid',payment_method:hotelInvoicePM,paid_at:new Date().toISOString()});
     var saleId=null;
-    try{var saleRes=await sbPost('sales',{room_id:checkinRoom.id,total_k:amt,payment_method:checkinPM,revenue_category:'hotel',stay_from:from,stay_to:to,guest_name:guest});saleId=saleRes[0].id;}catch(e){}
-    logAction('Anreise kassiert',checkinRoom.name+(guest?' · '+guest:'')+(from&&to?' · '+from+' bis '+to:'')+' · Rp '+amt+'k · '+checkinPM);
+    try{
+      var saleRes=await sbPost('sales',{room_id:h.room_id,total_k:h.amount_k,payment_method:hotelInvoicePM,revenue_category:'hotel',stay_from:h.checkin_date,stay_to:h.checkout_date,guest_name:h.guest_name});
+      saleId=saleRes[0].id;
+    }catch(e){}
+    var roomName=h.rooms?h.rooms.name:'—';
+    logAction('Hotelrechnung kassiert',roomName+(h.guest_name?' · '+h.guest_name:'')+' · Rp '+h.amount_k+'k · '+hotelInvoicePM);
     closeCheckin();
-    notify('✓ '+checkinRoom.name+' · Rp '+amt+'k');
+    notify('✓ '+roomName+' · Rp '+h.amount_k+'k');
     if(saleId)showPaidReceipt(saleId);
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 16:45 -->
+<!-- Mata Villas v2026-08-22 20:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -111,6 +111,14 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 .qn{font-size:12px;font-weight:700;min-width:18px;text-align:center}
 .note-area{padding:6px 8px;flex-shrink:0;border-top:1px solid var(--border)}
 .note-area textarea{width:100%;padding:6px 9px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;font-family:var(--font);resize:none;outline:none;height:38px}
+.manual-btn{margin:6px 8px 0;padding:8px;border-radius:8px;border:1.5px dashed var(--border);background:var(--bg);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);flex-shrink:0}
+.manual-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,44,.75);z-index:120;align-items:center;justify-content:center}
+.manual-overlay.show{display:flex}
+.manual-card{background:#fff;border-radius:16px;padding:22px;width:90%;max-width:340px;text-align:left}
+.manual-label{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px}
+.manual-input{width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px;margin-bottom:14px;outline:none}
+.mcatbtn{flex:1;padding:9px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
+.mcatbtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .total-row{padding:9px 13px;border-top:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;font-size:15px;font-weight:800}
 .actions{padding:7px 9px 10px;display:flex;gap:7px;flex-shrink:0}
 .abtn{flex:1;padding:9px;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font)}
@@ -186,6 +194,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
       <div id="existing-items"></div>
     </div>
     <div class="olist" id="olist"></div>
+    <button class="manual-btn" id="manual-btn" onclick="openManualAdd()"></button>
     <div class="note-area"><textarea id="onote" id="onote"></textarea></div>
     <div class="total-row"><span id="total-label"></span><span id="ototal">Rp 0k</span></div>
     <div class="actions">
@@ -195,6 +204,26 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
   </div>
 </div>
 <div class="backdrop" id="backdrop" onclick="closeCart()"></div>
+<div class="manual-overlay" id="manual-overlay">
+  <div class="manual-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:16px;font-weight:800" id="manual-title"></div>
+      <button onclick="closeManualAdd()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+    </div>
+    <label class="manual-label" id="manual-name-label"></label>
+    <input type="text" id="manual-name" class="manual-input">
+    <label class="manual-label" id="manual-price-label"></label>
+    <input type="number" id="manual-price" class="manual-input" placeholder="0">
+    <div id="manual-cat-wrap" style="margin-bottom:6px">
+      <label class="manual-label" id="manual-cat-label"></label>
+      <div style="display:flex;gap:8px">
+        <button class="mcatbtn on" data-c="Tapas" id="manual-cat-kitchen"></button>
+        <button class="mcatbtn" data-c="Drinks" id="manual-cat-bar"></button>
+      </div>
+    </div>
+    <button class="lbtn" id="manual-add-btn" onclick="addManualItem()" style="margin-top:12px"></button>
+  </div>
+</div>
 <button class="fab" id="fab" onclick="toggleCart()">🛒<span class="fab-n" id="fab-n">0</span></button>
 <div class="sent-ov" id="sent-ov">
   <div class="sent-box">
@@ -225,7 +254,10 @@ var T={
       firstName:'Vorname',lastName:'Nachname',add:'Hinzufügen',
       noTableSel:'Bitte zuerst Tisch wählen',cartEmpty:'Warenkorb ist leer',noPin:'Kein PIN hinterlegt',
       restaurant:'Restaurant',minibar:'Minibar',selectRoom:'Zimmer wählen',room:'Zimmer',
-      noRoomSel:'Bitte zuerst Zimmer wählen'},
+      noRoomSel:'Bitte zuerst Zimmer wählen',
+      manualAdd:'➕ Manuell hinzufügen',manualTitle:'Manuelle Position',manualName:'Bezeichnung',
+      manualPrice:'Preis (Rp, in k)',manualCat:'Bereich',manualKitchen:'Küche',manualBar:'Bar',
+      manualAddBtn:'Hinzufügen',manualFillAll:'Bitte Bezeichnung und Preis eingeben'},
   en:{selectTable:'Select table',order:'Order',empty:'Empty',note:'Note...',
       total:'Total',clear:'Clear',send:'Send',sent:'Order sent!',
       free:'free',busy:'busy',allCats:'All',openOrder:'Open order',
@@ -244,7 +276,10 @@ var T={
       firstName:'First name',lastName:'Last name',add:'Add',
       noTableSel:'Please select a table first',cartEmpty:'Cart is empty',noPin:'No PIN set',
       restaurant:'Restaurant',minibar:'Minibar',selectRoom:'Select room',room:'Room',
-      noRoomSel:'Please select a room first'},
+      noRoomSel:'Please select a room first',
+      manualAdd:'➕ Add manually',manualTitle:'Manual item',manualName:'Name',
+      manualPrice:'Price (Rp, in k)',manualCat:'Section',manualKitchen:'Kitchen',manualBar:'Bar',
+      manualAddBtn:'Add',manualFillAll:'Please enter name and price'},
   id:{selectTable:'Pilih meja',order:'Pesanan',empty:'Kosong',note:'Catatan...',
       total:'Total',clear:'Hapus',send:'Kirim',sent:'Pesanan dikirim!',
       free:'bebas',busy:'terisi',allCats:'Semua',openOrder:'Pesanan terbuka',
@@ -263,7 +298,10 @@ var T={
       firstName:'Nama depan',lastName:'Nama belakang',add:'Tambah',
       noTableSel:'Pilih meja dulu',cartEmpty:'Keranjang kosong',noPin:'PIN belum diatur',
       restaurant:'Restoran',minibar:'Minibar',selectRoom:'Pilih kamar',room:'Kamar',
-      noRoomSel:'Pilih kamar dulu'}
+      noRoomSel:'Pilih kamar dulu',
+      manualAdd:'➕ Tambah manual',manualTitle:'Item manual',manualName:'Nama',
+      manualPrice:'Harga (Rp, ribuan)',manualCat:'Bagian',manualKitchen:'Dapur',manualBar:'Bar',
+      manualAddBtn:'Tambah',manualFillAll:'Isi nama dan harga'}
 };
 function t(k){return(T[lang]&&T[lang][k])||(T.de&&T.de[k])||k;}
 function tw(){return t('table')+' ';}
@@ -444,9 +482,18 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-22 16:45';
+  document.getElementById('ver-tag').textContent='v2026-08-22 20:00';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
+  document.getElementById('manual-btn').textContent=t('manualAdd');
+  document.getElementById('manual-title').textContent=t('manualTitle');
+  document.getElementById('manual-name-label').textContent=t('manualName');
+  document.getElementById('manual-price-label').textContent=t('manualPrice');
+  document.getElementById('manual-cat-label').textContent=t('manualCat');
+  document.getElementById('manual-cat-kitchen').textContent=t('manualKitchen');
+  document.getElementById('manual-cat-bar').textContent=t('manualBar');
+  document.getElementById('manual-add-btn').textContent=t('manualAddBtn');
+  document.getElementById('manual-cat-wrap').style.display=mode==='minibar'?'none':'block';
   document.querySelector('.note-area textarea').placeholder=t('note');
   buildCats();buildMenu();
   if(mode==='minibar'){renderRooms();}else{renderTables();}
@@ -552,6 +599,39 @@ function addItem(id){
   renderOrder();buildMenu();updateFab();
 }
 
+var manualCat='Tapas';
+function openManualAdd(){
+  document.getElementById('manual-name').value='';
+  document.getElementById('manual-price').value='';
+  manualCat='Tapas';
+  document.getElementById('manual-cat-kitchen').classList.add('on');
+  document.getElementById('manual-cat-bar').classList.remove('on');
+  document.getElementById('manual-overlay').classList.add('show');
+}
+function closeManualAdd(){document.getElementById('manual-overlay').classList.remove('show');}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('.mcatbtn');
+  if(b){
+    manualCat=b.dataset.c;
+    document.querySelectorAll('.mcatbtn').forEach(function(x){x.classList.remove('on');});
+    b.classList.add('on');
+  }
+});
+function addManualItem(){
+  var name=document.getElementById('manual-name').value.trim();
+  var price=parseFloat(document.getElementById('manual-price').value)||0;
+  if(!name||price<=0){notify('⚠ '+t('manualFillAll'));return;}
+  var cat=mode==='minibar'?'Minibar':manualCat;
+  var id='manual_'+Date.now();
+  order.push({id:id,name:name,price:price,cat:cat,qty:1});
+  closeManualAdd();
+  renderOrder();buildMenu();updateFab();
+  if(window.matchMedia('(max-width:660px)').matches){
+    document.getElementById('order-panel').classList.add('open');
+    document.getElementById('backdrop').classList.add('show');
+  }
+}
+
 function changeQty(id,d){
   var i=order.findIndex(function(o){return o.id===id;});
   if(i<0)return;
@@ -618,7 +698,7 @@ async function sendOrder(){
     var res=await sbPost('orders',payload);
     var oid=res[0].id;
     await sbPost('order_items',order.map(function(o){
-      return {order_id:oid,menu_item_id:o.id,name:o.name,price_k:o.price,quantity:o.qty,category:o.cat};
+      return {order_id:oid,menu_item_id:(typeof o.id==='number'?o.id:null),name:o.name,price_k:o.price,quantity:o.qty,category:o.cat};
     }));
     var subLabel;
     if(mode==='minibar'){
