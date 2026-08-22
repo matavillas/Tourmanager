@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 17:35 -->
+<!-- Mata Villas v2026-08-22 18:35 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,13 +11,17 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);background:#f0f4f8;color:var(--text);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:24px 14px}
 .card{background:#fff;border-radius:14px;max-width:380px;width:100%;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,.08)}
-.head{background:var(--accent);color:#fff;text-align:center;padding:20px 16px}
-.head h1{font-size:17px;font-weight:800}
-.head p{font-size:12px;opacity:.85;margin-top:3px}
+.head{background:var(--accent);color:#fff;text-align:center;padding:22px 16px}
+.head h1{font-size:19px;font-weight:800}
+.head p{font-size:12px;opacity:.9;margin-top:4px}
 .badge{background:var(--green-bg);color:var(--green);padding:8px 16px;font-size:12px;font-weight:600;text-align:center}
-.row{display:flex;justify-content:space-between;padding:8px 16px;font-size:13px;border-bottom:1px solid var(--border)}
-.row .n{flex:1}
-.row .p{font-family:monospace;font-weight:600;color:var(--accent)}
+table{width:100%;border-collapse:collapse}
+.drow td{padding:9px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+.drow td:first-child{color:var(--text2)}
+.drow td:last-child{text-align:right;font-weight:600}
+.irow td{padding:8px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+.irow td:last-child{text-align:right;font-family:monospace;font-weight:600;color:var(--accent)}
+.sec-label{padding:10px 16px 4px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
 .total{display:flex;justify-content:space-between;padding:16px;font-size:19px;font-weight:800;background:#f0f4f8}
 .empty{padding:40px 20px;text-align:center;color:var(--text3)}
 .foot{text-align:center;padding:16px;font-size:11px;color:var(--text3)}
@@ -32,10 +36,11 @@ var SB='https://pxzdkyvndosikdmstnpp.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5c
 async function sbGet(table,q){var r=await fetch(SB+'/rest/v1/'+table+'?'+(q||''),{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
 
 var pmLabel={cash:'💵 Cash',card:'💳 Card',qr:'📱 QRIS'};
-var catLabel={hotel:'🏨 Hotel stay',minibar:'🏠 Minibar',restaurant:'🍽️ Restaurant'};
+var PHONE='+62 853 5381 7651';
 
 function fmtDate(s){var d=new Date(s);return d.toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 function fmtDay(s){var d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function drow(label,val){return '<tr class="drow"><td>'+label+'</td><td>'+val+'</td></tr>';}
 
 async function load(){
   var params=new URLSearchParams(window.location.search);
@@ -50,17 +55,44 @@ async function load(){
     if(s.order_id){
       try{items=await sbGet('order_items','select=name,quantity,price_k&order_id=eq.'+s.order_id);}catch(e){}
     }
-    var loc=(s.revenue_category==='minibar'||s.revenue_category==='hotel')?(s.rooms?s.rooms.name:'Room'):('Table '+s.table_number);
-    var stayLine=(s.revenue_category==='hotel'&&s.stay_from&&s.stay_to)?('<p>'+fmtDay(s.stay_from)+' → '+fmtDay(s.stay_to)+'</p>'):'';
-    var guestLine=(s.revenue_category==='hotel'&&s.guest_name)?('<p>'+s.guest_name+'</p>'):'';
-    var rows=items.map(function(i){
-      return '<div class="row"><span class="n">'+i.quantity+'x '+i.name+'</span><span class="p">Rp '+(i.price_k*i.quantity)+'k</span></div>';
-    }).join('');
     var brandName=s.revenue_category==='hotel'?'Mata Villas':'Mata Tapas Bar';
+    var loc=(s.revenue_category==='minibar'||s.revenue_category==='hotel')?(s.rooms?s.rooms.name:'Room'):('Table '+s.table_number);
+
+    var detailRows='';
+    if(s.revenue_category==='hotel'){
+      if(s.guest_name)detailRows+=drow('Guest',s.guest_name);
+      detailRows+=drow('Room',loc);
+      if(s.stay_from)detailRows+=drow('From',fmtDay(s.stay_from));
+      if(s.stay_to)detailRows+=drow('To',fmtDay(s.stay_to));
+      if(s.stay_from&&s.stay_to){
+        var nights=Math.round((new Date(s.stay_to)-new Date(s.stay_from))/86400000);
+        detailRows+=drow('Nights',nights);
+      }
+      detailRows+=drow('Price','Rp '+s.total_k+'k');
+    }else{
+      detailRows+=drow(s.revenue_category==='minibar'?'Room':'Table',loc);
+      detailRows+=drow('Date',fmtDate(s.created_at));
+    }
+
+    var itemsHtml='';
+    if(s.revenue_category==='minibar'&&s.item_snapshot&&s.item_snapshot.length){
+      itemsHtml='<div class="sec-label">Items</div>'+s.item_snapshot.map(function(g){
+        var gd=fmtDay(g.date);
+        var gRows=g.items.map(function(i){return '<tr class="irow"><td>'+i.quantity+'x '+i.name+'</td><td>Rp '+(i.price_k*i.quantity)+'k</td></tr>';}).join('');
+        return '<div style="padding:8px 16px 2px;font-size:10px;font-weight:700;color:var(--text3)">📅 '+gd+'</div><table><tbody>'+gRows+'</tbody></table>';
+      }).join('');
+    }else{
+      var itemRows=items.map(function(i){
+        return '<tr class="irow"><td>'+i.quantity+'x '+i.name+'</td><td>Rp '+(i.price_k*i.quantity)+'k</td></tr>';
+      }).join('');
+      itemsHtml=itemRows?('<div class="sec-label">Items</div><table><tbody>'+itemRows+'</tbody></table>'):'';
+    }
+
     card.innerHTML=
-      '<div class="head"><h1>'+brandName+'</h1><p>Gili Trawangan · '+fmtDate(s.created_at)+'</p><p>'+(catLabel[s.revenue_category]||'')+' · '+loc+'</p>'+guestLine+stayLine+'</div>'+
+      '<div class="head"><h1>'+brandName+'</h1><p>Gili Trawangan</p><p>'+PHONE+'</p></div>'+
       '<div class="badge">✓ Paid · '+(pmLabel[s.payment_method]||s.payment_method||'—')+'</div>'+
-      rows+
+      '<table><tbody>'+detailRows+'</tbody></table>'+
+      itemsHtml+
       '<div class="total"><span>Total</span><span>Rp '+s.total_k+'k</span></div>'+
       '<div class="foot">Thank you for staying with us!</div>';
   }catch(e){

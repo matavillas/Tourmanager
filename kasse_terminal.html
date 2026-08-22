@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 17:35 -->
+<!-- Mata Villas v2026-08-22 18:35 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -81,6 +81,11 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .ritem-name{flex:1}
 .ritem-price{color:var(--accent);font-weight:600;font-family:monospace}
 .rtotal{display:flex;justify-content:space-between;padding:14px 16px;font-size:18px;font-weight:800;background:var(--bg);border-top:2px solid var(--border)}
+.drow-table{width:100%;border-collapse:collapse}
+.drow-table td{padding:9px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+.drow-table td:first-child{color:var(--text2)}
+.drow-table td:last-child{text-align:right;font-weight:600}
+.sec-label{padding:10px 16px 4px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
 .paysec{border-top:1.5px solid var(--border);padding:12px 16px;background:#fff;flex-shrink:0}
 .pay-label{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
 .pay-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
@@ -122,7 +127,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-22 17:35</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-22 18:35</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -479,8 +484,16 @@ function onLangChange(){renderBills();if(selBill)renderReceipt(selBill);}
 function shareButtonsHtml(b){
   var receiptUrl='https://matavillas.github.io/Tourmanager/receipt.html?id='+b.id;
   var qrImg='https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(receiptUrl);
-  var items=(b.order_items||[]).filter(function(i){return i.status!=='cancelled';});
-  var lines=items.map(function(i){return i.quantity+'x '+i.name+' - Rp '+(i.price_k*i.quantity)+'k';}).join('\n');
+  var lines;
+  if(b.order_type==='minibar'&&b.item_snapshot&&b.item_snapshot.length){
+    lines=b.item_snapshot.map(function(g){
+      var gLines=g.items.map(function(i){return i.quantity+'x '+i.name+' - Rp '+(i.price_k*i.quantity)+'k';}).join('\n');
+      return g.date+':\n'+gLines;
+    }).join('\n');
+  }else{
+    var items=(b.order_items||[]).filter(function(i){return i.status!=='cancelled';});
+    lines=items.map(function(i){return i.quantity+'x '+i.name+' - Rp '+(i.price_k*i.quantity)+'k';}).join('\n');
+  }
   var stayLine=(b.order_type==='hotel'&&b.stay_from&&b.stay_to)?('Stay: '+b.stay_from+' to '+b.stay_to+'\n'):'';
   var guestLine=(b.order_type==='hotel'&&b.guest_name)?('Guest: '+b.guest_name+'\n'):'';
   var brandName=b.order_type==='hotel'?'Mata Villas':'Mata Tapas Bar';
@@ -504,10 +517,21 @@ function setBillsMode(m){
   loadBills();
 }
 
+async function showPaidReceipt(saleId){
+  billsMode='history';
+  document.getElementById('bmode-open').style.background='#fff';
+  document.getElementById('bmode-open').style.color='var(--text2)';
+  document.getElementById('bmode-history').style.background='var(--accent)';
+  document.getElementById('bmode-history').style.color='#fff';
+  document.getElementById('paysec').style.display='none';
+  await loadBills();
+  selectBill(saleId);
+}
+
 async function loadBills(){
   if(billsMode==='history'){
     try{
-      var sales=await sbGet('sales','select=id,table_number,room_id,revenue_category,total_k,payment_method,created_at,order_id,stay_from,stay_to,guest_name,rooms(name)&order=created_at.desc&limit=50');
+      var sales=await sbGet('sales','select=id,table_number,room_id,revenue_category,total_k,payment_method,created_at,order_id,stay_from,stay_to,guest_name,item_snapshot,rooms(name)&order=created_at.desc&limit=50');
       var oids=sales.map(function(s){return s.order_id;}).filter(function(x){return x!==null&&x!==undefined;});
       var itemsByOrder={};
       if(oids.length){
@@ -517,7 +541,7 @@ async function loadBills(){
       bills=sales.map(function(s){
         return {id:s.id,table_number:s.table_number,room_id:s.room_id,room_name:s.rooms?s.rooms.name:null,
           order_type:s.revenue_category==='minibar'?'minibar':(s.revenue_category==='hotel'?'hotel':'restaurant'),
-          stay_from:s.stay_from,stay_to:s.stay_to,guest_name:s.guest_name,
+          stay_from:s.stay_from,stay_to:s.stay_to,guest_name:s.guest_name,item_snapshot:s.item_snapshot,
           total_k:s.total_k,created_at:s.created_at,payment_method:s.payment_method,_paid:true,order_items:itemsByOrder[s.order_id]||[]};
       });
       renderBills();
@@ -599,13 +623,40 @@ function renderReceipt(b){
   var subtotal=items.reduce(function(s,i){return s+(i.price_k*i.quantity);},0);
   if(isHist){
     var pmLabel={cash:'💵 '+(lang==='de'?'Bar':lang==='en'?'Cash':'Tunai'),card:'💳 '+(lang==='de'?'Karte':lang==='en'?'Card':'Kartu'),qr:'📱 QRIS'};
-    var stayLine=(b.order_type==='hotel'&&b.stay_from&&b.stay_to)?('<div class="receipt-sub">'+b.stay_from+' → '+b.stay_to+'</div>'):'';
-    var guestLine=(b.order_type==='hotel'&&b.guest_name)?('<div class="receipt-sub">'+b.guest_name+'</div>'):'';
     var brandName=b.order_type==='hotel'?'Mata Villas':'Mata Tapas Bar';
+    var phone='+62 853 5381 7651';
+    function drow(label,val){return '<tr><td>'+label+'</td><td>'+val+'</td></tr>';}
+    var detailRows='';
+    if(b.order_type==='hotel'){
+      if(b.guest_name)detailRows+=drow(lang==='de'?'Gast':'Guest',b.guest_name);
+      detailRows+=drow(lang==='de'?'Zimmer':'Room',billLabel(b));
+      if(b.stay_from)detailRows+=drow(lang==='de'?'Von':'From',b.stay_from);
+      if(b.stay_to)detailRows+=drow(lang==='de'?'Bis':'To',b.stay_to);
+      if(b.stay_from&&b.stay_to){
+        var nights=Math.round((new Date(b.stay_to)-new Date(b.stay_from))/86400000);
+        detailRows+=drow(lang==='de'?'Nächte':'Nights',nights);
+      }
+      detailRows+=drow(lang==='de'?'Preis':'Price','Rp '+b.total_k+'k');
+    }else{
+      detailRows+=drow(b.order_type==='minibar'?(lang==='de'?'Zimmer':'Room'):(lang==='de'?'Tisch':'Table'),billLabel(b));
+      detailRows+=drow(lang==='de'?'Datum':'Date',t);
+    }
+    var itemsHtml;
+    if(b.order_type==='minibar'&&b.item_snapshot&&b.item_snapshot.length){
+      itemsHtml='<div class="sec-label">'+(lang==='de'?'Positionen':'Items')+'</div>'+
+        b.item_snapshot.map(function(g){
+          var gd=new Date(g.date+'T00:00:00').toLocaleDateString(lang==='de'?'de-DE':lang==='id'?'id-ID':'en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
+          var gRows=g.items.map(function(i){return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span></div>';}).join('');
+          return '<div style="padding:6px 16px 2px;font-size:11px;font-weight:700;color:var(--text3)">📅 '+gd+'</div>'+gRows;
+        }).join('');
+    }else{
+      itemsHtml=rows?('<div class="sec-label">'+(lang==='de'?'Positionen':'Items')+'</div>'+rows):'';
+    }
     document.getElementById('receipt').innerHTML=
-      '<div class="receipt-head"><div class="receipt-logo">'+brandName+'</div><div class="receipt-sub">Gili Trawangan · '+t+'</div><div class="receipt-sub">'+billLabel(b)+'</div>'+guestLine+stayLine+'</div>'+
+      '<div class="receipt-head"><div class="receipt-logo">'+brandName+'</div><div class="receipt-sub">Gili Trawangan</div><div class="receipt-sub">'+phone+'</div></div>'+
       '<div style="background:var(--green-bg);color:var(--green);padding:8px 16px;font-size:12px;font-weight:600">✓ '+(lang==='de'?'Bezahlt':lang==='en'?'Paid':'Dibayar')+' · '+(pmLabel[b.payment_method]||b.payment_method||'—')+'</div>'+
-      rows+
+      '<table class="drow-table"><tbody>'+detailRows+'</tbody></table>'+
+      itemsHtml+
       '<div class="rtotal" style="font-size:18px;font-weight:800;border-top:2px solid #333;padding-top:8px;margin-top:6px"><span>Total</span><span>Rp '+(b.total_k||subtotal)+'k</span></div>'+
       shareButtonsHtml(b);
     document.body.className=lang;
@@ -616,9 +667,13 @@ function renderReceipt(b){
   var finalTotal=subtotal-discountAmt;
   b._displayTotal=finalTotal;
   document.getElementById('receipt').innerHTML=
-    '<div class="receipt-head"><div class="receipt-logo">Mata Tapas Bar</div><div class="receipt-sub">Gili Trawangan · '+t+'</div><div class="receipt-sub">'+billLabel(b)+'</div></div>'+
+    '<div class="receipt-head"><div class="receipt-logo">Mata Tapas Bar</div><div class="receipt-sub">Gili Trawangan</div><div class="receipt-sub">+62 853 5381 7651</div></div>'+
+    '<table class="drow-table"><tbody>'+
+      '<tr><td>'+(lang==='de'?'Tisch':lang==='en'?'Table':'Meja')+'</td><td>'+billLabel(b)+'</td></tr>'+
+      '<tr><td>'+(lang==='de'?'Datum':lang==='en'?'Date':'Tanggal')+'</td><td>'+t+'</td></tr>'+
+    '</tbody></table>'+
     (warn?'<div class="receipt-warn">'+warn+'</div>':'')+
-    rows+
+    (rows?('<div class="sec-label">'+(lang==='de'?'Positionen':lang==='en'?'Items':'Item')+'</div>'+rows):'')+
     '<div class="rtotal" style="border-top:1px solid #eee;padding-top:6px;margin-top:6px"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'+
     '<div class="discount-row" style="display:flex;align-items:center;gap:8px;margin:8px 0;padding:8px;background:#f5f2ed;border-radius:8px;flex-wrap:wrap">'+
       '<span style="font-size:13px;color:#888">Rabatt:</span>'+
@@ -701,20 +756,22 @@ async function confirmPay(){
     var salePayload=isMinibar
       ?{order_id:bid,room_id:selBill.room_id,total_k:total,payment_method:payMethod,revenue_category:'minibar',discount_percent:discount,discount_reason:discount>0?(window._discountReason||'Rabatt'):null}
       :{order_id:bid,table_number:selBill.table_number,total_k:total,payment_method:payMethod,revenue_category:'restaurant',discount_percent:discount,discount_reason:discount>0?(window._discountReason||'Rabatt'):null};
-    try{await sbPost('sales',salePayload);}catch(e){}
+    var saleId=null;
+    try{var saleRes=await sbPost('sales',salePayload);saleId=saleRes[0].id;}catch(e){}
     logAction('Zahlung bestätigt',label+' · '+payMethod+' · Rp '+total+'k'+(discount>0?' · Rabatt '+discount+'%':''));
     window._discountPercent=0;
     bills=bills.filter(function(b){return b.id!==bid;});
     selBill=null;
     renderBills();
-    document.getElementById('receipt').innerHTML='<div class="receipt-empty"><span class="l-de">Rechnung wählen</span><span class="l-en">Select a bill</span><span class="l-id">Pilih tagihan</span></div>';
-    document.getElementById('paysec').style.display='none';
     var ol=document.getElementById('paid-overlay');
     var msgs={de:'Bezahlt!',en:'Paid!',id:'Dibayar!'};
     document.getElementById('paid-msg').textContent=msgs[lang]||'Bezahlt!';
     document.getElementById('paid-sub').textContent=label+' · Rp '+total+'k';
     ol.classList.add('show');
-    setTimeout(function(){ol.classList.remove('show');},2500);
+    setTimeout(function(){
+      ol.classList.remove('show');
+      if(saleId)showPaidReceipt(saleId);
+    },1800);
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
@@ -781,10 +838,12 @@ async function confirmCheckin(){
   try{
     var res=await sbPost('hotel_charges',{room_id:checkinRoom.id,guest_name:guest,checkin_date:from,checkout_date:to,nights:nights,amount_k:amt,payment_method:checkinPM,employee_id:currentStaff?currentStaff.id:null});
     var hcId=res[0].id;
-    try{await sbPost('sales',{room_id:checkinRoom.id,total_k:amt,payment_method:checkinPM,revenue_category:'hotel',stay_from:from,stay_to:to,guest_name:guest});}catch(e){}
+    var saleId=null;
+    try{var saleRes=await sbPost('sales',{room_id:checkinRoom.id,total_k:amt,payment_method:checkinPM,revenue_category:'hotel',stay_from:from,stay_to:to,guest_name:guest});saleId=saleRes[0].id;}catch(e){}
     logAction('Anreise kassiert',checkinRoom.name+(guest?' · '+guest:'')+(from&&to?' · '+from+' bis '+to:'')+' · Rp '+amt+'k · '+checkinPM);
     closeCheckin();
     notify('✓ '+checkinRoom.name+' · Rp '+amt+'k');
+    if(saleId)showPaidReceipt(saleId);
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
@@ -828,11 +887,17 @@ function renderCheckoutBody(){
   var subtotal=allItems.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
   var discountAmt=Math.round(subtotal*checkoutDiscount/100);
   var finalTotal=subtotal-discountAmt;
-  var rows=allItems.map(function(i){
-    return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span></div>';
+  var groupsHtml=checkoutOrders.map(function(o){
+    var items=(o.order_items||[]).filter(function(i){return i.status!=='cancelled';});
+    if(!items.length)return '';
+    var dateStr=new Date(o.created_at).toLocaleDateString(lang==='de'?'de-DE':lang==='id'?'id-ID':'en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
+    var itemRows=items.map(function(i){
+      return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span></div>';
+    }).join('');
+    return '<div class="sec-label">📅 '+dateStr+'</div>'+itemRows;
   }).join('');
   body.innerHTML=
-    '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px">'+rows+
+    '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px">'+groupsHtml+
     '<div class="rtotal" style="border-top:1px solid var(--border)"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'+
     '</div>'+
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
@@ -869,15 +934,21 @@ async function confirmCheckout(){
   checkoutOrders.forEach(function(o){(o.order_items||[]).forEach(function(i){if(i.status!=='cancelled')allItems.push(i);});});
   var subtotal=allItems.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
   var finalTotal=subtotal-Math.round(subtotal*checkoutDiscount/100);
+  var snapshot=checkoutOrders.map(function(o){
+    var items=(o.order_items||[]).filter(function(i){return i.status!=='cancelled';});
+    return {date:o.created_at.slice(0,10),items:items.map(function(i){return {name:i.name,quantity:i.quantity,price_k:i.price_k};})};
+  }).filter(function(g){return g.items.length;});
   try{
     for(var i=0;i<checkoutOrders.length;i++){
       await sbPatch('orders','id=eq.'+checkoutOrders[i].id,{status:'paid',payment_method:checkoutPM,paid_at:new Date().toISOString()});
     }
     var lastOrderId=checkoutOrders[checkoutOrders.length-1].id;
-    try{await sbPost('sales',{order_id:checkoutOrders.length===1?lastOrderId:null,room_id:checkoutRoom.id,total_k:finalTotal,payment_method:checkoutPM,revenue_category:'minibar',discount_percent:checkoutDiscount,discount_reason:checkoutDiscount>0?'Rabatt':null});}catch(e){}
+    var saleId=null;
+    try{var saleRes=await sbPost('sales',{order_id:checkoutOrders.length===1?lastOrderId:null,room_id:checkoutRoom.id,total_k:finalTotal,payment_method:checkoutPM,revenue_category:'minibar',discount_percent:checkoutDiscount,discount_reason:checkoutDiscount>0?'Rabatt':null,item_snapshot:snapshot});saleId=saleRes[0].id;}catch(e){}
     logAction('Abreise kassiert (Minibar)',checkoutRoom.name+' · '+checkoutPM+' · Rp '+finalTotal+'k'+(checkoutDiscount>0?' · Rabatt '+checkoutDiscount+'%':''));
     closeCheckout();
     notify('✓ '+checkoutRoom.name+' · Rp '+finalTotal+'k');
+    if(saleId)showPaidReceipt(saleId);
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
