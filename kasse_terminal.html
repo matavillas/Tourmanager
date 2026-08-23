@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 08:45 -->
+<!-- Mata Villas v2026-08-23 11:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -127,7 +127,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 08:45</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 11:00</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -360,7 +360,8 @@ function closingL(){
     hotel:lang==='de'?'Hotel (Anreise)':lang==='en'?'Hotel (check-in)':'Hotel (check-in)',
     byCategory:lang==='de'?'Nach Bereich':lang==='en'?'By category':'Menurut kategori',
     byMethod:lang==='de'?'Nach Zahlungsart':lang==='en'?'By payment method':'Menurut metode pembayaran',
-    ofWhichHotel:lang==='de'?'davon Hotelgäste':lang==='en'?'of which hotel guests':'termasuk tamu hotel'
+    ofWhichHotel:lang==='de'?'davon Hotelgäste':lang==='en'?'of which hotel guests':'termasuk tamu hotel',
+    viaChannel:lang==='de'?'Über Channel eingezogen (nicht in Kassensumme)':lang==='en'?'Collected via channel (not in cash total)':'Dikumpulkan via channel (tidak termasuk kas)'
   };
 }
 
@@ -390,6 +391,8 @@ async function loadClosingData(){
     var cash=sales.filter(function(s){return s.payment_method==='cash';}).reduce(function(a,s){return a+(s.total_k||0);},0);
     var card=sales.filter(function(s){return s.payment_method==='card';}).reduce(function(a,s){return a+(s.total_k||0);},0);
     var qr=sales.filter(function(s){return s.payment_method==='qr';}).reduce(function(a,s){return a+(s.total_k||0);},0);
+    var booking=sales.filter(function(s){return s.payment_method==='booking';}).reduce(function(a,s){return a+(s.total_k||0);},0);
+    var agoda=sales.filter(function(s){return s.payment_method==='agoda';}).reduce(function(a,s){return a+(s.total_k||0);},0);
     var total=cash+card+qr;
     var catOf=function(s){return s.revenue_category||'restaurant';};
     var restAll=sales.filter(function(s){return catOf(s)==='restaurant';});
@@ -407,6 +410,7 @@ async function loadClosingData(){
       '<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">'+L.byMethod+'</div>'+
       row(L.cash,cash)+row(L.card,card)+row(L.qr,qr)+
       '<div style="display:flex;justify-content:space-between;border-top:1.5px solid var(--border);padding-top:6px;margin-top:2px;font-weight:800;font-size:15px"><span>'+L.total+'</span><span>Rp '+total+'k</span></div>'+
+      ((booking>0||agoda>0)?('<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">'+L.viaChannel+'</div>'+(booking>0?row('🅱️ Booking.com',booking):'')+(agoda>0?row('🅰️ Agoda',agoda):'')):'')+
       '<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3)"><span>'+L.count+'</span><span>'+sales.length+'</span></div>';
     var existing=await sbGet('cash_closings','select=*&closing_date=eq.'+date+'&order=created_at.desc&limit=1');
     var box=document.getElementById('closing-already');
@@ -474,8 +478,8 @@ async function loadClosingHistory(){
   }catch(e){}
 }
 
-var BAR_CATS=['Cocktails','Spanish Drinks','Drinks'];
-var KITCHEN_CATS=['Breakfast','Tapas','Larger Plates','Dessert'];
+var BAR_CATS=['Cocktails','Premium Cocktails','Spanish Drinks','Drinks','Coffee','Tea','Soda','Fresh Juice','Beer','Wine'];
+var KITCHEN_CATS=['Breakfast','Tapas','Tabla de Tapas','Larger Plates','Dessert'];
 
 var bills=[],selBill=null,payMethod='cash',timer=null,billsMode='open';
 var checkinRoom=null,roomsList=[];
@@ -633,7 +637,7 @@ function renderReceipt(b){
   var warn=isHist?'':getPendingWarn(b);
   var subtotal=items.reduce(function(s,i){return s+(i.price_k*i.quantity);},0);
   if(isHist){
-    var pmLabel={cash:'💵 '+(lang==='de'?'Bar':lang==='en'?'Cash':'Tunai'),card:'💳 '+(lang==='de'?'Karte':lang==='en'?'Card':'Kartu'),qr:'📱 QRIS'};
+    var pmLabel={cash:'💵 '+(lang==='de'?'Bar':lang==='en'?'Cash':'Tunai'),card:'💳 '+(lang==='de'?'Karte':lang==='en'?'Card':'Kartu'),qr:'📱 QRIS',booking:'🅱️ Booking.com',agoda:'🅰️ Agoda'};
     var brandName=b.order_type==='hotel'?'Mata Villas':'Mata Tapas Bar';
     var phone='+62 853 5381 7651';
     function drow(label,val){return '<tr><td>'+label+'</td><td>'+val+'</td></tr>';}
@@ -803,7 +807,7 @@ async function confirmPay(){
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
-function afterLogin(m){currentStaff=m;loadBills();timer=setInterval(loadBills,8000);}
+function afterLogin(m){currentStaff=m;setLang(m.preferred_lang||'de');loadBills();timer=setInterval(loadBills,8000);}
 function afterLogout(){if(timer)clearInterval(timer);bills=[];selBill=null;}
 
 async function openCheckin(){
@@ -935,6 +939,8 @@ function selectHotelInvoice(id){
       '<div class="pm" id="hinv-pm-cash" onclick="selHotelInvoicePM(\'cash\')"><div class="pm-icon">💵</div><div class="pm-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div></div>'+
       '<div class="pm" id="hinv-pm-card" onclick="selHotelInvoicePM(\'card\')"><div class="pm-icon">💳</div><div class="pm-label"><span class="l-de">Karte</span><span class="l-en">Card</span><span class="l-id">Kartu</span></div></div>'+
       '<div class="pm" id="hinv-pm-qr" onclick="selHotelInvoicePM(\'qr\')"><div class="pm-icon">📱</div><div class="pm-label">QRIS</div></div>'+
+      '<div class="pm" id="hinv-pm-booking" onclick="selHotelInvoicePM(\'booking\')"><div class="pm-icon">🅱️</div><div class="pm-label">Booking.com</div></div>'+
+      '<div class="pm" id="hinv-pm-agoda" onclick="selHotelInvoicePM(\'agoda\')"><div class="pm-icon">🅰️</div><div class="pm-label">Agoda</div></div>'+
     '</div>'+
     '<button class="confirm-btn" id="hinv-confirm-btn" onclick="confirmHotelInvoicePayment()" disabled><span class="l-de">Jetzt kassieren</span><span class="l-en">Charge now</span><span class="l-id">Bayar sekarang</span></button>'+
     '</div>';

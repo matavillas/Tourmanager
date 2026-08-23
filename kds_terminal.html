@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 00:15 -->
+<!-- Mata Villas v2026-08-23 11:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -116,7 +116,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
   <span class="topbar-title">Küchen-Display</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 00:15</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 11:00</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -272,7 +272,7 @@ function notify(msg,dur){var el=document.getElementById('notif');if(!el)return;e
 
 
 var orders=[],curF='all',timer=null;
-var BAR=['Cocktails','Spanish Drinks','Drinks'];
+var BAR=['Cocktails','Premium Cocktails','Spanish Drinks','Drinks','Coffee','Tea','Soda','Fresh Juice','Beer','Wine'];
 var SM={1:'cooking',2:'ready',3:'served'};
 
 function onLangChange(){
@@ -345,7 +345,7 @@ async function upd(oid,ns){
   try{await sbPatch('orders','id=eq.'+oid,{status:ns});}catch(e){notify('⚠ '+e.message);}
 }
 
-function afterLogin(m){currentStaff=m;onLangChange();load();timer=setInterval(load,10000);}
+function afterLogin(m){currentStaff=m;setLang(m.preferred_lang||'de');onLangChange();load();timer=setInterval(load,10000);}
 function afterLogout(){if(timer)clearInterval(timer);orders=[];render();}
 
 window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();onLangChange();});

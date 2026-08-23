@@ -1,18 +1,11 @@
 <!DOCTYPE html>
-<!-- Manager Terminal v2026-06-10-FINAL -->
+<!-- Mata Villas v2026-08-23 11:00 -->
 <!-- Mata Villas v2026-06-08 06:15:13 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Manager Terminal — Mata Villas</title>
-<link rel="manifest" href="icons/manifest_manager.json">
-<link rel="apple-touch-icon" href="icons/manager_icon_180.png">
-<link rel="icon" href="icons/manager_icon_192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Manager">
-<meta name="theme-color" content="#1E2838">
 <style>
 
 :root{
@@ -255,6 +248,7 @@ tr:last-child td{border-bottom:none}
           <th><span class="l-de">Name</span></th>
           <th>PIN</th>
           <th><span class="l-de">Rolle</span><span class="l-en">Role</span><span class="l-id">Peran</span></th>
+          <th><span class="l-de">Sprache</span><span class="l-en">Language</span><span class="l-id">Bahasa</span></th>
           <th></th>
         </tr></thead>
         <tbody id="staff-tbody"></tbody></table>
@@ -265,6 +259,7 @@ tr:last-child td{border-bottom:none}
           <div class="form-group"><label><span class="l-de">Nachname</span><span class="l-en">Last name</span></label><input id="sf-lname" placeholder="Müller"></div>
           <div class="form-group"><label>PIN (4 <span class="l-de">Ziffern</span><span class="l-en">digits</span>)</label><input id="sf-pin" maxlength="4" placeholder="1234"></div>
           <div class="form-group"><label><span class="l-de">Rolle</span><span class="l-en">Role</span></label><select id="sf-role"><option value="service">Service</option><option value="kitchen">Kitchen</option><option value="bar">Bar</option><option value="kasse">Kasse</option><option value="manager">Manager</option></select></div>
+          <div class="form-group"><label><span class="l-de">Sprache</span><span class="l-en">Language</span></label><select id="sf-lang"><option value="de">Deutsch</option><option value="en">English</option><option value="id">Bahasa Indonesia</option></select></div>
         </div>
         <button class="form-btn" onclick="saveStaff()"><span class="l-de">Speichern</span><span class="l-en">Save</span></button>
         <button class="form-btn" style="background:var(--bg);color:var(--text2);border:1.5px solid var(--border);margin-left:8px" onclick="document.getElementById('add-staff-form').style.display='none'"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span></button>
@@ -616,10 +611,11 @@ async function storno(sid,oid){
 // PERSONAL
 async function loadStaffTable(){
   try{
-    allStaff=await sbGet('employees','select=*&order=fname');
+    allStaff=await sbGet('staff','select=*&order=fname');
+    var langLabel={de:'DE',en:'EN',id:'ID'};
     document.getElementById('staff-tbody').innerHTML=allStaff.map(function(s){
       return '<tr><td>'+s.fname+' '+(s.lname||'')+'</td><td><code>'+s.pin+'</code></td>'+
-        '<td>'+s.role_id+'</td>'+
+        '<td>'+s.role+'</td><td>'+(langLabel[s.preferred_lang]||'DE')+'</td>'+
         '<td><button class="del-btn" onclick="delStaff('+s.id+')">✕</button></td></tr>';
     }).join('');
   }catch(e){notify('⚠ '+e.message);}
@@ -632,9 +628,10 @@ async function saveStaff(){
   var lname=document.getElementById('sf-lname').value.trim();
   var pin=document.getElementById('sf-pin').value.trim();
   var role=document.getElementById('sf-role').value;
+  var prefLang=document.getElementById('sf-lang').value;
   if(!fname||!pin||pin.length!==4){notify('⚠ Vorname und 4-stellige PIN erforderlich');return;}
   try{
-    await sbPost('employees',{fname:fname,lname:lname,pin:pin,role_id:role,active:true});
+    await sbPost('staff',{fname:fname,lname:lname,pin:pin,role:role,preferred_lang:prefLang,active:true});
     document.getElementById('add-staff-form').style.display='none';
     notify('✓ '+(lang==='de'?'Gespeichert':'Saved'));
     loadStaffTable();
@@ -643,7 +640,7 @@ async function saveStaff(){
 
 async function delStaff(id){
   if(!confirm(lang==='de'?'Mitarbeiter löschen?':'Delete staff member?')) return;
-  try{await sbDel('employees','id=eq.'+id);loadStaffTable();notify('✓ Gelöscht');}catch(e){notify('⚠ '+e.message);}
+  try{await sbDel('staff','id=eq.'+id);loadStaffTable();notify('✓ Gelöscht');}catch(e){notify('⚠ '+e.message);}
 }
 
 // SPEISEKARTE

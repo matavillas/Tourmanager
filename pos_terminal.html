@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 00:15 -->
+<!-- Mata Villas v2026-08-23 11:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -67,6 +67,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 .rb-rooms{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 .rb-room-btn{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font)}
 .rb-room-btn.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.rb-cancel{color:var(--red);border-color:var(--red-bd);background:var(--red-bg)}
 .rb-release{margin-top:6px;padding:6px 12px;border-radius:8px;border:1.5px solid var(--orange-bd);background:var(--orange-bg);color:var(--orange);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:block}
 .table-label{font-size:12px;font-weight:600;white-space:nowrap;color:var(--text2)}
 .tgrid{display:flex;gap:5px;overflow-x:auto;flex:1;scrollbar-width:none;padding:2px 0}
@@ -283,7 +284,8 @@ var T={
       releaseTable:'✅ Tisch freigeben (Gast gegangen)',
       releaseConfirm:'Tisch {t} freigeben? Die Rechnung läuft für Zimmer {r} bis zur Abreise weiter.',
       tableReleased:'Tisch freigegeben',
-      priceWarn:'⚠ Rp {p}k ist ungewöhnlich hoch — meinst du vielleicht Rp {s}k? OK = trotzdem Rp {p}k verwenden, Abbrechen = Preis korrigieren.'},
+      priceWarn:'⚠ Rp {p}k ist ungewöhnlich hoch — meinst du vielleicht Rp {s}k? OK = trotzdem Rp {p}k verwenden, Abbrechen = Preis korrigieren.',
+      roomBillPendingWarn:'Bitte zuerst ein Zimmer wählen oder abbrechen'},
   en:{selectTable:'Select table',order:'Order',empty:'Empty',note:'Note...',
       total:'Total',clear:'Clear',send:'Send',sent:'Order sent!',
       free:'free',busy:'busy',allCats:'All',openOrder:'Open order',
@@ -310,7 +312,8 @@ var T={
       releaseTable:'✅ Release table (guest left)',
       releaseConfirm:'Release table {t}? The bill continues for room {r} until check-out.',
       tableReleased:'Table released',
-      priceWarn:'⚠ Rp {p}k is unusually high — did you mean Rp {s}k? OK = keep Rp {p}k anyway, Cancel = fix the price.'},
+      priceWarn:'⚠ Rp {p}k is unusually high — did you mean Rp {s}k? OK = keep Rp {p}k anyway, Cancel = fix the price.',
+      roomBillPendingWarn:'Please select a room first, or cancel'},
   id:{selectTable:'Pilih meja',order:'Pesanan',empty:'Kosong',note:'Catatan...',
       total:'Total',clear:'Hapus',send:'Kirim',sent:'Pesanan dikirim!',
       free:'bebas',busy:'terisi',allCats:'Semua',openOrder:'Pesanan terbuka',
@@ -337,7 +340,8 @@ var T={
       releaseTable:'✅ Bebaskan meja (tamu pergi)',
       releaseConfirm:'Bebaskan meja {t}? Tagihan berlanjut untuk kamar {r} sampai check-out.',
       tableReleased:'Meja dibebaskan',
-      priceWarn:'⚠ Rp {p}k terlihat sangat tinggi — maksud Anda Rp {s}k? OK = tetap gunakan Rp {p}k, Batal = perbaiki harga.'}
+      priceWarn:'⚠ Rp {p}k terlihat sangat tinggi — maksud Anda Rp {s}k? OK = tetap gunakan Rp {p}k, Batal = perbaiki harga.',
+      roomBillPendingWarn:'Silakan pilih kamar dulu, atau batalkan'}
 };
 function t(k){return(T[lang]&&T[lang][k])||(T.de&&T.de[k])||k;}
 function tw(){return t('table')+' ';}
@@ -429,69 +433,90 @@ var menu=[
   {id:103,name:"Herb Cream Cheese",cat:"Breakfast",price:40,avail:true},
   {id:104,name:"Morning Power",cat:"Breakfast",price:55,avail:true},
   {id:105,name:"Baguette",cat:"Breakfast",price:50,avail:true},
-  {id:106,name:"Tortilla Espanola",cat:"Breakfast",price:30,avail:true},
-  {id:107,name:"Overnight Oat",cat:"Breakfast",price:35,avail:true},
-  {id:108,name:"Toast",cat:"Breakfast",price:30,avail:true},
-  {id:109,name:"Nasi Goreng",cat:"Breakfast",price:50,avail:true},
-  {id:110,name:"Mie Goreng",cat:"Breakfast",price:50,avail:true},
+  {id:106,name:"Tortilla Española",cat:"Breakfast",price:30,avail:true},
+  {id:107,name:"Overnight Oat with Milk",cat:"Breakfast",price:35,avail:true},
+  {id:108,name:"Avocado Toast",cat:"Breakfast",price:45,avail:true},
+  {id:109,name:"Toasty",cat:"Breakfast",price:30,avail:true},
+  {id:110,name:"Sliced Fruit",cat:"Breakfast",price:35,avail:true},
   // Tapas
-  {id:201,name:"Alioli Con Pan",cat:"Tapas",price:25,avail:true},
+  {id:201,name:"Alioli con Pan",cat:"Tapas",price:25,avail:true},
   {id:202,name:"Patatas Bravas",cat:"Tapas",price:40,avail:true},
-  {id:203,name:"Tortilla Espanola",cat:"Tapas",price:50,avail:true},
+  {id:203,name:"Tortilla Española",cat:"Tapas",price:50,avail:true},
   {id:204,name:"Croquetas de Pollo",cat:"Tapas",price:50,avail:true},
   {id:205,name:"Croquetas de Champiñones",cat:"Tapas",price:50,avail:true},
   {id:206,name:"Albondigas",cat:"Tapas",price:45,avail:true},
   {id:207,name:"Boquerones",cat:"Tapas",price:55,avail:true},
-  {id:208,name:"Gambas al Ajilo",cat:"Tapas",price:80,avail:true},
+  {id:208,name:"Gambas al Ajillo",cat:"Tapas",price:80,avail:true},
   {id:209,name:"Calamares Fritos",cat:"Tapas",price:50,avail:true},
-  {id:210,name:"Pita Pocket",cat:"Tapas",price:55,avail:true},
-  {id:211,name:"Berenjenas Fritos",cat:"Tapas",price:40,avail:true},
-  {id:212,name:"Vegan Patatas Bravas",cat:"Tapas",price:40,avail:true},
+  {id:210,name:"Pinchos Morunos (Chicken)",cat:"Tapas",price:70,avail:true},
+  {id:211,name:"Pinchos Morunos (Beef)",cat:"Tapas",price:70,avail:true},
+  {id:212,name:"Berenjenas Fritos (Vegan)",cat:"Tapas",price:40,avail:true},
+  {id:213,name:"Vegan Patatas Bravas",cat:"Tapas",price:40,avail:true},
+  // Tabla de Tapas
+  {id:301,name:"Tapas Tradicionales Españolas",cat:"Tabla de Tapas",price:90,avail:true},
+  {id:302,name:"Veggie Fiesta",cat:"Tabla de Tapas",price:100,avail:true},
+  {id:303,name:"Sabor del Mar",cat:"Tabla de Tapas",price:120,avail:true},
+  {id:304,name:"Tierra Mar",cat:"Tabla de Tapas",price:120,avail:true},
   // Larger Plates
-  {id:301,name:"Fish & Chips",cat:"Larger Plates",price:85,avail:true},
-  {id:302,name:"Nasi Goreng Vegetable",cat:"Larger Plates",price:60,avail:true},
-  {id:303,name:"Nicoise Salad",cat:"Larger Plates",price:70,avail:true},
-  {id:304,name:"Nasi Goreng Seafood",cat:"Larger Plates",price:80,avail:true},
-  {id:305,name:"Nasi Goreng Chicken",cat:"Larger Plates",price:75,avail:true},
-  {id:306,name:"Beef Rendang",cat:"Larger Plates",price:90,avail:true},
+  {id:401,name:"Fish & Chips",cat:"Larger Plates",price:85,avail:true},
+  {id:402,name:"Nasi Goreng Vegetable",cat:"Larger Plates",price:60,avail:true},
+  {id:403,name:"Niçoise Salad",cat:"Larger Plates",price:70,avail:true},
+  {id:404,name:"Nasi Goreng Chicken",cat:"Larger Plates",price:75,avail:true},
+  {id:405,name:"Nasi Goreng Seafood",cat:"Larger Plates",price:80,avail:true},
+  {id:406,name:"Beef Rendang",cat:"Larger Plates",price:90,avail:true},
   // Dessert
-  {id:401,name:"Crema Catalana",cat:"Dessert",price:40,avail:true},
-  {id:402,name:"Churros",cat:"Dessert",price:40,avail:true},
-  {id:403,name:"Ice Cream",cat:"Dessert",price:35,avail:true},
-  // Cocktails
-  {id:501,name:"Signature Blue Mata",cat:"Cocktails",price:80,avail:true},
-  {id:502,name:"Margarita",cat:"Cocktails",price:80,avail:true},
-  {id:503,name:"Gin Fizz",cat:"Cocktails",price:80,avail:true},
-  {id:504,name:"Pina Colada",cat:"Cocktails",price:80,avail:true},
-  {id:505,name:"Lime Daiquiri",cat:"Cocktails",price:80,avail:true},
-  {id:506,name:"Arak Attack",cat:"Cocktails",price:80,avail:true},
+  {id:501,name:"Crema Catalana",cat:"Dessert",price:40,avail:true},
+  {id:502,name:"Churros",cat:"Dessert",price:40,avail:true},
+  {id:503,name:"Ice Cream",cat:"Dessert",price:35,avail:true},
+  // Coffee
+  {id:601,name:"Espresso",cat:"Coffee",price:25,avail:true},
+  {id:602,name:"Lombok Black Coffee",cat:"Coffee",price:25,avail:true},
+  {id:603,name:"Hot Latte",cat:"Coffee",price:35,avail:true},
+  {id:604,name:"Cappuccino",cat:"Coffee",price:35,avail:true},
+  {id:605,name:"Iced Coffee Latte",cat:"Coffee",price:40,avail:true},
+  {id:606,name:"Homemade Kakao",cat:"Coffee",price:35,avail:true},
+  // Tea
+  {id:611,name:"Black Tea",cat:"Tea",price:25,avail:true},
+  {id:612,name:"Jasmine Tea",cat:"Tea",price:25,avail:true},
+  {id:613,name:"Roselle Tea",cat:"Tea",price:25,avail:true},
+  {id:614,name:"Thai Tea",cat:"Tea",price:25,avail:true},
+  // Soda
+  {id:621,name:"Coca-Cola",cat:"Soda",price:25,avail:true},
+  {id:622,name:"Coca-Cola Zero",cat:"Soda",price:25,avail:true},
+  {id:623,name:"Sprite",cat:"Soda",price:25,avail:true},
+  {id:624,name:"Mineral Water",cat:"Soda",price:10,avail:true},
+  {id:625,name:"Fresh Coconut",cat:"Soda",price:25,avail:true},
+  {id:626,name:"Kombucha",cat:"Soda",price:45,avail:true},
+  // Fresh Juice
+  {id:631,name:"Banana Juice",cat:"Fresh Juice",price:35,avail:true},
+  {id:632,name:"Mango Juice",cat:"Fresh Juice",price:35,avail:true},
+  {id:633,name:"Pineapple Juice",cat:"Fresh Juice",price:35,avail:true},
+  {id:634,name:"Avocado Juice",cat:"Fresh Juice",price:35,avail:true},
+  {id:635,name:"Orange Juice",cat:"Fresh Juice",price:35,avail:true},
+  {id:636,name:"Green Booster",cat:"Fresh Juice",price:40,avail:true},
+  // Beer
+  {id:641,name:"Small Bintang",cat:"Beer",price:45,avail:true},
+  {id:642,name:"San Miguel Cerveza Negra",cat:"Beer",price:60,avail:true},
+  // Wine
+  {id:651,name:"Red Wine",cat:"Wine",price:80,avail:true},
+  {id:652,name:"White Wine",cat:"Wine",price:80,avail:true},
   // Spanish Drinks
-  {id:601,name:"Gili Sangria",cat:"Spanish Drinks",price:55,avail:true},
-  {id:602,name:"Calimocho",cat:"Spanish Drinks",price:60,avail:true},
-  {id:603,name:"Tinto Verano",cat:"Spanish Drinks",price:60,avail:true},
-  {id:604,name:"Red Wine",cat:"Spanish Drinks",price:80,avail:true},
-  {id:605,name:"White Wine",cat:"Spanish Drinks",price:80,avail:true},
-  // Drinks
-  {id:701,name:"Espresso",cat:"Drinks",price:25,avail:true},
-  {id:702,name:"Lombok Black Coffee",cat:"Drinks",price:25,avail:true},
-  {id:703,name:"Hot Latte",cat:"Drinks",price:35,avail:true},
-  {id:704,name:"Iced Coffee Latte",cat:"Drinks",price:40,avail:true},
-  {id:705,name:"Hot Tea",cat:"Drinks",price:20,avail:true},
-  {id:706,name:"Iced Tea",cat:"Drinks",price:25,avail:true},
-  {id:707,name:"Ice Lemon Tea",cat:"Drinks",price:25,avail:true},
-  {id:708,name:"Mineral Water",cat:"Drinks",price:10,avail:true},
-  {id:709,name:"Fresh Coconut",cat:"Drinks",price:25,avail:true},
-  {id:710,name:"Kombucha",cat:"Drinks",price:45,avail:true},
-  {id:711,name:"Banana Juice",cat:"Drinks",price:35,avail:true},
-  {id:712,name:"Mango Juice",cat:"Drinks",price:35,avail:true},
-  {id:713,name:"Pineapple Juice",cat:"Drinks",price:35,avail:true},
-  {id:714,name:"Avocado Juice",cat:"Drinks",price:35,avail:true},
-  {id:715,name:"Orange Juice",cat:"Drinks",price:35,avail:true},
-  {id:716,name:"Green Booster",cat:"Drinks",price:40,avail:true},
-  {id:717,name:"Small Bintang",cat:"Drinks",price:40,avail:true},
-  {id:718,name:"Coca-Cola",cat:"Drinks",price:25,avail:true},
-  {id:719,name:"Coca-Cola Zero",cat:"Drinks",price:25,avail:true},
-  {id:720,name:"Sprite",cat:"Drinks",price:25,avail:true},
+  {id:661,name:"Gili Sangria",cat:"Spanish Drinks",price:55,avail:true},
+  {id:662,name:"Calimocho",cat:"Spanish Drinks",price:60,avail:true},
+  {id:663,name:"Tinto Verano",cat:"Spanish Drinks",price:60,avail:true},
+  // Cocktails
+  {id:701,name:"Signature Blue Mata",cat:"Cocktails",price:80,avail:true},
+  {id:702,name:"Margarita",cat:"Cocktails",price:80,avail:true},
+  {id:703,name:"Gin Fizz",cat:"Cocktails",price:80,avail:true},
+  {id:704,name:"Pina Colada",cat:"Cocktails",price:80,avail:true},
+  {id:705,name:"Lime Daiquiri",cat:"Cocktails",price:80,avail:true},
+  {id:706,name:"Arak Attack",cat:"Cocktails",price:80,avail:true},
+  // Premium Cocktails
+  {id:711,name:"Negroni",cat:"Premium Cocktails",price:110,avail:true},
+  {id:712,name:"Lime Margarita",cat:"Premium Cocktails",price:110,avail:true},
+  {id:713,name:"Gin Fizz (Premium)",cat:"Premium Cocktails",price:110,avail:true},
+  {id:714,name:"Lime Daiquiri (Premium)",cat:"Premium Cocktails",price:110,avail:true},
+  {id:715,name:"Tequila Sunrise",cat:"Premium Cocktails",price:110,avail:true},
   // Minibar
   {id:901,name:"Polaris Sodawater",cat:"Minibar",price:25,avail:true},
   {id:902,name:"Coca Cola",cat:"Minibar",price:25,avail:true},
@@ -506,6 +531,7 @@ var tables=Array.from({length:15},function(_,i){return {num:i+1,status:'free'};}
 var rooms=[],selRoom=null;
 var mode='restaurant';
 var billRoom=null;
+var roomBillPending=false;
 var order=[],selTable=null,curCat='',existingOrders=[];
 
 function onLangChange(){renderAll();}
@@ -519,7 +545,7 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-23 00:15';
+  document.getElementById('ver-tag').textContent='v2026-08-23 11:00';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
   document.getElementById('manual-btn').textContent=t('manualAdd');
@@ -543,7 +569,7 @@ function renderAll(){
 function setMode(m){
   if(mode===m)return;
   mode=m;
-  order=[];curCat='';selTable=null;billRoom=null;
+  order=[];curCat='';selTable=null;billRoom=null;roomBillPending=false;
   document.getElementById('mode-restaurant').classList.toggle('on',m==='restaurant');
   document.getElementById('mode-minibar').classList.toggle('on',m==='minibar');
   document.getElementById('room-bill-bar').style.display='none';
@@ -576,7 +602,7 @@ function selectTable(n){
   updateBtn();
   document.getElementById('tbl-label').textContent=tw()+n;
   loadExistingOrders(n);
-  billRoom=null;
+  billRoom=null;roomBillPending=false;
   document.getElementById('room-bill-bar').style.display='block';
   document.getElementById('rb-rooms').style.display='none';
   updateRbToggle();
@@ -642,6 +668,7 @@ async function toggleRoomBill(){
     billRoom=null;
     updateRbToggle();
     wrap.style.display='none';
+    updateBtn();
     return;
   }
   if(!rooms.length){
@@ -649,13 +676,23 @@ async function toggleRoomBill(){
   }
   wrap.innerHTML=rooms.map(function(r){
     return '<button class="rb-room-btn" data-id="'+r.id+'">'+r.name+'</button>';
-  }).join('');
+  }).join('')+'<button class="rb-room-btn rb-cancel" data-cancel="1">✕ '+t('cancel')+'</button>';
   wrap.style.display='flex';
+  roomBillPending=true;
+  updateBtn();
 }
 document.addEventListener('click',function(e){
+  var cancelBtn=e.target.closest('.rb-cancel');
+  if(cancelBtn){
+    roomBillPending=false;billRoom=null;
+    document.getElementById('rb-rooms').style.display='none';
+    updateRbToggle();updateBtn();
+    return;
+  }
   var b=e.target.closest('.rb-room-btn');
   if(b){
     billRoom=rooms.find(function(r){return r.id===+b.dataset.id;});
+    roomBillPending=false;
     updateRbToggle();
     document.getElementById('rb-rooms').style.display='none';
     assignExistingOrdersToRoom();
@@ -666,19 +703,31 @@ async function loadExistingOrders(n,roomId){
   try{
     var q=roomId
       ?'select=id,status,total_k,created_at,order_items(name,quantity,category)&room_id=eq.'+roomId+'&order_type=eq.minibar&status=in.(new,cooking,making,ready)&order=created_at.desc&limit=10'
-      :'select=id,status,total_k,created_at,order_items(name,quantity,category)&table_number=eq.'+n+'&status=in.(new,cooking,making,ready)&order=created_at.desc&limit=5';
+      :'select=id,status,total_k,created_at,room_id,order_items(name,quantity,category),rooms(name)&table_number=eq.'+n+'&status=in.(new,cooking,making,ready)&order=created_at.desc&limit=5';
     var d=await sbGet('orders',q);
     existingOrders=d;
     var box=document.getElementById('existing-orders');
-    if(!d.length){box.style.display='none';return;}
-    box.style.display='block';
-    var sum=d.reduce(function(s,o){return s+(o.total_k||0);},0);
-    document.getElementById('existing-title').textContent=t('openOrder')+' ('+d.length+') · Rp '+sum+'k';
-    document.getElementById('existing-items').innerHTML=d.map(function(o){
-      var items=(o.order_items||[]).map(function(i){return i.quantity+'× '+i.name;}).join(', ');
-      var mins=Math.round((Date.now()-new Date(o.created_at).getTime())/60000);
-      return '<div class="existing-item">#'+o.id+' · '+items+' · '+mins+' min · Rp '+(o.total_k||0)+'k</div>';
-    }).join('');
+    if(!d.length){box.style.display='none';}
+    else{
+      box.style.display='block';
+      var sum=d.reduce(function(s,o){return s+(o.total_k||0);},0);
+      document.getElementById('existing-title').textContent=t('openOrder')+' ('+d.length+') · Rp '+sum+'k';
+      document.getElementById('existing-items').innerHTML=d.map(function(o){
+        var items=(o.order_items||[]).map(function(i){return i.quantity+'× '+i.name;}).join(', ');
+        var mins=Math.round((Date.now()-new Date(o.created_at).getTime())/60000);
+        return '<div class="existing-item">#'+o.id+' · '+items+' · '+mins+' min · Rp '+(o.total_k||0)+'k</div>';
+      }).join('');
+    }
+    // Falls dieser Tisch bereits einer Zimmerrechnung zugeordnet ist: Freigeben-Option sofort anzeigen
+    if(!roomId&&mode==='restaurant'){
+      var roomBilled=d.find(function(o){return o.room_id;});
+      if(roomBilled){
+        billRoom={id:roomBilled.room_id,name:roomBilled.rooms?roomBilled.rooms.name:'?'};
+        updateRbToggle();
+        document.getElementById('rb-rooms').style.display='none';
+        updateReleaseBtn();
+      }
+    }
   }catch(e){document.getElementById('existing-orders').style.display='none';}
 }
 
@@ -804,7 +853,7 @@ document.getElementById('olist').addEventListener('click',function(e){
   else if(btn.dataset.act==='del')removeOrderItem(id);
 });
 
-function updateBtn(){document.getElementById('snd-btn').classList.toggle('off',!(order.length&&(mode==='minibar'?selRoom:selTable)));}
+function updateBtn(){document.getElementById('snd-btn').classList.toggle('off',!(order.length&&(mode==='minibar'?selRoom:selTable))||roomBillPending);}
 function updateFab(){
   var n=order.reduce(function(s,o){return s+o.qty;},0);
   var fab=document.getElementById('fab');
@@ -828,6 +877,7 @@ async function sendOrder(){
   }else{
     if(!selTable){notify('⚠ '+t('noTableSel'));return;}
   }
+  if(roomBillPending){notify('⚠ '+t('roomBillPendingWarn'));return;}
   if(!order.length){notify('⚠ '+t('cartEmpty'));return;}
   var note=document.getElementById('onote').value;
   var total=order.reduce(function(s,o){return s+o.price*o.qty;},0);
@@ -888,7 +938,9 @@ async function loadRooms(){
 }
 
 function afterLogin(m){
-  currentStaff=m;renderAll();loadTables();
+  currentStaff=m;
+  setLang(m.preferred_lang||'de');
+  renderAll();loadTables();
   setInterval(function(){if(mode==='minibar')loadRooms();else loadTables();},30000);
 }
 function afterLogout(){order=[];selTable=null;selRoom=null;mode='restaurant';clearOrder();}
