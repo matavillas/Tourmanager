@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 11:00 -->
+<!-- Mata Villas v2026-08-23 11:20 -->
 <!-- Mata Villas v2026-06-08 06:15:13 -->
 <html lang="de">
 <head>
@@ -254,6 +254,7 @@ tr:last-child td{border-bottom:none}
         <tbody id="staff-tbody"></tbody></table>
       </div>
       <div id="add-staff-form" style="display:none;background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px;margin-bottom:16px">
+        <div id="staff-form-title" style="font-weight:700;margin-bottom:10px"><span class="l-de">Neuer Mitarbeiter</span><span class="l-en">New staff member</span></div>
         <div class="form-grid">
           <div class="form-group"><label><span class="l-de">Vorname</span><span class="l-en">First name</span></label><input id="sf-fname" placeholder="Julia"></div>
           <div class="form-group"><label><span class="l-de">Nachname</span><span class="l-en">Last name</span></label><input id="sf-lname" placeholder="Müller"></div>
@@ -262,7 +263,7 @@ tr:last-child td{border-bottom:none}
           <div class="form-group"><label><span class="l-de">Sprache</span><span class="l-en">Language</span></label><select id="sf-lang"><option value="de">Deutsch</option><option value="en">English</option><option value="id">Bahasa Indonesia</option></select></div>
         </div>
         <button class="form-btn" onclick="saveStaff()"><span class="l-de">Speichern</span><span class="l-en">Save</span></button>
-        <button class="form-btn" style="background:var(--bg);color:var(--text2);border:1.5px solid var(--border);margin-left:8px" onclick="document.getElementById('add-staff-form').style.display='none'"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span></button>
+        <button class="form-btn" style="background:var(--bg);color:var(--text2);border:1.5px solid var(--border);margin-left:8px" onclick="editingStaffId=null;document.getElementById('add-staff-form').style.display='none'"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span></button>
       </div>
     </div>
     <!-- SPEISEKARTE -->
@@ -359,7 +360,7 @@ tr:last-child td{border-bottom:none}
 var SB='https://pxzdkyvndosikdmstnpp.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 async function sbGet(table,q){var r=await fetch(SB+'/rest/v1/'+table+'?'+(q||''),{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
 async function sbPost(table,d){var r=await fetch(SB+'/rest/v1/'+table,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(r.status);return r.json();}
-async function sbPatch(table,filter,d){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});}
+async function sbPatch(table,filter,d){var r=await fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});if(!r.ok){var t='';try{t=await r.text();}catch(e){}throw new Error('DB-Fehler ('+r.status+'): '+t);}return r;}
 async function sbDel(table,filter){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});}
 
 
@@ -616,12 +617,37 @@ async function loadStaffTable(){
     document.getElementById('staff-tbody').innerHTML=allStaff.map(function(s){
       return '<tr><td>'+s.fname+' '+(s.lname||'')+'</td><td><code>'+s.pin+'</code></td>'+
         '<td>'+s.role+'</td><td>'+(langLabel[s.preferred_lang]||'DE')+'</td>'+
-        '<td><button class="del-btn" onclick="delStaff('+s.id+')">✕</button></td></tr>';
+        '<td><button class="del-btn" style="background:var(--accent-bg);color:var(--accent);border-color:var(--accent);margin-right:6px" onclick="editStaff('+s.id+')">✎</button>'+
+        '<button class="del-btn" onclick="delStaff('+s.id+')">✕</button></td></tr>';
     }).join('');
   }catch(e){notify('⚠ '+e.message);}
 }
 
-function showAddStaff(){document.getElementById('add-staff-form').style.display='block';}
+function showAddStaff(){
+  editingStaffId=null;
+  document.getElementById('sf-fname').value='';
+  document.getElementById('sf-lname').value='';
+  document.getElementById('sf-pin').value='';
+  document.getElementById('sf-role').value='service';
+  document.getElementById('sf-lang').value='de';
+  document.getElementById('staff-form-title').textContent=lang==='de'?'Neuer Mitarbeiter':'New staff member';
+  document.getElementById('add-staff-form').style.display='block';
+}
+
+var editingStaffId=null;
+function editStaff(id){
+  var s=allStaff.find(function(x){return x.id===id;});
+  if(!s)return;
+  editingStaffId=id;
+  document.getElementById('sf-fname').value=s.fname||'';
+  document.getElementById('sf-lname').value=s.lname||'';
+  document.getElementById('sf-pin').value=s.pin||'';
+  document.getElementById('sf-role').value=s.role||'service';
+  document.getElementById('sf-lang').value=s.preferred_lang||'de';
+  document.getElementById('staff-form-title').textContent=lang==='de'?'Mitarbeiter bearbeiten':'Edit staff member';
+  document.getElementById('add-staff-form').style.display='block';
+  document.getElementById('add-staff-form').scrollIntoView({behavior:'smooth',block:'center'});
+}
 
 async function saveStaff(){
   var fname=document.getElementById('sf-fname').value.trim();
@@ -631,7 +657,12 @@ async function saveStaff(){
   var prefLang=document.getElementById('sf-lang').value;
   if(!fname||!pin||pin.length!==4){notify('⚠ Vorname und 4-stellige PIN erforderlich');return;}
   try{
-    await sbPost('staff',{fname:fname,lname:lname,pin:pin,role:role,preferred_lang:prefLang,active:true});
+    if(editingStaffId){
+      await sbPatch('staff','id=eq.'+editingStaffId,{fname:fname,lname:lname,pin:pin,role:role,preferred_lang:prefLang});
+    }else{
+      await sbPost('staff',{fname:fname,lname:lname,pin:pin,role:role,preferred_lang:prefLang,active:true});
+    }
+    editingStaffId=null;
     document.getElementById('add-staff-form').style.display='none';
     notify('✓ '+(lang==='de'?'Gespeichert':'Saved'));
     loadStaffTable();
