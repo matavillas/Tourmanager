@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-24 09:30 -->
+<!-- Mata Villas v2026-08-24 20:15 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -168,7 +168,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
   <span class="topbar-title" id="topbar-title"></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace" id="ver-tag"></span>
+  <span style="font-size:8px;color:var(--text3);font-family:monospace" id="ver-tag"></span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -546,7 +546,7 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-24 09:30';
+  document.getElementById('ver-tag').textContent='240824 2015';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
   document.getElementById('manual-btn').textContent=t('manualAdd');
@@ -952,7 +952,7 @@ window.addEventListener('DOMContentLoaded',function(){
   renderAll();
   document.getElementById('mode-bar').onclick=function(e){var b=e.target.closest('.mbtn');if(b)setMode(b.dataset.m);};
   // Rücktaste/Geste soll die App nicht beenden — Abmeldung nur über den ⏻-Button
-  history.pushState(null,'',location.href);
+  for(var _i=0;_i<8;_i++){history.pushState(null,'',location.href);}
   window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});
 });
 </script>

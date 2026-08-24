@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-24 09:30 -->
+<!-- Mata Villas v2026-08-24 20:15 -->
 <!-- Mata Villas v2026-06-08 06:15:13 -->
 <html lang="de">
 <head>
@@ -71,7 +71,8 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 .card-value{font-size:24px;font-weight:800}
 .card-sub{font-size:12px;color:var(--text3);margin-top:4px}
 /* Tables */
-.table-wrap{background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.table-wrap{background:#fff;border-radius:12px;border:1px solid var(--border);overflow-x:auto;margin-bottom:16px}
+.table-wrap table{min-width:600px}
 .table-head{padding:12px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--border);background:var(--bg);display:flex;justify-content:space-between;align-items:center}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{padding:8px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1.5px solid var(--border);background:var(--bg)}
@@ -126,7 +127,7 @@ tr:last-child td{border-bottom:none}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Manager Terminal</span><span class="l-en">Manager Terminal</span><span class="l-id">Terminal Manajer</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-24 09:30</span>
+  <span style="font-size:8px;color:var(--text3);font-family:monospace">240824 2015</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -793,7 +794,7 @@ async function deleteOrderRecord(orderId){
 async function loadOrders(){
   var date=document.getElementById('ord-date').value||new Date().toISOString().slice(0,10);
   try{
-    var orders=await sbGet('orders','select=id,table_number,status,kitchen_status,bar_status,total_k,created_at,order_items(name,quantity,price_k)&created_at=gte.'+date+'T00:00:00&created_at=lte.'+date+'T23:59:59&order=created_at.desc');
+    var orders=await sbGet('orders','select=id,table_number,room_id,order_type,status,kitchen_status,bar_status,total_k,created_at,order_items(name,quantity,price_k),rooms(name)&created_at=gte.'+date+'T00:00:00&created_at=lte.'+date+'T23:59:59&order=created_at.desc');
     document.getElementById('ord-label').textContent=orders.length+(lang==='de'?' Bestellungen':lang==='en'?' orders':' pesanan');
     var statusLabel=function(o){
       if(o.status==='paid') return '<span style="color:#2d7a4f">✓ Bezahlt</span>';
@@ -803,7 +804,8 @@ async function loadOrders(){
     document.getElementById('ord-tbody').innerHTML=orders.length?orders.map(function(o){
       var time=new Date(o.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
       var items=(o.order_items||[]).map(function(i){return i.quantity+'× '+i.name;}).join(', ');
-      return '<tr><td>#'+o.id+'</td><td>'+tw()+o.table_number+'</td><td>'+time+'</td>'+
+      var loc=o.table_number?(tw()+o.table_number):(o.room_id?('🏨 '+(o.rooms?o.rooms.name:'?')):'—');
+      return '<tr><td>#'+o.id+'</td><td>'+loc+'</td><td>'+time+'</td>'+
         '<td>'+statusLabel(o)+'</td>'+
         '<td><b>Rp '+(o.total_k||0)+'k</b></td>'+
         '<td style="font-size:11px;color:var(--text2)">'+items+'</td>'+
@@ -862,7 +864,7 @@ function afterLogout(){logAction('Abgemeldet','Manager');if(timer)clearInterval(
 
 window.addEventListener('DOMContentLoaded',function(){
   loadStaff();initPins();
-  history.pushState(null,'',location.href);
+  for(var _i=0;_i<8;_i++){history.pushState(null,'',location.href);}
   window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});
 });
 </script>
