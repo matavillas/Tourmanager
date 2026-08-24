@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 11:45 -->
+<!-- Mata Villas v2026-08-23 13:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -127,7 +127,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 11:45</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 13:00</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -323,6 +323,7 @@ function doLogin(){
 }
 
 function doLogout(){
+  logAction('Abgemeldet','Kasse');
   document.getElementById('login').classList.remove('hidden');
   clearPins();
   document.getElementById('login-err').textContent='';
@@ -808,7 +809,7 @@ async function confirmPay(){
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
-function afterLogin(m){currentStaff=m;setLang(m.preferred_lang||'de');loadBills();timer=setInterval(loadBills,8000);}
+function afterLogin(m){currentStaff=m;setLang(m.preferred_lang||'de');logAction('Angemeldet','Kasse');loadBills();timer=setInterval(loadBills,8000);}
 function afterLogout(){if(timer)clearInterval(timer);bills=[];selBill=null;}
 
 async function openCheckin(){
@@ -1122,7 +1123,11 @@ async function confirmCheckout(){
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
-window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();});
+window.addEventListener('DOMContentLoaded',function(){
+  loadStaff();initPins();
+  history.pushState(null,'',location.href);
+  window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});
+});
 </script>
 </body>
 </html>

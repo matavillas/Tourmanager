@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 11:00 -->
+<!-- Mata Villas v2026-08-23 13:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -131,7 +131,7 @@ body{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidd
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas">
   <span class="topbar-title">Bar Terminal</span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 11:00</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 13:00</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -285,6 +285,7 @@ function doLogin(){
 }
 
 function doLogout(){
+  logAction('Abgemeldet','Bar');
   document.getElementById('login').classList.remove('hidden');
   clearPins();
   document.getElementById('login-err').textContent='';
@@ -475,10 +476,14 @@ async function sendDirect(){
   }catch(e){notify('⚠ '+e.message);}
 }
 
-function afterLogin(m){currentStaff=m;setLang(m.preferred_lang||'de');onLangChange();buildDirectMenu();load();timer=setInterval(load,10000);}
+function afterLogin(m){currentStaff=m;setLang(m.preferred_lang||'de');logAction('Angemeldet','Bar');onLangChange();buildDirectMenu();load();timer=setInterval(load,10000);}
 function afterLogout(){if(timer)clearInterval(timer);orders=[];render();}
 
-window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();onLangChange();});
+window.addEventListener('DOMContentLoaded',function(){
+  loadStaff();initPins();onLangChange();
+  history.pushState(null,'',location.href);
+  window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});
+});
 </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 11:20 -->
+<!-- Mata Villas v2026-08-23 13:30 -->
 <!-- Mata Villas v2026-06-08 06:15:13 -->
 <html lang="de">
 <head>
@@ -142,6 +142,7 @@ tr:last-child td{border-bottom:none}
     <div class="nav-item" onclick="showPanel('berichte',this)">📈 <span class="l-de">Berichte</span><span class="l-en">Reports</span><span class="l-id">Laporan</span></div>
     <div class="nav-section"><span class="l-de">Verwaltung</span><span class="l-en">Management</span><span class="l-id">Manajemen</span></div>
     <div class="nav-item" onclick="showPanel('personal',this)">👥 <span class="l-de">Personal</span><span class="l-en">Staff</span><span class="l-id">Staf</span></div>
+    <div class="nav-item" onclick="showPanel('anmeldungen',this)">🔑 <span class="l-de">Anmeldungen</span><span class="l-en">Logins</span><span class="l-id">Login</span></div>
     <div class="nav-item" onclick="showPanel('speisekarte',this)">🍽️ <span class="l-de">Speisekarte</span><span class="l-en">Menu</span><span class="l-id">Menu</span></div>
     <div class="nav-item" onclick="showPanel('tischplan',this)">🗺️ <span class="l-de">Tischplan</span><span class="l-en">Floor Plan</span><span class="l-id">Denah</span></div>
     <div class="nav-item" onclick="showPanel('bestellungen',this)">📋 <span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span></div>
@@ -266,6 +267,23 @@ tr:last-child td{border-bottom:none}
         <button class="form-btn" style="background:var(--bg);color:var(--text2);border:1.5px solid var(--border);margin-left:8px" onclick="editingStaffId=null;document.getElementById('add-staff-form').style.display='none'"><span class="l-de">Abbrechen</span><span class="l-en">Cancel</span></button>
       </div>
     </div>
+    <!-- ANMELDUNGEN -->
+    <div class="panel" id="panel-anmeldungen">
+      <div class="panel-title"><span class="l-de">Anmeldungen</span><span class="l-en">Logins</span><span class="l-id">Login</span></div>
+      <div style="margin-bottom:14px;display:flex;gap:8px;align-items:center">
+        <label style="font-size:12px;color:var(--text2)"><span class="l-de">Datum</span><span class="l-en">Date</span></label>
+        <input type="date" id="login-log-date" onchange="loadLoginLog()" style="padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font)">
+      </div>
+      <div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">
+        <table><thead><tr>
+          <th><span class="l-de">Zeit</span><span class="l-en">Time</span></th>
+          <th><span class="l-de">Mitarbeiter</span><span class="l-en">Staff</span></th>
+          <th><span class="l-de">Terminal</span></th>
+          <th><span class="l-de">Aktion</span><span class="l-en">Action</span></th>
+        </tr></thead>
+        <tbody id="login-log-tbody"></tbody></table>
+      </div>
+    </div>
     <!-- SPEISEKARTE -->
     <div class="panel" id="panel-speisekarte">
       <div style="background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid var(--border)">
@@ -335,6 +353,7 @@ tr:last-child td{border-bottom:none}
           <th>Status</th>
           <th>Total</th>
           <th><span class="l-de">Artikel</span><span class="l-en">Items</span><span class="l-id">Item</span></th>
+          <th></th>
         </tr></thead>
         <tbody id="ord-tbody"></tbody></table>
       </div>
@@ -361,7 +380,7 @@ var SB='https://pxzdkyvndosikdmstnpp.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5c
 async function sbGet(table,q){var r=await fetch(SB+'/rest/v1/'+table+'?'+(q||''),{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
 async function sbPost(table,d){var r=await fetch(SB+'/rest/v1/'+table,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(r.status);return r.json();}
 async function sbPatch(table,filter,d){var r=await fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'PATCH',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(d)});if(!r.ok){var t='';try{t=await r.text();}catch(e){}throw new Error('DB-Fehler ('+r.status+'): '+t);}return r;}
-async function sbDel(table,filter){return fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});}
+async function sbDel(table,filter){var r=await fetch(SB+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok){var t='';try{t=await r.text();}catch(e){}throw new Error('DB-Fehler ('+r.status+'): '+t);}return r;}
 
 
 var lang='de';
@@ -417,7 +436,7 @@ function doLogin(){
   var pin=Array.from(document.querySelectorAll('.pin')).map(function(p){return p.value;}).join('');
   var m=staff.find(function(s){return s.id===sid;});
   if(!m){document.getElementById('login-err').textContent='Bitte Mitarbeiter wählen';return;}
-  if(m.pin!==pin&&!(pin==='0000'&&m.role==='manager')){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin')[0].focus();return;}
+  if(m.pin!==pin){document.getElementById('login-err').textContent='Falscher PIN';clearPins();document.querySelectorAll('.pin')[0].focus();return;}
   document.getElementById('login').classList.add('hidden');
   var un=document.getElementById('topbar-user');if(un)un.textContent=m.fname;
   if(typeof afterLogin==='function')afterLogin(m);
@@ -446,6 +465,7 @@ function showPanel(id,el){
   if(id==='dashboard') loadDashboard();
   else if(id==='berichte') loadReports('today');
   else if(id==='personal') loadStaffTable();
+  else if(id==='anmeldungen') loadLoginLog();
   else if(id==='bestellungen') loadOrdersToday();
   else if(id==='tischplan'){}
   else if(id==='barrezepte'){}
@@ -610,6 +630,23 @@ async function storno(sid,oid){
 }
 
 // PERSONAL
+async function loadLoginLog(){
+  var dateEl=document.getElementById('login-log-date');
+  if(!dateEl.value)dateEl.value=new Date().toISOString().slice(0,10);
+  var date=dateEl.value;
+  try{
+    var rows=await sbGet('audit_log','action=in.(Angemeldet,Abgemeldet)&created_at=gte.'+date+'T00:00:00%2B08:00&created_at=lte.'+date+'T23:59:59%2B08:00&order=created_at.desc');
+    var tbody=document.getElementById('login-log-tbody');
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">'+(lang==='de'?'Keine Einträge':'No entries')+'</td></tr>';return;}
+    tbody.innerHTML=rows.map(function(r){
+      var t=new Date(r.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Makassar'});
+      var actionColor=r.action==='Angemeldet'?'var(--green)':'var(--red)';
+      return '<tr><td>'+t+'</td><td>'+(r.staff_name||'—')+'</td><td>'+(r.terminal||'—')+'</td>'+
+        '<td style="color:'+actionColor+';font-weight:600">'+r.action+'</td></tr>';
+    }).join('');
+  }catch(e){notify('⚠ '+e.message);}
+}
+
 async function loadStaffTable(){
   try{
     allStaff=await sbGet('staff','select=*&order=fname');
@@ -723,6 +760,22 @@ async function loadOrdersToday(){
   loadOrders();
 }
 
+async function deleteOrderRecord(orderId){
+  var msg1=lang==='de'?'Rechnung #'+orderId+' wirklich dauerhaft löschen? Das entfernt auch den zugehörigen Umsatzeintrag aus dem Tagesabschluss.':'Really permanently delete invoice #'+orderId+'? This also removes the matching sales record from the daily closing.';
+  if(!confirm(msg1))return;
+  var msg2=lang==='de'?'Bist du sicher? Das kann NICHT rückgängig gemacht werden.':'Are you sure? This CANNOT be undone.';
+  if(!confirm(msg2))return;
+  try{
+    var sales=await sbGet('sales','order_id=eq.'+orderId+'&select=id,total_k');
+    for(var i=0;i<sales.length;i++){await sbDel('sales','id=eq.'+sales[i].id);}
+    await sbDel('order_items','order_id=eq.'+orderId);
+    await sbDel('orders','id=eq.'+orderId);
+    logAction('Rechnung gelöscht','#'+orderId+(sales.length?' · Rp '+sales.reduce(function(s,x){return s+(x.total_k||0);},0)+'k Umsatz entfernt':''));
+    notify('✓ '+(lang==='de'?'Rechnung gelöscht':'Invoice deleted'));
+    loadOrders();
+  }catch(e){notify('⚠ Fehler: '+e.message);}
+}
+
 async function loadOrders(){
   var date=document.getElementById('ord-date').value||new Date().toISOString().slice(0,10);
   try{
@@ -739,19 +792,30 @@ async function loadOrders(){
       return '<tr><td>#'+o.id+'</td><td>'+tw()+o.table_number+'</td><td>'+time+'</td>'+
         '<td>'+statusLabel(o)+'</td>'+
         '<td><b>Rp '+(o.total_k||0)+'k</b></td>'+
-        '<td style="font-size:11px;color:var(--text2)">'+items+'</td></tr>';
-    }).join(''):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)"><span class="l-de">Keine Bestellungen</span><span class="l-en">No orders</span></td></tr>';
+        '<td style="font-size:11px;color:var(--text2)">'+items+'</td>'+
+        '<td><button class="del-btn" onclick="deleteOrderRecord('+o.id+')" title="Rechnung dauerhaft löschen">🗑</button></td></tr>';
+    }).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)"><span class="l-de">Keine Bestellungen</span><span class="l-en">No orders</span></td></tr>';
     document.body.className=lang;
   }catch(e){notify('⚠ '+e.message);}
 }
 
-function afterLogin(){
+var currentStaff=null;
+function logAction(action,details){
+  sbPost('audit_log',{staff_name:currentStaff?currentStaff.fname:null,staff_role:currentStaff?currentStaff.role:null,terminal:'Manager',action:action,details:details||null}).catch(function(){});
+}
+function afterLogin(m){
+  currentStaff=m;
+  logAction('Angemeldet','Manager');
   loadDashboard();
   timer=setInterval(loadDashboard,15000);
 }
-function afterLogout(){if(timer)clearInterval(timer);}
+function afterLogout(){logAction('Abgemeldet','Manager');if(timer)clearInterval(timer);}
 
-window.addEventListener('DOMContentLoaded',function(){loadStaff();initPins();});
+window.addEventListener('DOMContentLoaded',function(){
+  loadStaff();initPins();
+  history.pushState(null,'',location.href);
+  window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});
+});
 </script>
 </body>
 </html>

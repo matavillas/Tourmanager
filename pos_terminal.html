@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 11:45 -->
+<!-- Mata Villas v2026-08-23 13:00 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -416,6 +416,7 @@ function doLogin(){
 }
 
 function doLogout(){
+  logAction('Abgemeldet','POS');
   document.getElementById('login').classList.remove('hidden');
   clearPins();
   document.getElementById('login-err').textContent='';
@@ -545,7 +546,7 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-23 11:45';
+  document.getElementById('ver-tag').textContent='v2026-08-23 13:00';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
   document.getElementById('manual-btn').textContent=t('manualAdd');
@@ -940,6 +941,7 @@ async function loadRooms(){
 function afterLogin(m){
   currentStaff=m;
   setLang(m.preferred_lang||'de');
+  logAction('Angemeldet','POS');
   renderAll();loadTables();
   setInterval(function(){if(mode==='minibar')loadRooms();else loadTables();},30000);
 }
@@ -949,6 +951,9 @@ window.addEventListener('DOMContentLoaded',function(){
   loadStaff();initPins();
   renderAll();
   document.getElementById('mode-bar').onclick=function(e){var b=e.target.closest('.mbtn');if(b)setMode(b.dataset.m);};
+  // Rücktaste/Geste soll die App nicht beenden — Abmeldung nur über den ⏻-Button
+  history.pushState(null,'',location.href);
+  window.addEventListener('popstate',function(){history.pushState(null,'',location.href);});
 });
 </script>
 </body>
