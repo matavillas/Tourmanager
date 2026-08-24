@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 13:30 -->
+<!-- Mata Villas v2026-08-24 09:30 -->
 <!-- Mata Villas v2026-06-08 06:15:13 -->
 <html lang="de">
 <head>
@@ -126,6 +126,7 @@ tr:last-child td{border-bottom:none}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Manager Terminal</span><span class="l-en">Manager Terminal</span><span class="l-id">Terminal Manajer</span></span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-24 09:30</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -145,7 +146,7 @@ tr:last-child td{border-bottom:none}
     <div class="nav-item" onclick="showPanel('anmeldungen',this)">🔑 <span class="l-de">Anmeldungen</span><span class="l-en">Logins</span><span class="l-id">Login</span></div>
     <div class="nav-item" onclick="showPanel('speisekarte',this)">🍽️ <span class="l-de">Speisekarte</span><span class="l-en">Menu</span><span class="l-id">Menu</span></div>
     <div class="nav-item" onclick="showPanel('tischplan',this)">🗺️ <span class="l-de">Tischplan</span><span class="l-en">Floor Plan</span><span class="l-id">Denah</span></div>
-    <div class="nav-item" onclick="showPanel('bestellungen',this)">📋 <span class="l-de">Bestellungen</span><span class="l-en">Orders</span><span class="l-id">Pesanan</span></div>
+    <div class="nav-item" onclick="showPanel('bestellungen',this)">📋 <span class="l-de">Rechnungen</span><span class="l-en">Invoices</span><span class="l-id">Faktur</span></div>
     <div class="nav-item" onclick="showPanel('rezepte',this)">📖 <span class="l-de">Rezepte Küche</span><span class="l-en">Kitchen Recipes</span><span class="l-id">Resep Dapur</span></div>
     <div class="nav-item" onclick="showPanel('barrezepte',this)">🍹 <span class="l-de">Rezepte Bar</span><span class="l-en">Bar Recipes</span><span class="l-id">Resep Bar</span></div> <span class="l-de">Rezepte</span><span class="l-en">Recipes</span><span class="l-id">Resep</span></div>
   </div>
@@ -356,6 +357,19 @@ tr:last-child td{border-bottom:none}
           <th></th>
         </tr></thead>
         <tbody id="ord-tbody"></tbody></table>
+      </div>
+      <div class="table-head" style="margin-top:18px">🏨 <span class="l-de">Hotelrechnungen</span><span class="l-en">Hotel invoices</span><span class="l-id">Faktur hotel</span></div>
+      <div class="table-wrap">
+        <table><thead><tr>
+          <th>#</th>
+          <th><span class="l-de">Zimmer</span><span class="l-en">Room</span><span class="l-id">Kamar</span></th>
+          <th><span class="l-de">Gast</span><span class="l-en">Guest</span></th>
+          <th><span class="l-de">Zeitraum</span><span class="l-en">Stay</span></th>
+          <th>Status</th>
+          <th>Total</th>
+          <th></th>
+        </tr></thead>
+        <tbody id="hotel-inv-tbody"></tbody></table>
       </div>
     </div>
     <!-- BAR REZEPTE -->
@@ -797,6 +811,41 @@ async function loadOrders(){
     }).join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)"><span class="l-de">Keine Bestellungen</span><span class="l-en">No orders</span></td></tr>';
     document.body.className=lang;
   }catch(e){notify('⚠ '+e.message);}
+  loadHotelInvoices();
+}
+
+async function loadHotelInvoices(){
+  var date=document.getElementById('ord-date').value||new Date().toISOString().slice(0,10);
+  try{
+    var rows=await sbGet('hotel_charges','select=*,rooms(name)&created_at=gte.'+date+'T00:00:00&created_at=lte.'+date+'T23:59:59&order=created_at.desc');
+    var tbody=document.getElementById('hotel-inv-tbody');
+    if(!rows.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text3)"><span class="l-de">Keine Hotelrechnungen</span><span class="l-en">No hotel invoices</span></td></tr>';return;}
+    var statusLabel=function(h){
+      return h.status==='paid'?'<span style="color:#2d7a4f">✓ '+(lang==='de'?'Bezahlt':'Paid')+'</span>':'<span style="color:#e67e22">'+(lang==='de'?'Offen':'Open')+'</span>';
+    };
+    tbody.innerHTML=rows.map(function(h){
+      var room=h.rooms?h.rooms.name:'—';
+      var period=(h.checkin_date&&h.checkout_date)?(h.checkin_date+' → '+h.checkout_date):'—';
+      return '<tr><td>#'+h.id+'</td><td>'+room+'</td><td>'+(h.guest_name||'—')+'</td><td style="font-size:11px">'+period+'</td>'+
+        '<td>'+statusLabel(h)+'</td><td><b>Rp '+h.amount_k+'k</b></td>'+
+        '<td><button class="del-btn" onclick="deleteHotelInvoice('+h.id+')" title="Hotelrechnung dauerhaft löschen">🗑</button></td></tr>';
+    }).join('');
+  }catch(e){notify('⚠ '+e.message);}
+}
+
+async function deleteHotelInvoice(id){
+  var msg1=lang==='de'?'Hotelrechnung #'+id+' wirklich dauerhaft löschen? Das entfernt auch den zugehörigen Umsatzeintrag, falls schon bezahlt.':'Really permanently delete hotel invoice #'+id+'? This also removes the matching sales record if already paid.';
+  if(!confirm(msg1))return;
+  var msg2=lang==='de'?'Bist du sicher? Das kann NICHT rückgängig gemacht werden.':'Are you sure? This CANNOT be undone.';
+  if(!confirm(msg2))return;
+  try{
+    var sales=await sbGet('sales','hotel_charge_id=eq.'+id+'&select=id,total_k');
+    for(var i=0;i<sales.length;i++){await sbDel('sales','id=eq.'+sales[i].id);}
+    await sbDel('hotel_charges','id=eq.'+id);
+    logAction('Hotelrechnung gelöscht','#'+id+(sales.length?' · Rp '+sales.reduce(function(s,x){return s+(x.total_k||0);},0)+'k Umsatz entfernt':''));
+    notify('✓ '+(lang==='de'?'Hotelrechnung gelöscht':'Hotel invoice deleted'));
+    loadHotelInvoices();
+  }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
 var currentStaff=null;
