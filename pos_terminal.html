@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 11:00 -->
+<!-- Mata Villas v2026-08-23 11:45 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -545,7 +545,7 @@ function renderAll(){
   document.getElementById('login-btn').textContent=t('signIn');
   document.getElementById('total-label').textContent=t('total');
   document.getElementById('topbar-title').textContent='POS Terminal';
-  document.getElementById('ver-tag').textContent='v2026-08-23 11:00';
+  document.getElementById('ver-tag').textContent='v2026-08-23 11:45';
   document.getElementById('mode-restaurant').textContent=t('restaurant');
   document.getElementById('mode-minibar').textContent=t('minibar');
   document.getElementById('manual-btn').textContent=t('manualAdd');
@@ -787,7 +787,7 @@ document.addEventListener('click',function(e){
 });
 function addManualItem(){
   var name=document.getElementById('manual-name').value.trim();
-  var price=parseFloat(document.getElementById('manual-price').value)||0;
+  var price=parseFloat((document.getElementById('manual-price').value||'').replace(',','.'))||0;
   var qty=parseInt(document.getElementById('manual-qty').value)||1;
   if(qty<1)qty=1;
   if(!name||price<=0){notify('⚠ '+t('manualFillAll'));return;}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-23 11:00 -->
+<!-- Mata Villas v2026-08-23 11:45 -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -127,7 +127,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 11:00</span>
+  <span style="font-size:9px;color:var(--text3);font-family:monospace">v2026-08-23 11:45</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -234,7 +234,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
       <div id="checkin-nights-display" style="font-size:12px;color:var(--text3);margin-bottom:14px;margin-top:-8px"></div>
       <div style="margin-bottom:16px">
         <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Betrag (Rp, in k)</span><span class="l-en">Amount (Rp, in k)</span><span class="l-id">Jumlah (Rp, k)</span></label>
-        <input type="number" id="checkin-amount" placeholder="0" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px">
+        <input type="number" step="0.1" id="checkin-amount" placeholder="0" style="width:100%;padding:9px 10px;border:1.5px solid var(--border);border-radius:8px;font-family:var(--font);font-size:14px">
       </div>
       <button class="confirm-btn" id="checkin-save-btn" onclick="saveHotelDraft()" disabled><span class="l-de">Rechnung speichern</span><span class="l-en">Save invoice</span><span class="l-id">Simpan faktur</span></button>
     </div>
@@ -483,6 +483,7 @@ var KITCHEN_CATS=['Breakfast','Tapas','Tabla de Tapas','Larger Plates','Dessert'
 
 var bills=[],selBill=null,payMethod='cash',timer=null,billsMode='open';
 var checkinRoom=null,roomsList=[];
+function numVal(id){var v=document.getElementById(id).value||'';return parseFloat(v.replace(',','.'))||0;}
 
 function tw(){return lang==='de'?'Tisch ':lang==='en'?'Table ':'Meja ';}
 function toggleMoreMenu(){document.getElementById('more-panel').classList.toggle('show');}
@@ -865,13 +866,13 @@ function calcCheckinNights(){
 document.getElementById('checkin-from').addEventListener('change',function(){calcCheckinNights();updateHotelDraftBtn();});
 document.getElementById('checkin-to').addEventListener('change',function(){calcCheckinNights();updateHotelDraftBtn();});
 function updateHotelDraftBtn(){
-  var amt=parseFloat(document.getElementById('checkin-amount').value)||0;
+  var amt=numVal('checkin-amount');
   document.getElementById('checkin-save-btn').disabled=!(checkinRoom&&amt>0);
 }
 document.getElementById('checkin-amount').addEventListener('input',updateHotelDraftBtn);
 
 async function saveHotelDraft(){
-  var amt=parseFloat(document.getElementById('checkin-amount').value)||0;
+  var amt=numVal('checkin-amount');
   var from=document.getElementById('checkin-from').value||null;
   var to=document.getElementById('checkin-to').value||null;
   var nights=calcCheckinNights();
