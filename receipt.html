@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Mata Villas v2026-08-22 18:35 -->
+<!-- Mata Villas v2026-08-24 21:45 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -35,12 +35,13 @@ table{width:100%;border-collapse:collapse}
 var SB='https://pxzdkyvndosikdmstnpp.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emRreXZuZG9zaWtkbXN0bnBwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1NTIyNzQsImV4cCI6MjA5NTEyODI3NH0.QX1Iki-lguTfVsmyYWA9yPRtC8Qln-lMhSbCdMSdlYw';
 async function sbGet(table,q){var r=await fetch(SB+'/rest/v1/'+table+'?'+(q||''),{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});if(!r.ok)throw new Error(r.status);return r.json();}
 
-var pmLabel={cash:'💵 Cash',card:'💳 Card',qr:'📱 QRIS'};
+var pmLabel={cash:'💵 Cash',card:'💳 Card',qr:'📱 QRIS',booking:'🅱️ Booking.com',agoda:'🅰️ Agoda'};
 var PHONE='+62 853 5381 7651';
 
 function fmtDate(s){var d=new Date(s);return d.toLocaleString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
 function fmtDay(s){var d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function drow(label,val){return '<tr class="drow"><td>'+label+'</td><td>'+val+'</td></tr>';}
+function formatRp(k){var full=Math.round((k||0)*1000);return 'Rp '+full.toLocaleString('id-ID');}
 
 async function load(){
   var params=new URLSearchParams(window.location.search);
@@ -68,7 +69,7 @@ async function load(){
         var nights=Math.round((new Date(s.stay_to)-new Date(s.stay_from))/86400000);
         detailRows+=drow('Nights',nights);
       }
-      detailRows+=drow('Price','Rp '+s.total_k+'k');
+      detailRows+=drow('Price',formatRp(s.total_k));
     }else{
       detailRows+=drow(s.revenue_category==='minibar'?'Room':'Table',loc);
       detailRows+=drow('Date',fmtDate(s.created_at));
@@ -78,12 +79,12 @@ async function load(){
     if(s.revenue_category==='minibar'&&s.item_snapshot&&s.item_snapshot.length){
       itemsHtml='<div class="sec-label">Items</div>'+s.item_snapshot.map(function(g){
         var gd=fmtDay(g.date);
-        var gRows=g.items.map(function(i){return '<tr class="irow"><td>'+i.quantity+'x '+i.name+'</td><td>Rp '+(i.price_k*i.quantity)+'k</td></tr>';}).join('');
+        var gRows=g.items.map(function(i){return '<tr class="irow"><td>'+i.quantity+'x '+i.name+'</td><td>'+formatRp(i.price_k*i.quantity)+'</td></tr>';}).join('');
         return '<div style="padding:8px 16px 2px;font-size:10px;font-weight:700;color:var(--text3)">📅 '+gd+'</div><table><tbody>'+gRows+'</tbody></table>';
       }).join('');
     }else{
       var itemRows=items.map(function(i){
-        return '<tr class="irow"><td>'+i.quantity+'x '+i.name+'</td><td>Rp '+(i.price_k*i.quantity)+'k</td></tr>';
+        return '<tr class="irow"><td>'+i.quantity+'x '+i.name+'</td><td>'+formatRp(i.price_k*i.quantity)+'</td></tr>';
       }).join('');
       itemsHtml=itemRows?('<div class="sec-label">Items</div><table><tbody>'+itemRows+'</tbody></table>'):'';
     }
@@ -93,7 +94,7 @@ async function load(){
       '<div class="badge">✓ Paid · '+(pmLabel[s.payment_method]||s.payment_method||'—')+'</div>'+
       '<table><tbody>'+detailRows+'</tbody></table>'+
       itemsHtml+
-      '<div class="total"><span>Total</span><span>Rp '+s.total_k+'k</span></div>'+
+      '<div class="total"><span>Total</span><span>'+formatRp(s.total_k)+'</span></div>'+
       '<div class="foot">Thank you for staying with us!</div>';
   }catch(e){
     card.innerHTML='<div class="empty">Error loading receipt.</div>';
