@@ -127,7 +127,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="topbar">
   <img class="topbar-logo" src="" alt="Mata Villas" style="height:32px;object-fit:contain">
   <span class="topbar-title"><span class="l-de">Kassen-Terminal</span><span class="l-en">Cashier Terminal</span><span class="l-id">Terminal Kasir</span></span>
-  <span style="font-size:8px;color:var(--text3);font-family:monospace">240824 2200</span>
+  <span style="font-size:8px;color:var(--text3);font-family:monospace">240826 1300</span>
   <div class="topbar-right">
     <button class="lb on" onclick="setLang('de')">DE</button>
     <button class="lb" onclick="setLang('en')">EN</button>
@@ -137,7 +137,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
       <div class="more-panel" id="more-panel">
         <a href="tischplan.html" target="_blank" class="more-item"><span class="ic">🗺️</span><span class="l-de">Tischplan</span><span class="l-en">Table plan</span><span class="l-id">Denah meja</span></a>
         <div class="more-item" onclick="closeMoreMenu();openCheckin()"><span class="ic">🏨</span><span class="l-de">Hotel</span><span class="l-en">Hotel</span><span class="l-id">Hotel</span></div>
-        <div class="more-item" onclick="closeMoreMenu();openCheckout()"><span class="ic">🚪</span><span class="l-de">Abreise (Minibar)</span><span class="l-en">Check-out (Minibar)</span><span class="l-id">Check-out (Minibar)</span></div>
+        <div class="more-item" onclick="closeMoreMenu();openCheckout()"><span class="ic">🧾</span><span class="l-de">Zimmerrechnung</span><span class="l-en">Room Folio</span><span class="l-id">Tagihan Kamar</span></div>
         <div class="more-item" onclick="closeMoreMenu();openClosing()"><span class="ic">📋</span><span class="l-de">Tagesabschluss</span><span class="l-en">Daily closing</span><span class="l-id">Penutupan harian</span></div>
       </div>
     </div>
@@ -248,7 +248,7 @@ body.de .l-de,body.en .l-en,body.id .l-id{display:inline}
 <div class="paid-overlay" id="checkout-overlay" style="background:rgba(26,32,44,.88)">
   <div style="background:#fff;border-radius:16px;padding:24px;width:90%;max-width:400px;max-height:85vh;overflow-y:auto;color:var(--text);text-align:left">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:17px;font-weight:800"><span class="l-de">Abreise</span><span class="l-en">Check-out</span><span class="l-id">Check-out</span></div>
+      <div style="font-size:17px;font-weight:800"><span class="l-de">Zimmerrechnung</span><span class="l-en">Room Folio</span><span class="l-id">Tagihan Kamar</span></div>
       <button onclick="closeCheckout()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
     </div>
     <label style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:6px"><span class="l-de">Zimmer</span><span class="l-en">Room</span><span class="l-id">Kamar</span></label>
@@ -975,11 +975,11 @@ async function confirmHotelInvoicePayment(){
   }catch(e){notify('⚠ Fehler: '+e.message);}
 }
 
-var checkoutRoom=null,checkoutOrders=[],checkoutPM=null,checkoutDiscount=0,checkoutReason=null;
+var checkoutRoom=null,checkoutOrders=[],checkoutPM=null,checkoutDiscount=0,checkoutReason=null,checkoutDiscountOpen=false;
 
 async function openCheckout(){
   document.getElementById('checkout-overlay').classList.add('show');
-  checkoutRoom=null;checkoutOrders=[];checkoutPM=null;checkoutDiscount=0;checkoutReason=null;
+  checkoutRoom=null;checkoutOrders=[];checkoutPM=null;checkoutDiscount=0;checkoutReason=null;checkoutDiscountOpen=false;
   document.getElementById('checkout-body').innerHTML='';
   if(!roomsList.length){
     try{roomsList=await sbGet('rooms','active=eq.true&order=sort_order&select=id,name');}catch(e){roomsList=[];}
@@ -994,7 +994,7 @@ async function selCheckoutRoom(id,el){
   checkoutRoom=roomsList.find(function(r){return r.id===id;});
   document.querySelectorAll('#checkout-rooms .pm').forEach(function(b){b.classList.remove('sel');});
   el.classList.add('sel');
-  checkoutPM=null;checkoutDiscount=0;checkoutReason=null;
+  checkoutPM=null;checkoutDiscount=0;checkoutReason=null;checkoutDiscountOpen=false;
   var body=document.getElementById('checkout-body');
   body.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Lädt…</div>';
   try{
@@ -1033,29 +1033,35 @@ function renderCheckoutBody(){
   var subtotal=allItems.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
   var discountAmt=Math.round(subtotal*checkoutDiscount/100);
   var finalTotal=subtotal-discountAmt;
+  var restaurantLabel=lang==='de'?'Restaurant':lang==='en'?'Restaurant':'Restoran';
+  var minibarLabel='Minibar';
   var groupsHtml=checkoutOrders.map(function(o){
     var items=(o.order_items||[]).filter(function(i){return i.status!=='cancelled';});
     if(!items.length)return '';
     var dateStr=new Date(o.created_at).toLocaleDateString(lang==='de'?'de-DE':lang==='id'?'id-ID':'en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
     var groupTotal=items.reduce(function(s,i){return s+i.price_k*i.quantity;},0);
     var icon=o.order_type==='minibar'?'🏠':'🍽️';
-    var label=o.order_type==='minibar'?(lang==='de'?'Minibar':'Minibar'):((lang==='de'?'Tisch':'Table')+' '+o.table_number);
+    var label=o.order_type==='minibar'?minibarLabel:restaurantLabel;
     var itemRows=items.map(function(i){
-      return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">Rp '+(i.price_k*i.quantity)+'k</span>'+
+      return '<div class="ritem"><span class="ritem-name">'+i.quantity+'x '+i.name+'</span><span class="ritem-price">'+formatRp(i.price_k*i.quantity)+'</span>'+
         '<button onclick="removeCheckoutItem('+o.id+','+i.id+')" title="Entfernen" style="background:none;border:none;color:#e74c3c;cursor:pointer;font-size:14px;margin-left:8px">&#10005;</button></div>';
     }).join('');
-    return '<div class="sec-label" style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--text2)"><span>'+icon+' '+label+' · 📅 '+dateStr+'</span><span>Rp '+groupTotal+'k</span></div>'+itemRows;
+    return '<div class="sec-label" style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;color:var(--text2)"><span>📅 '+dateStr+' — '+icon+' '+label+'</span><span>'+formatRp(groupTotal)+'</span></div>'+itemRows;
   }).join('');
+  var discountToggle=checkoutDiscountOpen
+    ? '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
+        '<span style="font-size:13px;color:var(--text3)">Rabatt:</span>'+
+        [0,10,20].map(function(p){return '<button onclick="setCheckoutDiscount('+p+')" style="padding:4px 10px;border-radius:6px;border:1px solid '+(checkoutDiscount===p?'var(--accent)':'var(--border)')+';background:'+(checkoutDiscount===p?'var(--accent-bg)':'#fff')+';font-size:12px;cursor:pointer">'+p+'%</button>';}).join('')+
+        '<button onclick="checkoutDiscountOpen=false;renderCheckoutBody()" style="margin-left:auto;padding:4px 8px;border:none;background:none;color:var(--text3);font-size:12px;cursor:pointer">✕</button>'+
+      '</div>'
+    : '<div style="margin-bottom:12px"><button onclick="checkoutDiscountOpen=true;renderCheckoutBody()" style="padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:#fff;font-size:11px;color:var(--text3);cursor:pointer">✎ Rabatt (nur Personal)</button></div>';
   body.innerHTML=
     '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px">'+groupsHtml+
-    '<div class="rtotal" style="border-top:1px solid var(--border)"><span>Subtotal</span><span>Rp '+subtotal+'k</span></div>'+
+    '<div class="rtotal" style="border-top:1px solid var(--border)"><span>Subtotal</span><span>'+formatRp(subtotal)+'</span></div>'+
     '</div>'+
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">'+
-      '<span style="font-size:13px;color:var(--text3)">Rabatt:</span>'+
-      [0,10,20].map(function(p){return '<button onclick="setCheckoutDiscount('+p+')" style="padding:4px 10px;border-radius:6px;border:1px solid '+(checkoutDiscount===p?'var(--accent)':'var(--border)')+';background:'+(checkoutDiscount===p?'var(--accent-bg)':'#fff')+';font-size:12px;cursor:pointer">'+p+'%</button>';}).join('')+
-    '</div>'+
-    (checkoutDiscount>0?'<div class="rtotal" style="color:#e67e22"><span>Rabatt ('+checkoutDiscount+'%)</span><span>-Rp '+discountAmt+'k</span></div>':'')+
-    '<div class="rtotal" style="font-size:18px;font-weight:800;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:14px"><span>Total</span><span>Rp '+finalTotal+'k</span></div>'+
+    discountToggle+
+    (checkoutDiscount>0?'<div class="rtotal" style="color:#e67e22"><span>Rabatt ('+checkoutDiscount+'%)</span><span>-'+formatRp(discountAmt)+'</span></div>':'')+
+    '<div class="rtotal" style="font-size:18px;font-weight:800;background:var(--bg);border-radius:8px;padding:10px 12px;margin-bottom:14px"><span>Total</span><span>'+formatRp(finalTotal)+'</span></div>'+
     '<div class="pay-label"><span class="l-de">Zahlungsart</span><span class="l-en">Payment method</span><span class="l-id">Metode pembayaran</span></div>'+
     '<div class="pay-methods" style="margin-bottom:14px">'+
       '<div class="pm" id="checkout-pm-cash" onclick="selCheckoutPM(\'cash\')"><div class="pm-icon">💵</div><div class="pm-label"><span class="l-de">Bar</span><span class="l-en">Cash</span><span class="l-id">Tunai</span></div></div>'+
