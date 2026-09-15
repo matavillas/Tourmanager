@@ -40,6 +40,18 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .upload-sub{font-size:14px;color:var(--muted);line-height:1.6;}
 .upload-hint{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--bg);padding:8px 16px;border-radius:20px;margin-top:12px;display:inline-block;}
 #fileInput{display:none;}
+.file-queue{display:flex;flex-direction:column;gap:8px;max-width:560px;width:100%;}
+.file-queue-item{display:flex;align-items:center;gap:10px;background:#1e2d3d;border:1px solid #30363d;border-radius:8px;padding:10px 14px;font-size:12px;}
+.file-queue-icon{font-size:18px;flex-shrink:0;}
+.file-queue-name{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-queue-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;}
+.file-queue-remove{background:none;border:none;cursor:pointer;color:#c8431a;font-size:16px;padding:0 2px;line-height:1;flex-shrink:0;}
+.file-queue-remove:hover{color:#ff6b4a;}
+.btn-add-file{background:#1e2d3d;border:2px dashed #30363d;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;width:100%;max-width:560px;transition:all 0.15s;text-align:center;}
+.btn-add-file:hover{border-color:var(--accent);color:var(--accent);background:#233347;}
+.btn-build{background:#1a5fa0;color:#fff;border:none;border-radius:10px;padding:14px 24px;font-size:14px;font-weight:700;cursor:pointer;width:100%;max-width:560px;transition:background 0.15s;}
+.btn-build:hover{background:#1a4f88;}
+.btn-build:disabled{background:#30363d;color:var(--muted);cursor:not-allowed;}
 #appZone{display:none;}
 .app-bar{background:#1e2d3d;border-bottom:1px solid #30363d;padding:12px 28px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
 .app-bar-info{font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;}.app-bar-info strong{color:var(--text);}
@@ -133,12 +145,22 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
     <div id="apiSetupStatus" style="font-size:11px;margin-top:6px;color:var(--muted);">Key wird sicher im Browser gespeichert – nicht in der Datei.</div>
   </div>
 
+  <!-- Datei-Queue -->
+  <div class="file-queue" id="fileQueue" style="display:none;"></div>
+
+  <!-- Drop-Zone / Datei hinzufügen -->
   <div class="upload-card" id="dropZone" onclick="document.getElementById('fileInput').click()">
     <div class="upload-icon">📦</div>
-    <div class="upload-title">Tour-PDF hochladen</div>
-    <div class="upload-sub">Ziehe die Tages-PDF hier rein oder klicke zum Auswählen.<br>Stopps werden automatisch erkannt und den Touren zugeordnet.</div>
-    <div class="upload-hint">PDF oder .tour Datei &nbsp;·&nbsp; 31_... = 7:00 Uhr &nbsp;·&nbsp; 32_... = 10:00 Uhr &nbsp;·&nbsp; 33_... = 13:00 Uhr</div>
+    <div class="upload-title" id="dropZoneTitle">Tour-Dateien hochladen</div>
+    <div class="upload-sub">Klicke oder ziehe Dateien hierher.<br>Jede Datei = eine Tour. Mehrere Dateien nacheinander hinzufügen.</div>
+    <div class="upload-hint">PDF oder .tour &nbsp;·&nbsp; 31 = 7:00 Uhr &nbsp;·&nbsp; 32 = 10:00 Uhr &nbsp;·&nbsp; 33 = 13:00 Uhr &nbsp;·&nbsp; 37 = Nord/Süd</div>
   </div>
+
+  <!-- Touren berechnen Button (erscheint sobald min. 1 Datei) -->
+  <button class="btn-build" id="btnBuild" style="display:none;" onclick="buildAllFiles()">
+    🚀 Touren berechnen
+  </button>
+
   <input type="file" id="fileInput" accept=".pdf,.tour">
 </div>
 
@@ -499,7 +521,6 @@ function getMonthlyBillingHTML() {
   </table>`;
 }
 
-// Normalisiert Umlaute und ß für unscharfen Vergleich
 function normalizeAddr(s) {
   return s.toLowerCase()
     .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
@@ -1307,14 +1328,12 @@ function parseTourFile(text, filename) {
   for (const line of lines) {
     // Format: "Firmenname, Straße HNr, PLZ Ort"
     // Von hinten parsen: letztes Segment = PLZ Ort, vorletztes = Straße, Rest = Name
+    // (funktioniert auch wenn Firmenname ein Komma enthält)
     const parts = line.split(',');
     if (parts.length < 3) continue;
 
-    // Letztes Segment = PLZ Ort (z.B. " 41464 Neuss")
     const plzOrt = parts[parts.length - 1].trim();
-    // Vorletztes Segment = Straße (z.B. " Moselstraße 13")
     const street = parts[parts.length - 2].trim();
-    // Alles davor = Firmenname (zusammengefügt falls Komma im Namen)
     const name   = parts.slice(0, parts.length - 2).join(',').trim();
 
     // PLZ + Ort trennen
@@ -1489,42 +1508,78 @@ async function buildTours(stops, timeCode) {
   const tourMap={};
   const extraStops=[];
 
+  // 37er Touren: keine Sonderregeln, direkt in tourMap
+  const is37 = timeCode === '37';
+
   stops.forEach(s=>{
-    if(timeCode==='32'){
-      // Tour 32 (10 Uhr): Neuss + Kaarst → 1E, Dormagen komplett ignorieren
-      if(isDormagen(s)) return;
-      if(isNeuss(s)||isKaarst(s)){extraStops.push(s);return;}
+    if (!is37) {
+      if(timeCode==='32'){
+        // Tour 32 (10 Uhr): Neuss + Kaarst → Tour 4/1E, Dormagen ignorieren
+        if(isDormagen(s)) return;
+        if(isNeuss(s)||isKaarst(s)){extraStops.push(s);return;}
+      } else {
+        // Tour 31 + 33 (7 + 13 Uhr): Neuss + Kaarst + Dormagen → Tour 4/1E
+        if(isNeuss(s)||isKaarst(s)||isDormagen(s)){extraStops.push(s);return;}
+      }
     } else {
-      // Tour 31 + 33 (7 + 13 Uhr): Neuss + Kaarst + Dormagen → alle in 1E
-      if(isNeuss(s)||isKaarst(s)||isDormagen(s)){extraStops.push(s);return;}
+      // Tour 37 (10 Uhr Nord/Süd): Dormagen kommt als erstes in Süd 1 (Tour 3)
+      // Dormagen-Stopps werden in tourMap[3] vorne eingereiht
+      if(isDormagen(s)){
+        if(!tourMap[3])tourMap[3]=[];
+        tourMap[3].unshift(s); // vorne einfügen
+        return;
+      }
     }
     if(!tourMap[s.tourNum])tourMap[s.tourNum]=[];
     tourMap[s.tourNum].push(s);
   });
+
   const tours=[];
   const tourNums = Object.keys(tourMap).map(Number).sort();
-  const startHourB = {'31': 7, '32': 10, '33': 13}[state._currentTimeCode||'32'] || 7;
+  const startHourB = {'31':7,'32':10,'33':13,'37':10}[timeCode] || 10;
   const startTimeB = new Date(); startTimeB.setHours(startHourB, 0, 0, 0);
 
-  for(let i=0; i<tourNums.length; i++){
-    const n=tourNums[i];
-    const allStops = tourMap[n];
+  // Bezeichnung je Zeitcode
+  const tourLabels = {
+    '31': n => `Tour ${n}/31`,
+    '32': n => `Tour ${n}/32`,
+    '33': n => `Tour ${n}/33`,
+    '37': n => ({'1':'Nord 1','2':'Nord 2','3':'Süd 1','4':'Süd 2'}[String(n)] || `Tour ${n}/37`)
+  };
+  const labelFn = tourLabels[timeCode] || (n => `Tour ${n}`);
 
-    // Alle Stopps der Tour als echte Rundtour optimieren:
-    // Depot → alle Stopps → Depot, Google Maps entscheidet die beste Reihenfolge global.
-    // Kein k-means / kein stadtweises Clustering – Maps berücksichtigt echte Fahrzeiten.
+  for(let i=0; i<tourNums.length; i++){
+    const n = tourNums[i];
+    let allStops = tourMap[n];
+
+    // Süd 1 (Tour 3/37): Dormagen-Stopps fest am Anfang, Rest danach optimiert
     let optimized = allStops;
-    if (allStops.length > 1) {
+    if (is37 && n === 3) {
+      const dormagenPart = allStops.filter(s => isDormagen(s));
+      const restPart     = allStops.filter(s => !isDormagen(s));
+      // Dormagen intern optimieren (Brute Force – meist wenige Stopps)
+      const optDorm = dormagenPart.length > 1 ? await optimizeRoute(dormagenPart, DEPOT) : dormagenPart;
+      // Rest per Google Maps optimieren, Startpunkt = letzter Dormagen-Stopp
+      let optRest = restPart;
+      if (restPart.length > 1) {
+        const gmOrder = await optimizeWithGoogleMaps(restPart, DEPOT, new Date(startTimeB));
+        if (gmOrder && gmOrder.length === restPart.length) {
+          optRest = gmOrder.map(i => restPart[i]);
+        } else {
+          optRest = await optimizeRoute(restPart, DEPOT);
+        }
+      }
+      optimized = [...optDorm, ...optRest];
+    } else if (allStops.length > 1) {
+      // Alle anderen Touren: echte Rundtour, Google Maps optimiert global
       const gmOrder = await optimizeWithGoogleMaps(allStops, DEPOT, new Date(startTimeB));
       if (gmOrder && gmOrder.length === allStops.length) {
         optimized = gmOrder.map(i => allStops[i]);
       } else {
-        // Fallback: Distance Matrix + 2-opt/3-opt wenn Maps nicht verfügbar
         optimized = await optimizeRoute(allStops, DEPOT);
       }
     }
-
-    tours.push({id:`tour${n}`,label:`Tour ${n}`,stops:optimized,color:TOUR_COLORS[i]||TOUR_COLORS[0]});
+    tours.push({id:`tour${timeCode}_${n}`,label:labelFn(n),stops:optimized,color:TOUR_COLORS[i]||TOUR_COLORS[0]});
   }
   if(extraStops.length>0){
     // Tour 1E: Feste Gruppen Kaarst→Neuss→Dormagen
@@ -1553,12 +1608,13 @@ async function buildTours(stops, timeCode) {
     const optDorm = bruteForceRoute(dormagenExtra, afterNeuss, DEPOT_ARR);
 
     const optimized = [...optKaarst, ...optNeuss, ...optDorm];
-    tours.push({id:'tour1E',label:'Tour 1E',stops:optimized,color:'#8b1ac8'});
+    const tour4Label = {'31':'Tour 4/31','32':'Tour 4/32','33':'Tour 4/33'}[timeCode] || 'Tour 4';
+    tours.push({id:`tour${timeCode}_4E`,label:tour4Label,stops:optimized,color:'#8b1ac8'});
   }
   return tours;
 }
 
-let state={filename:'',tours:[],dragStop:null,dragFromTour:null};
+let state={filename:'',tours:[],dragStop:null,dragFromTour:null,fileQueue:[]};
 
 function render(){
   const container=document.getElementById('toursContainer');
@@ -2083,87 +2139,91 @@ function generateExportHTML(tours,title,filename){
   return `<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tour Dashboard · ${title}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f0ede8;font-family:sans-serif;padding-bottom:40px}h1{background:#1a1814;color:#f0ede8;padding:16px 24px;font-size:16px}  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:20px}.card{background:#fff;border:1px solid #d8d3cc;border-radius:10px;overflow:hidden}.ch{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #d8d3cc}.cnt{font-size:11px;background:#f0ede8;padding:2px 8px;border-radius:10px;color:#8a8480}.gm{display:block;margin:10px 12px 0;padding:11px;border-radius:7px;text-decoration:none;font-size:13px;font-weight:700;text-align:center;color:#fff}.cr{display:flex;margin:6px 12px 10px}.ci{flex:1;background:#f0ede8;border:1px solid #d8d3cc;border-right:none;padding:6px 8px;font-size:10px;border-radius:6px 0 0 6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;outline:none;font-family:monospace}.cb{background:#d8d3cc;border:1px solid #d8d3cc;padding:6px 10px;border-radius:0 6px 6px 0;cursor:pointer;font-size:11px;font-weight:600}.cb.done{background:#1a9c4a;color:#fff;border-color:#1a9c4a}.depot{padding:6px 12px;background:rgba(200,67,26,0.06);font-size:11px;font-weight:600;color:#c8431a;border-bottom:1px solid rgba(216,211,204,0.4);font-family:monospace}.stop{display:flex;align-items:flex-start;gap:8px;padding:7px 12px;border-bottom:1px solid rgba(216,211,204,0.4)}.n{font-size:11px;color:#8a8480;min-width:20px;font-family:monospace;padding-top:1px}.sn{font-size:12px;font-weight:600}.sa{font-size:11px;color:#8a8480;font-family:monospace;margin-top:1px}.note{font-size:10px;color:#c8961a;background:rgba(200,150,26,0.1);padding:1px 6px;border-radius:3px;margin-top:2px;display:inline-block}</style></head><body><h1 style="display:flex;align-items:center;gap:16px;">Tour Dashboard <span style="background:#c8431a;color:#fff;padding:2px 10px;border-radius:4px;font-size:14px;">${title}</span></h1><div class="grid">${cards}</div><script>document.querySelectorAll('.cb').forEach(b=>{b.addEventListener('click',()=>{navigator.clipboard.writeText(b.dataset.url).then(()=>{b.textContent='✓ Kopiert!';b.classList.add('done');setTimeout(()=>{b.textContent='Kopieren';b.classList.remove('done');},2500);});});});<\/script></body></html>`;
 }
 
-async function handleFile(file){
-  if(!file?.name.endsWith('.pdf') && !file?.name.endsWith('.tour')){
-    showToast('Bitte eine PDF- oder .tour-Datei hochladen');return;
-  }
+// ── DATEI-QUEUE MANAGEMENT ────────────────────────────────────────────────────
+function getTimecodeFromFilename(name) {
+  // Aus Dateiname Zeitcode ableiten: 31_ / 32_ / 33_ / 37_ als Präfix oder im Namen
+  const m = name.match(/(?:^|_)(3[1237])(?:_|\.)/i);
+  if (m) return m[1];
+  // Fallback: aktuelle Uhrzeit
+  const nowMin = new Date().getHours()*60 + new Date().getMinutes();
+  if (nowMin >= 17*60)                        return '31';
+  if (nowMin >= 9*60  && nowMin < 11*60)      return '32';
+  if (nowMin >= 12*60+30 && nowMin < 14*60)   return '33';
+  return '32';
+}
 
-  // .tour Datei direkt parsen (immer iso-8859-1 – Windows-Format)
-  if(file.name.endsWith('.tour')){
-    const buf = await file.arrayBuffer();
-    const text = new TextDecoder('iso-8859-1').decode(buf);
-    const {stops, pdfDate} = parseTourFile(text, file.name);
-    if(!stops.length){showToast('Keine Stopps in .tour Datei gefunden');return;}
+function timecodeLabel(code) {
+  return {'31':'7:00 Uhr','32':'10:00 Uhr','33':'13:00 Uhr','37':'10:00 Uhr (Nord/Süd)'}[code] || code;
+}
 
-    // Datum + Code aus Dateiname
-    const tourMatch = file.name.match(/Tour_(\d+)_(\d+)_(\d{8})(\d{4})/i);
-    const tourNum   = tourMatch ? tourMatch[1] : '?';
-    const timeStr   = tourMatch ? tourMatch[4].slice(0,2)+':'+tourMatch[4].slice(2) : '';
+function renderFileQueue() {
+  const q = state.fileQueue;
+  const qEl = document.getElementById('fileQueue');
+  const btn = document.getElementById('btnBuild');
+  const dropTitle = document.getElementById('dropZoneTitle');
 
-    // Uhrzeit → Code bestimmen
-    const hour = tourMatch ? parseInt(tourMatch[4].slice(0,2)) : 12;
-    const min  = tourMatch ? parseInt(tourMatch[4].slice(2)) : 0;
-    const nowMin = hour*60+min;
-    let tourCode;
-    if      (nowMin >= 17*60)                      tourCode = '31';
-    else if (nowMin >= 9*60 && nowMin < 11*60)     tourCode = '32';
-    else if (nowMin >= 12*60+30 && nowMin < 14*60) tourCode = '33';
-    else                                            tourCode = '3'+tourNum;
-
-    const timeLabels={'31':'⏰ 7:00 Uhr','32':'⏰ 10:00 Uhr','33':'⏰ 13:00 Uhr'};
-    state.tourCode = tourCode;
-    state._currentTimeCode = tourCode;
-    state.tourDate = pdfDate;
-    state.filename = file.name;
-
-    document.getElementById('infoTime').textContent = timeStr ? `⏰ ${timeStr} Uhr` : '';
-    document.getElementById('infoCode').textContent = tourCode ? 'Tour '+tourCode : '';
-    document.getElementById('infoDate').textContent = pdfDate ? pdfDate : '';
-
-    document.getElementById('loading').classList.add('show');
-    showLoadingMsg(`${stops.length} Stopps werden optimiert…`);
-
-    await geocodeMissingStops(stops);
-    state.tours = await buildTours(stops, tourCode);
-    document.getElementById('uploadZone').style.display='none';
-    document.getElementById('appZone').style.display='block';
-    render();
-    showToast(`${stops.length} Stopps aus .tour Datei geladen`);
-    document.getElementById('loading').classList.remove('show');
+  if (!q.length) {
+    qEl.style.display = 'none';
+    btn.style.display = 'none';
+    dropTitle.textContent = 'Tour-Dateien hochladen';
     return;
   }
-  state.filename=file.name;
-  const timeLabels={'31':'⏰ 7:00 Uhr','32':'⏰ 10:00 Uhr','33':'⏰ 13:00 Uhr'};
-  // Tournummer anhand Uhrzeit:
-  // ab 17:00 = Tour 31 (morgen 7 Uhr)
-  // 09:00-11:00 = Tour 32 (heute 10 Uhr)
-  // 12:30-14:00 = Tour 33 (heute 13 Uhr)
-  const nowMin = new Date().getHours()*60 + new Date().getMinutes();
-  let tourCode;
-  if      (nowMin >= 17*60)                        tourCode = '31';
-  else if (nowMin >= 9*60  && nowMin < 11*60)      tourCode = '32';
-  else if (nowMin >= 12*60+30 && nowMin < 14*60)   tourCode = '33';
-  else {
-    const cm = file.name.match(/^(\d{2})/);
-    tourCode = cm ? cm[1] : '32';
-  }
-  const timeCode = tourCode;
 
-  // Lieferdatum: Tour 31 = nächster Werktag, Tour 32+33 = heute
-  function getDeliveryDate(code) {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    if (code === '31') {
-      // Nächster Werktag (Mo-Fr), Wochenende überspringen
-      const next = new Date(today);
-      do {
-        next.setDate(next.getDate() + 1);
-      } while (next.getDay() === 0 || next.getDay() === 6);
-      return next;
-    }
-    return today;
+  qEl.style.display = 'flex';
+  btn.style.display = 'block';
+  dropTitle.textContent = '+ Weitere Datei hinzufügen';
+
+  qEl.innerHTML = q.map((f, i) => `
+    <div class="file-queue-item">
+      <span class="file-queue-icon">${f.name.endsWith('.tour') ? '📋' : '📄'}</span>
+      <span class="file-queue-name">${f.name}</span>
+      <span class="file-queue-meta">⏰ ${timecodeLabel(f.timeCode)}</span>
+      <button class="file-queue-remove" onclick="removeFromQueue(${i})" title="Entfernen">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFromQueue(i) {
+  state.fileQueue.splice(i, 1);
+  renderFileQueue();
+}
+
+async function handleFile(file) {
+  if (!file?.name.endsWith('.pdf') && !file?.name.endsWith('.tour')) {
+    showToast('Bitte eine PDF- oder .tour-Datei hochladen'); return;
   }
-  const delivDate = getDeliveryDate(tourCode);
+  // Doppelte vermeiden
+  if (state.fileQueue.some(f => f.name === file.name)) {
+    showToast(`"${file.name}" ist bereits in der Liste`); return;
+  }
+  const timeCode = getTimecodeFromFilename(file.name);
+  state.fileQueue.push({ file, name: file.name, timeCode });
+  renderFileQueue();
+  // fileInput zurücksetzen damit dieselbe Datei nochmal gewählt werden kann
+  document.getElementById('fileInput').value = '';
+}
+
+// ── ALLE DATEIEN VERARBEITEN UND TOUREN BERECHNEN ────────────────────────────
+function getDeliveryDate(code) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (code === '31') {
+    const next = new Date(today);
+    do { next.setDate(next.getDate() + 1); }
+    while (next.getDay() === 0 || next.getDay() === 6);
+    return next;
+  }
+  return today;
+}
+
+async function buildAllFiles() {
+  if (!state.fileQueue.length) return;
+
+  document.getElementById('loading').classList.add('show');
+  showLoadingMsg('Dateien werden eingelesen…');
+
+  // Alle Zeitcodes die vorkommen – erster bestimmt das Datum
+  const primaryCode = state.fileQueue[0].timeCode;
+  const delivDate = getDeliveryDate(primaryCode);
   const dd = String(delivDate.getDate()).padStart(2,'0');
   const mm = String(delivDate.getMonth()+1).padStart(2,'0');
   const yyyy = delivDate.getFullYear();
@@ -2171,29 +2231,63 @@ async function handleFile(file){
   const wochentage = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
   const wochentag = wochentage[delivDate.getDay()];
 
-  state.tourCode = tourCode;
-  state.tourDate = dateStr;
+  // Stopps pro Zeitcode sammeln
+  // Jede Datei liefert Stopps die bereits eine tourNum (1,2,3,4) haben
+  // Wir gruppieren: timeCode → stops[]
+  const stopsByCode = {}; // '31' → [...], '32' → [...], '37' → [...]
 
-  document.getElementById('infoTime').textContent = timeLabels[timeCode]||'';
-  document.getElementById('infoCode').textContent = tourCode ? 'Tour ' + tourCode : '';
-  document.getElementById('infoDate').textContent = dateStr ? (wochentag+', '+dateStr) : '';
-  // Combined summary line - stops count added after parsing
-  state._summaryParts = { date: wochentag+', '+dateStr, code: tourCode, time: timeLabels[timeCode]||'' };
-  document.getElementById('loading').classList.add('show');
-  try{
-    const {stops, pdfDate} = await parsePDF(file);
-    if(!stops.length){showToast('Keine Stopps erkannt');document.getElementById('loading').classList.remove('show');return;}
-    // pdfDate ignorieren – Lieferdatum wird aus Tournummer berechnet
-    // Fehlende Koordinaten geocodieren
-    await geocodeMissingStops(stops);
-    showLoadingMsg('Route wird berechnet…');
-    state.tours=await buildTours(stops,timeCode);
-    // ETAs werden direkt in optimizeWithGoogleMaps berechnet (3 Min Standzeit)
-    document.getElementById('uploadZone').style.display='none';
-    document.getElementById('appZone').style.display='block';
-    render();
-    showToast(`${stops.length} Stopps · ${state.tours.length} Touren`);
-  }catch(e){console.error(e);showToast('Fehler: '+e.message);}
+  for (const entry of state.fileQueue) {
+    showLoadingMsg(`Lese ${entry.name}…`);
+    let stops = [];
+    try {
+      if (entry.file.name.endsWith('.tour')) {
+        const buf = await entry.file.arrayBuffer();
+        const text = new TextDecoder('iso-8859-1').decode(buf);
+        const parsed = parseTourFile(text, entry.file.name);
+        stops = parsed.stops;
+      } else {
+        const parsed = await parsePDF(entry.file);
+        stops = parsed.stops;
+      }
+    } catch(e) {
+      showToast(`Fehler bei ${entry.name}: ${e.message}`); continue;
+    }
+    if (!stops.length) { showToast(`Keine Stopps in ${entry.name}`); continue; }
+
+    if (!stopsByCode[entry.timeCode]) stopsByCode[entry.timeCode] = [];
+    stopsByCode[entry.timeCode].push(...stops);
+  }
+
+  // Geocodierung + Optimierung pro Zeitcode
+  await geocodeMissingStops(Object.values(stopsByCode).flat());
+  showLoadingMsg('Routen werden optimiert…');
+
+  state.tours = [];
+  state._currentTimeCode = primaryCode;
+  state.tourCode = primaryCode;
+  state.tourDate = dateStr;
+  state.filename = state.fileQueue.map(f => f.name).join(', ');
+
+  for (const [code, stops] of Object.entries(stopsByCode)) {
+    const toursForCode = await buildTours(stops, code);
+    state.tours.push(...toursForCode);
+  }
+
+  // Info-Bar befüllen
+  const timeLabels = {'31':'⏰ 7:00 Uhr','32':'⏰ 10:00 Uhr','33':'⏰ 13:00 Uhr','37':'⏰ 10:00 Uhr (Nord/Süd)'};
+  const codes = [...new Set(state.fileQueue.map(f => f.timeCode))];
+  document.getElementById('infoTime').textContent = codes.map(c => timecodeLabel(c)).join(' · ');
+  document.getElementById('infoTime').style.display = '';
+  document.getElementById('infoDate').textContent = wochentag+', '+dateStr;
+  document.getElementById('infoDate').style.display = '';
+  const totalStops = Object.values(stopsByCode).flat().length;
+  document.getElementById('infoStops').textContent = `${totalStops} Stopps · ${state.tours.length} Touren`;
+  document.getElementById('infoStops').style.display = '';
+
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('appZone').style.display = 'block';
+  render();
+  showToast(`${totalStops} Stopps · ${state.tours.length} Touren`);
   document.getElementById('loading').classList.remove('show');
 }
 
@@ -2201,7 +2295,9 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function showLoadingMsg(msg){const p=document.querySelector('#loading p');if(p)p.textContent=msg;}
 
 
-document.getElementById('fileInput').addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+document.getElementById('fileInput').addEventListener('change',e=>{
+  Array.from(e.target.files).forEach(f => handleFile(f));
+});
 
 // Auto-initialize Google Maps SDK on load
 (function() {
@@ -2241,7 +2337,7 @@ async function saveApiKeySetup() {
 const dz=document.getElementById('dropZone');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
 dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
-dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');Array.from(e.dataTransfer.files).forEach(f=>handleFile(f));});
 document.getElementById('newTourName').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddTour();if(e.key==='Escape')document.getElementById('addTourModal').classList.remove('open');});
 document.getElementById('driverPhoneInput').addEventListener('keydown',e=>{if(e.key==='Enter')addDriver();});
 document.getElementById('driverNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('driverPhoneInput').focus();});
