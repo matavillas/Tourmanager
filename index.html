@@ -1200,9 +1200,10 @@ function calcTourKmHaversine(stops) {
   const DEPOT = [51.1974335, 6.5433796];
   let total = 0;
   let prev = DEPOT;
+  let coordCount = 0;
   stops.forEach(s => {
     const c = getCoordPair(s);
-    if (c) { total += haversineDist(prev, c); prev = c; }
+    if (c) { total += haversineDist(prev, c); prev = c; coordCount++; }
   });
   total += haversineDist(prev, DEPOT);
   // Fahrtzeit: 40 km/h Durchschnitt + 3 Min pro Stopp
@@ -1212,6 +1213,8 @@ function calcTourKmHaversine(stops) {
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   const timeStr = h > 0 ? `${h}h ${m}min` : `${m}min`;
+  // Wenn keine Koordinaten: Schätzung kennzeichnen
+  if (coordCount === 0) return { km: '?', timeStr: '?' };
   return { km: total.toFixed(1), timeStr };
 }
 
@@ -1255,18 +1258,34 @@ async function calcTourStats(tour) {
 }
 
 // ── GOOGLE MAPS WAYPOINT OPTIMIERUNG + STANDZEIT ─────────────────────────────
+// Google Maps DirectionsService erlaubt max. 23 Wegpunkte
+const GM_MAX_WAYPOINTS = 23;
+
 async function optimizeWithGoogleMaps(stops, depot, startTime) {
   const key = getApiKey();
   if (!key) return null;
+  if (!stops.length) return [];
+
+  // Bei mehr als 23 Stopps: DirectionsService nicht nutzbar → null zurück
+  // → Fallback auf optimizeRoute (Distance Matrix + 2-opt)
+  // Der Fahrer kann dann in Maps manuell "Route optimieren" klicken
+  if (stops.length > GM_MAX_WAYPOINTS) return null;
 
   try {
     await loadGoogleMapsSDK(key);
     const service = new google.maps.DirectionsService();
+    return optimizeChunkWithGoogleMaps(service, stops, depot, startTime);
+  } catch(e) {
+    console.warn('Google Maps Optimierung fehlgeschlagen:', e.message);
+    return null;
+  }
+}
 
+async function optimizeChunkWithGoogleMaps(service, stops, depot, startTime) {
     const waypoints = stops.map(s => {
       const c = getCoordPair(s);
       return {
-        location: c ? new google.maps.LatLng(c[0], c[1]) : s.addr,
+        location: c ? new google.maps.LatLng(c[0], c[1]) : (s.addr + ', Deutschland'),
         stopover: true
       };
     });
@@ -1277,19 +1296,13 @@ async function optimizeWithGoogleMaps(stops, depot, startTime) {
         destination: new google.maps.LatLng(depot[0], depot[1]),
         waypoints: waypoints,
         optimizeWaypoints: true,
-        travelMode: google.maps.TravelMode.DRIVING,
-        drivingOptions: {
-          departureTime: startTime || new Date(),
-          trafficModel: google.maps.TrafficModel.BEST_GUESS
-        }
+        travelMode: google.maps.TravelMode.DRIVING
       }, (result, status) => {
         if (status === 'OK') {
           const order = result.routes[0].waypoint_order;
           const legs = result.routes[0].legs;
-          // Berechne ETAs: Startzeit + kumulative Fahrzeiten + 3 Min Standzeit
           const STAY_MS = 3 * 60 * 1000;
           let currentTime = new Date(startTime || new Date());
-          // Leg 0: depot → first stop
           const reorderedStops = order.map(i => stops[i]);
           legs.forEach((leg, i) => {
             if (i >= reorderedStops.length) return;
@@ -1307,10 +1320,6 @@ async function optimizeWithGoogleMaps(stops, depot, startTime) {
         }
       });
     });
-  } catch(e) {
-    console.warn('Google Maps Optimierung fehlgeschlagen:', e.message);
-    return null;
-  }
 }
 
 function reoptimizeTour(tour) {
