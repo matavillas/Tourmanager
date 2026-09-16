@@ -2558,6 +2558,13 @@ dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over
 document.getElementById('newTourName').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddTour();if(e.key==='Escape')document.getElementById('addTourModal').classList.remove('open');});
 document.getElementById('driverPhoneInput').addEventListener('keydown',e=>{if(e.key==='Enter')addDriver();});
 document.getElementById('driverNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('driverPhoneInput').focus();});
+
+// Beim Start immer Upload-Zone anzeigen — nie App-Zustand aus Cache laden
+document.getElementById('uploadZone').style.display = 'flex';
+document.getElementById('appZone').style.display = 'none';
+document.getElementById('infoTime').style.display = 'none';
+document.getElementById('infoDate').style.display = 'none';
+document.getElementById('infoStops').style.display = 'none';
 </script>
 </body>
 </html>
